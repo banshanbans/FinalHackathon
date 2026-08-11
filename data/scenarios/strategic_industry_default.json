@@ -1,0 +1,24 @@
+{
+  "schema_version": "scenario-v1",
+  "scenario_id": "strategic_industry_default",
+  "name": "战略性新兴产业区域协同扶持计划",
+  "default_objective": "促进战略性新兴产业创新，同时兼顾区域均衡与财政效率。",
+  "policy": {
+    "schema_version": "policy-v1",
+    "policy_id": "strategic_industry_v1",
+    "domain": "strategic_emerging_industry",
+    "central_budget_index": 70,
+    "local_match_requirement": 0.5,
+    "regional_bias": 0.0,
+    "cooperation_incentive": 0.4,
+    "evaluation_weights": {
+      "innovation": 0.35,
+      "employment": 0.25,
+      "equity": 0.25,
+      "fiscal_efficiency": 0.15
+    },
+    "priority_industries": ["ai", "advanced_manufacturing", "green_energy"],
+    "mechanism_version": "industry-policy-env-v1"
+  }
+}
+

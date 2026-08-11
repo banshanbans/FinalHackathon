@@ -1,0 +1,25 @@
+{
+  "schema_version": "province-action-v1",
+  "action_id": "act_15_T4_eb7f0dc5453a",
+  "province_code": "15",
+  "phase": "T4",
+  "stance": "balanced",
+  "implementation_intensity": 0.6018,
+  "local_budget_ratio": 0.447,
+  "priority_industries": [
+    "green_energy",
+    "advanced_manufacturing"
+  ],
+  "talent_strategy": "reskill",
+  "interaction_strategy": "observe",
+  "target_provinces": [],
+  "requested_central_support": 0.5554,
+  "reason_codes": [
+    "HIGH_INDUSTRY_FIT",
+    "FISCAL_CONSTRAINT",
+    "TRANSITION_PRIORITY"
+  ],
+  "public_summary": "围绕绿色能源配置地方资源，并保持审慎观察。",
+  "run_mode": "fallback",
+  "fallback_used": true
+}

@@ -1,0 +1,9 @@
+schema_version: simulation-config-v1
+data_version: province-profile-2024-v1
+mechanism_version: industry-policy-env-v1
+seed: 20260812
+max_related_provinces: 5
+indices:
+  minimum: 0
+  maximum: 100
+

@@ -1,0 +1,20 @@
+schema_version: mechanism-config-v1
+version: industry-policy-env-v1
+direct_effects:
+  policy_match_scale: 8.0
+  central_support_scale: 4.0
+  local_investment_scale: 5.0
+  fiscal_execution_cost_scale: 3.5
+network_effects:
+  cooperation_scale: 1.8
+  competition_scale: 1.6
+  geographic_spillover_scale: 0.9
+  coordination_cost_scale: 0.35
+state_updates:
+  innovation_from_match: 0.62
+  innovation_from_cooperation: 0.35
+  employment_from_execution: 3.2
+  accessibility_from_support: 0.7
+  fiscal_pressure_from_cost: 1.25
+  talent_from_strategy: 2.4
+  cooperation_stock_from_action: 3.0

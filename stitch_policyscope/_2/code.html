@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>全国政企响应态势 - PolicyScope</title>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "on-primary-container": "#eeefff",
+                "surface": "#f8f9ff",
+                "outline": "#737686",
+                "surface-dim": "#c9dcf7",
+                "surface-bright": "#f8f9ff",
+                "tertiary-fixed-dim": "#c0c1ff",
+                "on-error": "#ffffff",
+                "primary-fixed-dim": "#b4c5ff",
+                "tertiary-fixed": "#e1e0ff",
+                "on-secondary-fixed": "#00201d",
+                "surface-container": "#e5eeff",
+                "on-background": "#081d30",
+                "inverse-surface": "#1f3246",
+                "on-surface": "#081d30",
+                "surface-variant": "#d1e4ff",
+                "secondary-fixed": "#9cf2e8",
+                "secondary-fixed-dim": "#80d5cb",
+                "surface-container-highest": "#d1e4ff",
+                "surface-container-lowest": "#ffffff",
+                "on-primary": "#ffffff",
+                "on-secondary-container": "#006f67",
+                "on-error-container": "#93000a",
+                "error-container": "#ffdad6",
+                "on-tertiary-fixed": "#07006c",
+                "secondary": "#006a63",
+                "tertiary-container": "#585be6",
+                "on-tertiary-container": "#f1eeff",
+                "tertiary": "#3e3fcc",
+                "surface-tint": "#0053db",
+                "on-primary-fixed": "#00174b",
+                "inverse-on-surface": "#eaf1ff",
+                "on-primary-fixed-variant": "#003ea8",
+                "background": "#f8f9ff",
+                "secondary-container": "#99efe5",
+                "primary-container": "#2563eb",
+                "on-tertiary": "#ffffff",
+                "on-tertiary-fixed-variant": "#2f2ebe",
+                "primary": "#004ac6",
+                "on-secondary-fixed-variant": "#00504a",
+                "outline-variant": "#c3c6d7",
+                "on-surface-variant": "#434655",
+                "error": "#ba1a1a",
+                "surface-container-low": "#eef4ff",
+                "on-secondary": "#ffffff",
+                "surface-container-high": "#dbe9ff",
+                "inverse-primary": "#b4c5ff",
+                "primary-fixed": "#dbe1ff"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+        },
+        "spacing": {
+                "margin": "32px",
+                "max_width": "1440px",
+                "unit": "8px",
+                "gutter": "24px",
+                "grid_columns": "12"
+        },
+        "fontFamily": {
+                "display-lg": [
+                        "Inter"
+                ],
+                "label-caps": [
+                        "Inter"
+                ],
+                "body-lg": [
+                        "Noto Sans"
+                ],
+                "metric-value": [
+                        "Inter"
+                ],
+                "display-md": [
+                        "Inter"
+                ],
+                "headline-sm": [
+                        "Noto Sans"
+                ],
+                "body-md": [
+                        "Noto Sans"
+                ]
+        },
+        "fontSize": {
+                "display-lg": [
+                        "32px",
+                        {
+                                "lineHeight": "40px",
+                                "letterSpacing": "-0.02em",
+                                "fontWeight": "600"
+                        }
+                ],
+                "label-caps": [
+                        "12px",
+                        {
+                                "lineHeight": "16px",
+                                "letterSpacing": "0.05em",
+                                "fontWeight": "600"
+                        }
+                ],
+                "body-lg": [
+                        "16px",
+                        {
+                                "lineHeight": "24px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "metric-value": [
+                        "28px",
+                        {
+                                "lineHeight": "32px",
+                                "fontWeight": "700"
+                        }
+                ],
+                "display-md": [
+                        "26px",
+                        {
+                                "lineHeight": "32px",
+                                "fontWeight": "600"
+                        }
+                ],
+                "headline-sm": [
+                        "20px",
+                        {
+                                "lineHeight": "28px",
+                                "fontWeight": "500"
+                        }
+                ],
+                "body-md": [
+                        "14px",
+                        {
+                                "lineHeight": "20px",
+                                "fontWeight": "400"
+                        }
+                ]
+        }
+},
+    },
+  }
+</script>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;family=Noto+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body { background-color: #F4F6F8; }
+        .workbench-card {
+            background-color: white;
+            border: 1px solid #E2E8F0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border-radius: 0.25rem;
+        }
+        .metric-card {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 16px;
+        }
+        .stage-node {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #E2E8F0;
+            border: 2px solid white;
+            z-index: 10;
+        }
+        .stage-node.completed { background-color: #006a63; }
+        .stage-node.active { background-color: #004ac6; }
+        .stage-node.intervention { background-color: #ba1a1a; animation: pulse-border 2s infinite; }
+        .stage-line {
+            position: absolute;
+            top: 5px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #E2E8F0;
+            z-index: 0;
+        }
+        .stage-line.completed { background-color: #006a63; }
+        
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 0 0 rgba(186, 26, 26, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(186, 26, 26, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(186, 26, 26, 0); }
+        }
+    </style>
+</head>
+<body class="font-body-md text-on-surface bg-background antialiased flex flex-col min-h-screen">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center h-16 px-gutter max-w-max_width mx-auto bg-surface dark:bg-inverse-surface border-b border-outline-variant dark:border-outline">
+<div class="flex items-center gap-6">
+<span class="text-headline-sm font-headline-sm font-bold text-primary dark:text-inverse-primary tracking-tight">PolicyScope 政策浪潮</span>
+<nav class="hidden md:flex gap-6 items-center h-full pt-1">
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-inverse-primary transition-colors font-label-caps text-label-caps h-full flex items-center" href="#">T0: Base</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-inverse-primary transition-colors font-label-caps text-label-caps h-full flex items-center" href="#">T1: Release</a>
+<a class="text-primary dark:text-inverse-primary border-b-2 border-primary font-bold pb-1 font-label-caps text-label-caps h-full flex items-center opacity-80 transition-all duration-150" href="#">T2: Impact</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-inverse-primary transition-colors font-label-caps text-label-caps h-full flex items-center" href="#">T3: Feedback</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-inverse-primary transition-colors font-label-caps text-label-caps h-full flex items-center" href="#">T4: Adjust</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-inverse-primary transition-colors font-label-caps text-label-caps h-full flex items-center" href="#">T5: Final</a>
+</nav>
+</div>
+<div class="flex items-center gap-4 text-primary dark:text-inverse-primary">
+<button class="hover:bg-surface-variant p-2 rounded-full transition-colors"><span class="material-symbols-outlined">database</span></button>
+<button class="hover:bg-surface-variant p-2 rounded-full transition-colors"><span class="material-symbols-outlined">settings</span></button>
+<button class="hover:bg-surface-variant p-2 rounded-full transition-colors"><span class="material-symbols-outlined">account_circle</span></button>
+</div>
+</header>
+<div class="flex flex-1 pt-16 max-w-max_width mx-auto w-full relative">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-16 h-[calc(100vh-64px)] w-64 flex flex-col py-margin z-40 bg-surface-container-low dark:bg-surface-container shadow-sm dark:shadow-none hidden md:flex">
+<div class="px-6 mb-8">
+<div class="flex items-center gap-3 mb-2">
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold">CP</div>
+<div>
+<h2 class="text-label-caps font-label-caps font-black text-secondary">中央政策协调席</h2>
+<p class="text-xs text-on-surface-variant">制造业设备更新专项</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 flex flex-col gap-1 px-4">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant dark:hover:bg-inverse-surface font-label-caps text-label-caps transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">gavel</span> Central Policy
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-secondary dark:text-secondary-fixed-dim font-bold border-r-4 border-secondary bg-surface-variant/50 font-label-caps text-label-caps scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">analytics</span> National Simulation
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant dark:hover:bg-inverse-surface font-label-caps text-label-caps transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">account_tree</span> Provincial &amp; Enterprise
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant dark:hover:bg-inverse-surface font-label-caps text-label-caps transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">fact_check</span> Intervention Approval
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant dark:hover:bg-inverse-surface font-label-caps text-label-caps transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">compare_arrows</span> A/B Comparison
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant dark:hover:bg-inverse-surface font-label-caps text-label-caps transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">source</span> Methods &amp; Evidence
+                </a>
+</nav>
+<div class="px-4 mt-auto border-t border-outline-variant/30 pt-4">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:bg-surface-variant font-label-caps text-label-caps transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span> Settings
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:bg-surface-variant font-label-caps text-label-caps transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">help</span> Support
+                </a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 ml-0 md:ml-64 p-gutter pb-32">
+<div class="flex justify-between items-end mb-6">
+<div>
+<h1 class="font-display-md text-display-md text-on-background">全国政企响应态势</h1>
+<p class="text-on-surface-variant font-body-md mt-1">T2阶段模拟进行中 - 全国宏观指标预测</p>
+</div>
+<div class="bg-secondary/10 text-secondary px-3 py-1 rounded font-label-caps text-label-caps flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span> 实时模拟中
+                </div>
+</div>
+<!-- Top: 6 Core Metric Cards -->
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+<div class="workbench-card metric-card">
+<div class="text-on-surface-variant font-label-caps text-label-caps uppercase mb-2">企业参与指数</div>
+<div class="font-metric-value text-metric-value text-primary mb-1">54.6</div>
+<div class="flex items-center gap-1 text-[10px] text-outline">
+<span class="material-symbols-outlined text-[12px] text-secondary">trending_up</span>
+                        当前阶段模拟指数
+                    </div>
+</div>
+<div class="workbench-card metric-card">
+<div class="text-on-surface-variant font-label-caps text-label-caps uppercase mb-2">设备更新意愿</div>
+<div class="font-metric-value text-metric-value text-on-surface mb-1">62.1</div>
+<div class="flex items-center gap-1 text-[10px] text-outline">
+<span class="material-symbols-outlined text-[12px] text-secondary">trending_up</span>
+                        当前阶段模拟指数
+                    </div>
+</div>
+<div class="workbench-card metric-card border-l-4 border-error">
+<div class="text-on-surface-variant font-label-caps text-label-caps uppercase mb-2">SME融资可达性</div>
+<div class="font-metric-value text-metric-value text-error mb-1">41.8</div>
+<div class="flex items-center gap-1 text-[10px] text-outline">
+<span class="material-symbols-outlined text-[12px] text-error">trending_down</span>
+                        当前阶段模拟指数
+                    </div>
+</div>
+<div class="workbench-card metric-card">
+<div class="text-on-surface-variant font-label-caps text-label-caps uppercase mb-2">产业升级指数</div>
+<div class="font-metric-value text-metric-value text-on-surface mb-1">58.4</div>
+<div class="flex items-center gap-1 text-[10px] text-outline">
+<span class="material-symbols-outlined text-[12px] text-secondary">trending_up</span>
+                        当前阶段模拟指数
+                    </div>
+</div>
+<div class="workbench-card metric-card">
+<div class="text-on-surface-variant font-label-caps text-label-caps uppercase mb-2">财政压力</div>
+<div class="font-metric-value text-metric-value text-on-surface mb-1">57.3</div>
+<div class="flex items-center gap-1 text-[10px] text-outline">
+<span class="material-symbols-outlined text-[12px] text-outline">trending_flat</span>
+                        当前阶段模拟指数
+                    </div>
+</div>
+<div class="workbench-card metric-card border-l-4 border-error">
+<div class="text-on-surface-variant font-label-caps text-label-caps uppercase mb-2">区域差距</div>
+<div class="font-metric-value text-metric-value text-error mb-1">18.4</div>
+<div class="flex items-center gap-1 text-[10px] text-outline">
+<span class="material-symbols-outlined text-[12px] text-error">trending_up</span>
+                        当前阶段模拟指数
+                    </div>
+</div>
+</div>
+<!-- Main Layout: Map & Stream -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[500px]">
+<!-- Center: Map Canvas -->
+<div class="lg:col-span-8 workbench-card flex flex-col relative overflow-hidden">
+<div class="p-4 border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-lowest z-10">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">省级企业参与指数分布</h3>
+<p class="text-xs text-on-surface-variant">T2 模拟阶段预测 (单位: 模拟指数)</p>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 bg-primary-fixed-dim rounded-sm"></span>
+<span class="text-xs text-on-surface-variant">低参与 (&lt;40)</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 bg-primary rounded-sm"></span>
+<span class="text-xs text-on-surface-variant">高参与 (&gt;60)</span>
+</div>
+</div>
+</div>
+<div class="flex-1 relative bg-surface-dim/20 flex items-center justify-center p-4">
+<!-- Map Image Placeholder with data-location -->
+<div class="w-full h-full rounded-lg overflow-hidden relative shadow-inner border border-outline-variant/50 bg-white">
+<img class="w-full h-full object-cover" data-alt="A highly detailed, accurate topographical data visualization map of China (31 provinces), rendered in a clean, modern light-mode interface style. The map uses a sophisticated color scale ranging from light institutional blue (primary-fixed-dim) to deep authoritative blue (primary) to represent varying 'Enterprise Participation Indices'. Hover states are subtly indicated with slightly deeper contrast shadows. The overall aesthetic is rigorous, forensic, and strategic command center style, avoiding neon or dark-mode glows. Soft, natural high-key lighting illuminates the pristine white background, emphasizing clarity and rational data presentation." data-location="China" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCcCAGaoZlV4oLo9xrxT4oRd_qgZ6DKa7iD3H8BhkDadiKJlUd5hiSNMMC-pOoz-gmg58XvulZAL4k7i_HcstKIlQ7jsmHyNfzIPjqCy2gZMCD4YPF0aQJiMXYF-e-lTmEKBVEZAGelr3bL4DyZuC69uW1YOPrO0I4Ro6QkUiUfIurcAGrd-xXIaygku4QZMiCGiNxECAwpv70fRZAVYIP78KsAPbyF6G3zmZdLfE17Vx8PEC9XjdHx"/>
+<!-- Simulated interactive overlays -->
+<div class="absolute top-1/4 left-1/3 bg-white border border-outline-variant shadow-md p-2 rounded pointer-events-none z-20 hidden md:block">
+<div class="text-[10px] font-bold text-on-surface">山东省</div>
+<div class="text-primary font-bold text-sm">65.2</div>
+</div>
+<div class="absolute top-1/2 left-2/3 bg-white border border-outline-variant shadow-md p-2 rounded pointer-events-none z-20 hidden md:block">
+<div class="text-[10px] font-bold text-on-surface">广东省</div>
+<div class="text-primary font-bold text-sm">72.1</div>
+</div>
+<div class="absolute top-1/2 left-1/2 bg-error-container border border-error/30 shadow-md p-2 rounded pointer-events-none z-20 hidden md:block">
+<div class="text-[10px] font-bold text-on-error-container">河南省</div>
+<div class="text-error font-bold text-sm">38.4</div>
+<div class="text-[8px] text-on-surface-variant">SME群体承压</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right: Action Stream -->
+<div class="lg:col-span-4 workbench-card flex flex-col bg-surface-container-lowest">
+<div class="p-4 border-b border-outline-variant/30 bg-surface-container-low flex justify-between items-center">
+<h3 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px] text-secondary">stream</span>
+                            实时行动流
+                        </h3>
+<span class="text-xs text-on-surface-variant">T1 - T2 记录</span>
+</div>
+<div class="flex-1 overflow-y-auto p-4 space-y-4">
+<!-- Event Card 1 -->
+<div class="border border-outline-variant/50 rounded p-3 relative bg-white">
+<div class="absolute -left-2 top-4 w-4 h-4 rounded-full bg-secondary text-white flex items-center justify-center border-2 border-white text-[8px] font-bold">T1</div>
+<div class="ml-2">
+<div class="flex justify-between items-start mb-1">
+<span class="bg-secondary/10 text-secondary px-1.5 py-0.5 rounded text-[10px] font-label-caps uppercase">省级代理 Agent</span>
+<span class="text-[10px] text-outline">广东省</span>
+</div>
+<div class="text-sm font-medium text-on-surface mb-1">响应策略调整</div>
+<p class="text-xs text-on-surface-variant">Increase Digital/SME weight in local subsidy allocation to match structural advantages.</p>
+</div>
+</div>
+<!-- Event Card 2 -->
+<div class="border border-outline-variant/50 rounded p-3 relative bg-white">
+<div class="absolute -left-2 top-4 w-4 h-4 rounded-full bg-secondary text-white flex items-center justify-center border-2 border-white text-[8px] font-bold">T1</div>
+<div class="ml-2">
+<div class="flex justify-between items-start mb-1">
+<span class="bg-secondary/10 text-secondary px-1.5 py-0.5 rounded text-[10px] font-label-caps uppercase">省级代理 Agent</span>
+<span class="text-[10px] text-outline">山东省</span>
+</div>
+<div class="text-sm font-medium text-on-surface mb-1">响应策略调整</div>
+<p class="text-xs text-on-surface-variant">Green equipment priority enacted for heavy manufacturing sectors.</p>
+</div>
+</div>
+<!-- Event Card 3 -->
+<div class="border border-error/30 bg-error-container/20 rounded p-3 relative">
+<div class="absolute -left-2 top-4 w-4 h-4 rounded-full bg-primary text-white flex items-center justify-center border-2 border-white text-[8px] font-bold">T2</div>
+<div class="ml-2">
+<div class="flex justify-between items-start mb-1">
+<span class="bg-outline/10 text-on-surface px-1.5 py-0.5 rounded text-[10px] font-label-caps uppercase">企业群体 Agent</span>
+<span class="text-[10px] text-outline">河南省</span>
+</div>
+<div class="text-sm font-medium text-error mb-1">行动受阻: WAIT</div>
+<p class="text-xs text-on-surface-variant"><span class="font-bold">Constraint:</span> Cash flow limitations among traditional manufacturing SMEs preventing immediate adoption.</p>
+</div>
+</div>
+<!-- Event Card 4 -->
+<div class="border border-tertiary/30 bg-tertiary-container/10 rounded p-3 relative">
+<div class="absolute -left-2 top-4 w-4 h-4 rounded-full bg-primary text-white flex items-center justify-center border-2 border-white text-[8px] font-bold">T2</div>
+<div class="ml-2">
+<div class="flex justify-between items-start mb-1">
+<span class="bg-tertiary/10 text-tertiary px-1.5 py-0.5 rounded text-[10px] font-label-caps uppercase">系统环境计算</span>
+<span class="text-[10px] text-outline">全局</span>
+</div>
+<div class="text-sm font-medium text-tertiary mb-1">Regional disparity warning</div>
+<p class="text-xs text-on-surface-variant">Policy ripple effect increasing gap between coastal high-tech and central traditional hubs.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Bottom Stage Timeline (Docked) -->
+<div class="fixed bottom-12 left-0 md:left-64 right-0 bg-surface/95 backdrop-blur border-t border-outline-variant px-gutter py-4 z-30">
+<div class="max-w-4xl mx-auto">
+<div class="flex justify-between items-end mb-2">
+<span class="text-xs font-bold text-on-surface-variant font-label-caps">SIMULATION TIMELINE</span>
+<span class="text-xs text-primary font-medium flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">speed</span> 1.5x Speed</span>
+</div>
+<div class="relative pt-4 pb-2">
+<!-- Track -->
+<div class="absolute top-[21px] left-4 right-4 h-1 bg-outline-variant rounded-full"></div>
+<!-- Progress -->
+<div class="absolute top-[21px] left-4 w-2/5 h-1 bg-primary rounded-full"></div>
+<div class="flex justify-between relative z-10 px-2">
+<!-- T0 -->
+<div class="flex flex-col items-center gap-1">
+<div class="w-4 h-4 rounded-full bg-secondary border-2 border-white shadow-sm flex items-center justify-center text-white"><span class="material-symbols-outlined text-[10px]">check</span></div>
+<span class="text-[10px] font-medium text-on-surface-variant">T0 Base</span>
+</div>
+<!-- T1 -->
+<div class="flex flex-col items-center gap-1">
+<div class="w-4 h-4 rounded-full bg-secondary border-2 border-white shadow-sm flex items-center justify-center text-white"><span class="material-symbols-outlined text-[10px]">check</span></div>
+<span class="text-[10px] font-medium text-on-surface-variant">T1 Release</span>
+</div>
+<!-- T2 Active -->
+<div class="flex flex-col items-center gap-1">
+<div class="w-5 h-5 rounded-full bg-primary border-2 border-white shadow-md flex items-center justify-center text-white ring-2 ring-primary-fixed-dim animate-pulse"></div>
+<span class="text-[10px] font-bold text-primary">T2 Impact</span>
+</div>
+<!-- T3 Intervention Highlight -->
+<div class="flex flex-col items-center gap-1 group cursor-pointer">
+<div class="w-4 h-4 rounded-full bg-error border-2 border-white shadow-sm ring-2 ring-error/50"></div>
+<span class="text-[10px] font-bold text-error">T3 可干预检查点</span>
+<div class="absolute bottom-10 bg-inverse-surface text-inverse-on-surface text-xs p-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                            System paused for policy adjustment injection
+                        </div>
+</div>
+<!-- T4 -->
+<div class="flex flex-col items-center gap-1">
+<div class="w-4 h-4 rounded-full bg-surface-container border-2 border-outline-variant shadow-sm"></div>
+<span class="text-[10px] font-medium text-outline">T4 Adjust</span>
+</div>
+<!-- T5 -->
+<div class="flex flex-col items-center gap-1">
+<div class="w-4 h-4 rounded-full bg-surface-container border-2 border-outline-variant shadow-sm"></div>
+<span class="text-[10px] font-medium text-outline">T5 Final</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer -->
+<footer class="docked bottom-0 w-full flex justify-between items-center py-4 px-gutter text-xs bg-surface-dim dark:bg-inverse-surface border-t border-outline-variant dark:border-outline flat no shadows z-50 fixed ml-0 md:ml-64 w-[calc(100%-0px)] md:w-[calc(100%-256px)]">
+<span class="text-outline dark:text-outline-variant font-body-md text-body-md">PolicyScope Simulation Workbench. Official Institutional Use Only. Simulation outcomes do not constitute legal or financial advice.</span>
+<div class="flex gap-4">
+<a class="text-outline dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed transition-colors duration-200" href="#">Legal</a>
+<a class="text-outline dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed transition-colors duration-200" href="#">Methodology</a>
+<a class="text-outline dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed transition-colors duration-200" href="#">API Status</a>
+</div>
+</footer>
+</body></html>

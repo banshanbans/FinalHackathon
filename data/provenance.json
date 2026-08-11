@@ -1,0 +1,34 @@
+{
+  "schema_version": "provenance-v1",
+  "data_version": "province-profile-2024-v1",
+  "method": "公开统计信息经稳健归一化与领域代理映射形成0-1沙盘画像；画像不等同于官方评价或现实预测。",
+  "verified_provinces": {
+    "44": {
+      "name": "广东省",
+      "source_year": 2024,
+      "source": "广东省统计局、国家统计局广东调查总队《2024年广东省国民经济和社会发展统计公报》",
+      "url": "https://stats.gd.gov.cn/attachment/0/576/576336/4686764.pdf",
+      "transformation": "以经济规模、产业结构及公开创新相关指标进行0-1领域归一化；部分产业基础字段为有来源约束的代理映射。"
+    },
+    "33": {
+      "name": "浙江省",
+      "source_year": 2024,
+      "source": "浙江省统计局《2024年浙江省国民经济和社会发展统计公报》",
+      "url": "https://tjj.zj.gov.cn/col/col1525492/index.html",
+      "transformation": "依据GDP、数字经济、高技术制造、研发和财政公开指标进行0-1领域归一化。"
+    },
+    "14": {
+      "name": "山西省",
+      "source_year": 2024,
+      "source": "山西省统计局、国家统计局山西调查总队2024年全省经济运行公开信息",
+      "url": "https://wjw.shanxi.gov.cn/xwzx/szyw/202502/t20250208_9764778.shtml",
+      "transformation": "依据经济运行和能源转型特征形成0-1领域画像；创新和财政约束字段为有来源约束的代理映射。"
+    }
+  },
+  "other_provinces": {
+    "quality": "proxy_or_demo",
+    "source_year": 2024,
+    "note": "用于MVP机制演示，未完成统一来源核验，不得解释为官方统计评价。"
+  }
+}
+

@@ -1,0 +1,30 @@
+{
+  "schema_version": "province-action-v1",
+  "action_id": "act_64_T4_c18b4b6d1a80",
+  "province_code": "64",
+  "phase": "T4",
+  "stance": "cautious",
+  "implementation_intensity": 0.4855,
+  "local_budget_ratio": 0.2538,
+  "priority_industries": [
+    "green_energy",
+    "advanced_manufacturing"
+  ],
+  "talent_strategy": "reskill",
+  "interaction_strategy": "cooperate",
+  "target_provinces": [
+    "62",
+    "63"
+  ],
+  "requested_central_support": 0.6842,
+  "reason_codes": [
+    "HIGH_INDUSTRY_FIT",
+    "FISCAL_CONSTRAINT",
+    "TRANSITION_PRIORITY",
+    "REGIONAL_COOPERATION",
+    "CENTRAL_SUPPORT_REQUEST"
+  ],
+  "public_summary": "围绕绿色能源配置地方资源，并推动跨省协作。",
+  "run_mode": "fallback",
+  "fallback_used": true
+}

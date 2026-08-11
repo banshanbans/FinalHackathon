@@ -1,0 +1,24 @@
+{
+  "schema_version": "province-action-v1",
+  "action_id": "act_42_T1_787137b70671",
+  "province_code": "42",
+  "phase": "T1",
+  "stance": "balanced",
+  "implementation_intensity": 0.6495,
+  "local_budget_ratio": 0.4928,
+  "priority_industries": [
+    "advanced_manufacturing",
+    "ai"
+  ],
+  "talent_strategy": "stable",
+  "interaction_strategy": "observe",
+  "target_provinces": [],
+  "requested_central_support": 0.4196,
+  "reason_codes": [
+    "HIGH_INDUSTRY_FIT",
+    "FISCAL_CONSTRAINT"
+  ],
+  "public_summary": "围绕先进制造配置地方资源，并保持审慎观察。",
+  "run_mode": "fallback",
+  "fallback_used": true
+}

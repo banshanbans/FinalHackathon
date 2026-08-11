@@ -1,0 +1,24 @@
+{
+  "schema_version": "province-action-v1",
+  "action_id": "act_43_T3_c33572e3e5ae",
+  "province_code": "43",
+  "phase": "T3",
+  "stance": "balanced",
+  "implementation_intensity": 0.6553,
+  "local_budget_ratio": 0.4445,
+  "priority_industries": [
+    "advanced_manufacturing",
+    "green_energy"
+  ],
+  "talent_strategy": "stable",
+  "interaction_strategy": "observe",
+  "target_provinces": [],
+  "requested_central_support": 0.4688,
+  "reason_codes": [
+    "HIGH_INDUSTRY_FIT",
+    "FISCAL_CONSTRAINT"
+  ],
+  "public_summary": "围绕先进制造配置地方资源，并保持审慎观察。",
+  "run_mode": "fallback",
+  "fallback_used": true
+}

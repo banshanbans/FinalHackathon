@@ -1,0 +1,28 @@
+{
+  "schema_version": "province-action-v1",
+  "action_id": "act_37_T4_f0bf7493abe9",
+  "province_code": "37",
+  "phase": "T4",
+  "stance": "aggressive",
+  "implementation_intensity": 0.7976,
+  "local_budget_ratio": 0.6136,
+  "priority_industries": [
+    "advanced_manufacturing",
+    "green_energy"
+  ],
+  "talent_strategy": "stable",
+  "interaction_strategy": "cooperate",
+  "target_provinces": [
+    "13",
+    "32"
+  ],
+  "requested_central_support": 0.329,
+  "reason_codes": [
+    "HIGH_INDUSTRY_FIT",
+    "HIGH_FISCAL_CAPACITY",
+    "REGIONAL_COOPERATION"
+  ],
+  "public_summary": "围绕先进制造配置地方资源，并推动跨省协作。",
+  "run_mode": "fallback",
+  "fallback_used": true
+}

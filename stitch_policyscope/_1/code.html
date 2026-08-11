@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>制造业设备更新专项 · 中央政策设定</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;family=Noto+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-container": "#eeefff",
+                        "surface": "#f8f9ff",
+                        "outline": "#737686",
+                        "surface-dim": "#c9dcf7",
+                        "surface-bright": "#f8f9ff",
+                        "tertiary-fixed-dim": "#c0c1ff",
+                        "on-error": "#ffffff",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "tertiary-fixed": "#e1e0ff",
+                        "on-secondary-fixed": "#00201d",
+                        "surface-container": "#e5eeff",
+                        "on-background": "#081d30",
+                        "inverse-surface": "#1f3246",
+                        "on-surface": "#081d30",
+                        "surface-variant": "#d1e4ff",
+                        "secondary-fixed": "#9cf2e8",
+                        "secondary-fixed-dim": "#80d5cb",
+                        "surface-container-highest": "#d1e4ff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "on-secondary-container": "#006f67",
+                        "on-error-container": "#93000a",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-fixed": "#07006c",
+                        "secondary": "#006a63",
+                        "tertiary-container": "#585be6",
+                        "on-tertiary-container": "#f1eeff",
+                        "tertiary": "#3e3fcc",
+                        "surface-tint": "#0053db",
+                        "on-primary-fixed": "#00174b",
+                        "inverse-on-surface": "#eaf1ff",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "background": "#f8f9ff",
+                        "secondary-container": "#99efe5",
+                        "primary-container": "#2563eb",
+                        "on-tertiary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#2f2ebe",
+                        "primary": "#004ac6",
+                        "on-secondary-fixed-variant": "#00504a",
+                        "outline-variant": "#c3c6d7",
+                        "on-surface-variant": "#434655",
+                        "error": "#ba1a1a",
+                        "surface-container-low": "#eef4ff",
+                        "on-secondary": "#ffffff",
+                        "surface-container-high": "#dbe9ff",
+                        "inverse-primary": "#b4c5ff",
+                        "primary-fixed": "#dbe1ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin": "32px",
+                        "max_width": "1440px",
+                        "unit": "8px",
+                        "gutter": "24px",
+                        "grid_columns": "12"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "body-lg": ["Noto Sans"],
+                        "metric-value": ["Inter"],
+                        "display-md": ["Inter"],
+                        "headline-sm": ["Noto Sans"],
+                        "body-md": ["Noto Sans"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "metric-value": ["28px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "display-md": ["26px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "500" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Noto Sans', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .filled-icon { font-variation-settings: 'FILL' 1; }
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #004ac6; /* primary */
+            cursor: pointer;
+            margin-top: -6px;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #c3c6d7; /* outline-variant */
+            border-radius: 2px;
+        }
+        input[type=range]:focus {
+            outline: none;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col pt-16 pl-0 md:pl-64">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 flex justify-between items-center h-16 px-gutter max-w-max_width mx-auto bg-surface dark:bg-inverse-surface border-b border-outline-variant dark:border-outline flat no shadows">
+<div class="flex items-center gap-4">
+<span class="text-headline-sm font-headline-sm font-bold text-primary dark:text-inverse-primary">PolicyScope 政策汹涌</span>
+</div>
+<div class="hidden md:flex items-center gap-6">
+<a class="text-primary dark:text-inverse-primary border-b-2 border-primary font-bold pb-1 font-label-caps text-label-caps opacity-80 transition-all duration-150" href="#">T0: Base</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-inverse-primary transition-colors font-label-caps text-label-caps" href="#">T1: Release</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-inverse-primary transition-colors font-label-caps text-label-caps" href="#">T2: Impact</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-inverse-primary transition-colors font-label-caps text-label-caps" href="#">T3: Feedback</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-inverse-primary transition-colors font-label-caps text-label-caps" href="#">T4: Adjust</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-inverse-primary transition-colors font-label-caps text-label-caps" href="#">T5: Final</a>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-primary dark:text-inverse-primary hover:bg-surface-variant p-2 rounded-full transition-colors">
+<span class="material-symbols-outlined">database</span>
+</button>
+<button class="text-primary dark:text-inverse-primary hover:bg-surface-variant p-2 rounded-full transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<button class="text-primary dark:text-inverse-primary hover:bg-surface-variant p-2 rounded-full transition-colors">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+</nav>
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-16 h-[calc(100vh-64px)] w-64 flex flex-col py-margin z-40 bg-surface-container-low dark:bg-surface-container shadow-sm dark:shadow-none hidden md:flex border-r border-surface-container-low">
+<div class="px-6 mb-8 flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center shrink-0">
+<span class="text-on-secondary-container font-label-caps text-label-caps">C</span>
+</div>
+<div>
+<div class="text-label-caps font-label-caps font-black text-secondary truncate">中央政策协调席</div>
+<div class="text-[10px] text-on-surface-variant truncate">制造业设备更新专项</div>
+</div>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-secondary dark:text-secondary-fixed-dim font-bold border-r-4 border-secondary bg-surface-variant scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">gavel</span>
+<span class="font-label-caps text-label-caps">Central Policy</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant dark:hover:bg-inverse-surface transition-colors" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-label-caps text-label-caps">National Simulation</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant dark:hover:bg-inverse-surface transition-colors" href="#">
+<span class="material-symbols-outlined">account_tree</span>
+<span class="font-label-caps text-label-caps">Provincial &amp; Enterprise</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant dark:hover:bg-inverse-surface transition-colors" href="#">
+<span class="material-symbols-outlined">fact_check</span>
+<span class="font-label-caps text-label-caps">Intervention Approval</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant dark:hover:bg-inverse-surface transition-colors" href="#">
+<span class="material-symbols-outlined">compare_arrows</span>
+<span class="font-label-caps text-label-caps">A/B Comparison</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant dark:hover:bg-inverse-surface transition-colors" href="#">
+<span class="material-symbols-outlined">source</span>
+<span class="font-label-caps text-label-caps">Methods &amp; Evidence</span>
+</a>
+</nav>
+<div class="px-4 mt-auto space-y-1 pt-4 border-t border-outline-variant/30">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-variant transition-colors" href="#">
+<span class="material-symbols-outlined text-sm">settings</span>
+<span class="font-label-caps text-label-caps">Settings</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-variant transition-colors" href="#">
+<span class="material-symbols-outlined text-sm">help</span>
+<span class="font-label-caps text-label-caps">Support</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 p-gutter max-w-max_width w-full mx-auto pb-24">
+<header class="mb-8">
+<h1 class="font-display-md text-display-md text-on-background mb-2">中央政策设定 <span class="text-outline text-lg font-normal ml-2">T0: 基础参数构建阶段</span></h1>
+<p class="font-body-md text-body-md text-on-surface-variant flex items-center gap-4">
+<span>Data version: Q3 2023 Census</span>
+<span class="w-1 h-1 rounded-full bg-outline"></span>
+<span>Scope: 31 Provinces (Mainland)</span>
+<span class="w-1 h-1 rounded-full bg-outline"></span>
+<span>Entities: State-owned, Private, Foreign-invested</span>
+</p>
+</header>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<!-- Left Column: Objectives & AI Analysis (60% -> 7 cols) -->
+<div class="lg:col-span-7 space-y-6">
+<!-- Policy Objective Input Area -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-[0_2px_4px_rgba(0,0,0,0.05)]">
+<div class="flex justify-between items-center mb-4">
+<h2 class="font-headline-sm text-headline-sm text-on-background flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">edit_note</span>
+                            宏观政策意图 (Natural Language Input)
+                        </h2>
+</div>
+<textarea class="w-full bg-surface-container-low border-0 rounded-lg p-4 font-body-lg text-body-lg text-on-surface focus:ring-2 focus:ring-primary focus:outline-none min-h-[120px] resize-none" placeholder="Enter policy objectives here...">在有限财政支持下推动制造业设备升级，同时提高中小企业参与度，兼顾绿色转型、就业稳定和区域政策可达性。</textarea>
+<div class="flex justify-end mt-4">
+<button class="bg-surface-variant text-primary px-4 py-2 rounded flex items-center gap-2 font-label-caps text-label-caps hover:bg-surface-dim transition-colors">
+<span class="material-symbols-outlined text-[16px]">smart_toy</span>
+                            Analyze Intent
+                        </button>
+</div>
+</section>
+<!-- AI Analysis & Goal Cards -->
+<section class="bg-surface-container-low rounded-xl p-6 border border-surface-container-highest">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-secondary filled-icon">psychology</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">中央政策研判 Agent: 结构化解析</h3>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-6 pl-8 border-l-2 border-secondary">
+                        Detected 5 primary pillars from intent. Focus is heavily balanced between technological upgrade and socio-economic stability. SME participation is prioritized over sheer output volume.
+                    </p>
+<div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+<!-- Goal Card 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant/50 rounded-lg p-4 flex flex-col gap-2">
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined text-[18px]">precision_manufacturing</span>
+<span class="font-label-caps text-label-caps">Primary Goal</span>
+</div>
+<div class="font-body-lg font-medium text-on-background">Industrial Upgrade</div>
+<div class="text-xs text-on-surface-variant mt-auto">Weight: High</div>
+</div>
+<!-- Goal Card 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant/50 rounded-lg p-4 flex flex-col gap-2">
+<div class="flex items-center gap-2 text-secondary">
+<span class="material-symbols-outlined text-[18px]">storefront</span>
+<span class="font-label-caps text-label-caps">Target Group</span>
+</div>
+<div class="font-body-lg font-medium text-on-background">SME Support</div>
+<div class="text-xs text-on-surface-variant mt-auto">Weight: High</div>
+</div>
+<!-- Goal Card 3 -->
+<div class="bg-surface-container-lowest border border-outline-variant/50 rounded-lg p-4 flex flex-col gap-2">
+<div class="flex items-center gap-2 text-on-secondary-container">
+<span class="material-symbols-outlined text-[18px]">eco</span>
+<span class="font-label-caps text-label-caps">Tech Vector</span>
+</div>
+<div class="font-body-lg font-medium text-on-background">Green Transition</div>
+<div class="text-xs text-on-surface-variant mt-auto">Weight: Medium</div>
+</div>
+<!-- Goal Card 4 -->
+<div class="bg-surface-container-lowest border border-outline-variant/50 rounded-lg p-4 flex flex-col gap-2">
+<div class="flex items-center gap-2 text-tertiary">
+<span class="material-symbols-outlined text-[18px]">groups</span>
+<span class="font-label-caps text-label-caps">Socio-Economic</span>
+</div>
+<div class="font-body-lg font-medium text-on-background">Employment Stability</div>
+<div class="text-xs text-on-surface-variant mt-auto">Weight: Medium</div>
+</div>
+<!-- Goal Card 5 -->
+<div class="bg-surface-container-lowest border border-outline-variant/50 rounded-lg p-4 flex flex-col gap-2">
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]">map</span>
+<span class="font-label-caps text-label-caps">Geographic</span>
+</div>
+<div class="font-body-lg font-medium text-on-background">Regional Balance</div>
+<div class="text-xs text-on-surface-variant mt-auto">Weight: Medium</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Column: Structured Parameter Editor (40% -> 5 cols) -->
+<div class="lg:col-span-5">
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-[0_2px_4px_rgba(0,0,0,0.05)] flex flex-col h-full sticky top-20">
+<div class="p-4 border-b border-outline-variant bg-surface-container-low rounded-t-xl flex justify-between items-center">
+<h2 class="font-headline-sm text-headline-sm text-on-background flex items-center gap-2">
+<span class="material-symbols-outlined">tune</span>
+                            结构化政策参数 (Mapped from Intent)
+                        </h2>
+<span class="bg-tertiary/10 text-tertiary font-label-caps text-[10px] px-2 py-1 rounded">EDITABLE</span>
+</div>
+<div class="p-6 space-y-6 overflow-y-auto">
+<!-- Slider Parameter 1 -->
+<div>
+<div class="flex justify-between items-center mb-2">
+<label class="font-body-md font-medium text-on-surface">Support Intensity (财政支持力度)</label>
+<span class="font-metric-value text-lg text-primary">70<span class="text-sm font-normal text-outline">/100</span></span>
+</div>
+<input max="100" min="0" type="range" value="70"/>
+</div>
+<!-- Slider Parameter 2 -->
+<div>
+<div class="flex justify-between items-center mb-2">
+<label class="font-body-md font-medium text-on-surface">Local Matching Req (地方配比要求)</label>
+<span class="font-metric-value text-lg text-primary">0.50<span class="text-sm font-normal text-outline"> Ratio</span></span>
+</div>
+<input max="1" min="0" step="0.05" type="range" value="0.50"/>
+</div>
+<!-- Breakdown Parameter -->
+<div class="pt-4 border-t border-outline-variant/50">
+<label class="font-body-md font-medium text-on-surface block mb-3">Subsidy Breakdown (资金分配结构)</label>
+<div class="flex h-6 rounded-full overflow-hidden bg-surface-variant mb-2">
+<div class="bg-primary h-full transition-all duration-300" style="width: 45%" title="Direct Subsidy: 45%"></div>
+<div class="bg-tertiary h-full transition-all duration-300" style="width: 35%" title="Loan Interest: 35%"></div>
+<div class="bg-secondary h-full transition-all duration-300" style="width: 20%" title="Financing Guarantee: 20%"></div>
+</div>
+<div class="flex justify-between text-xs font-label-caps text-on-surface-variant">
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-primary"></span> Direct (45%)</span>
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-tertiary"></span> Interest (35%)</span>
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-secondary"></span> Guarantee (20%)</span>
+</div>
+</div>
+<!-- Slider Parameter 3 -->
+<div class="pt-4 border-t border-outline-variant/50">
+<div class="flex justify-between items-center mb-2">
+<label class="font-body-md font-medium text-on-surface flex items-center gap-1">SME Preference <span class="material-symbols-outlined text-[14px] text-outline cursor-help" title="Bias towards Small/Medium Enterprises">info</span></label>
+<span class="font-metric-value text-lg text-primary">60<span class="text-sm font-normal text-outline">/100</span></span>
+</div>
+<input max="100" min="0" type="range" value="60"/>
+</div>
+<!-- Slider Parameter 4 -->
+<div>
+<div class="flex justify-between items-center mb-2">
+<label class="font-body-md font-medium text-on-surface">Central-West/NE Support Bias</label>
+<span class="font-metric-value text-lg text-outline">0<span class="text-sm font-normal"> (Neutral)</span></span>
+</div>
+<input max="50" min="-50" type="range" value="0"/>
+</div>
+<!-- Dual Weight Parameter -->
+<div class="pt-4 border-t border-outline-variant/50">
+<label class="font-body-md font-medium text-on-surface block mb-3">Tech Weight (技术导向权重)</label>
+<div class="flex gap-4">
+<div class="flex-1">
+<div class="flex justify-between text-xs mb-1"><span>Digital</span> <span class="font-medium text-primary">40%</span></div>
+<div class="h-2 bg-surface-variant rounded-full overflow-hidden"><div class="h-full bg-primary" style="width: 40%"></div></div>
+</div>
+<div class="flex-1">
+<div class="flex justify-between text-xs mb-1"><span>Green</span> <span class="font-medium text-secondary">30%</span></div>
+<div class="h-2 bg-surface-variant rounded-full overflow-hidden"><div class="h-full bg-secondary" style="width: 30%"></div></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Action Bar -->
+<div class="fixed bottom-12 left-0 md:left-64 right-0 bg-surface/90 backdrop-blur-md border-t border-outline-variant/50 p-4 z-30 shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
+<div class="max-w-max_width mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 px-gutter">
+<div class="flex items-center gap-2 text-on-surface-variant font-body-md text-sm">
+<span class="material-symbols-outlined text-error text-[18px]">warning</span>
+                用户确认前，政策不会进入仿真。 (Policy remains inactive until confirmed)
+            </div>
+<div class="flex gap-4">
+<button class="px-6 py-2 rounded-full border border-outline text-on-surface hover:bg-surface-variant transition-colors font-label-caps text-label-caps flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">refresh</span>
+                    重新生成政策指令
+                </button>
+<button class="px-6 py-2 rounded-full bg-primary text-on-primary hover:bg-primary-fixed-variant transition-colors font-label-caps text-label-caps flex items-center gap-2 shadow-sm">
+                    确认中央政策并开始推演
+                    <span class="material-symbols-outlined text-[18px]">play_arrow</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Footer -->
+<footer class="flex justify-between items-center py-4 px-gutter w-full text-xs bg-surface-dim dark:bg-inverse-surface border-t border-outline-variant dark:border-outline flat no shadows z-40 fixed bottom-0 left-0 md:left-64 md:w-[calc(100%-256px)]">
+<div class="text-outline dark:text-outline-variant font-body-md text-body-md">PolicyScope Simulation Workbench. Official Institutional Use Only. Simulation outcomes do not constitute legal or financial advice.</div>
+<div class="flex gap-4">
+<a class="text-outline dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed transition-colors duration-200" href="#">Legal</a>
+<a class="text-outline dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed transition-colors duration-200" href="#">Methodology</a>
+<a class="text-outline dark:text-outline-variant hover:text-primary dark:hover:text-primary-fixed transition-colors duration-200" href="#">API Status</a>
+</div>
+</footer>
+</body></html>

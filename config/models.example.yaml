@@ -1,0 +1,8 @@
+run_mode: fake
+base_url: https://api.openai.com/v1
+central_model: gpt-5-mini
+province_model: gpt-5-mini
+timeout_seconds: 12
+max_concurrency: 16
+prompt_version: province-agent-v1
+

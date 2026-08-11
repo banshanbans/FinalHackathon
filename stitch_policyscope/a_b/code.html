@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>政策工具调整 · 同源A/B对照 - PolicyScope 政策浪潮</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-primary-container": "#eeefff",
+                      "surface": "#f8f9ff",
+                      "outline": "#737686",
+                      "surface-dim": "#c9dcf7",
+                      "surface-bright": "#f8f9ff",
+                      "tertiary-fixed-dim": "#c0c1ff",
+                      "on-error": "#ffffff",
+                      "primary-fixed-dim": "#b4c5ff",
+                      "tertiary-fixed": "#e1e0ff",
+                      "on-secondary-fixed": "#00201d",
+                      "surface-container": "#e5eeff",
+                      "on-background": "#081d30",
+                      "inverse-surface": "#1f3246",
+                      "on-surface": "#081d30",
+                      "surface-variant": "#d1e4ff",
+                      "secondary-fixed": "#9cf2e8",
+                      "secondary-fixed-dim": "#80d5cb",
+                      "surface-container-highest": "#d1e4ff",
+                      "surface-container-lowest": "#ffffff",
+                      "on-primary": "#ffffff",
+                      "on-secondary-container": "#006f67",
+                      "on-error-container": "#93000a",
+                      "error-container": "#ffdad6",
+                      "on-tertiary-fixed": "#07006c",
+                      "secondary": "#006a63",
+                      "tertiary-container": "#585be6",
+                      "on-tertiary-container": "#f1eeff",
+                      "tertiary": "#3e3fcc",
+                      "surface-tint": "#0053db",
+                      "on-primary-fixed": "#00174b",
+                      "inverse-on-surface": "#eaf1ff",
+                      "on-primary-fixed-variant": "#003ea8",
+                      "background": "#f8f9ff",
+                      "secondary-container": "#99efe5",
+                      "primary-container": "#2563eb",
+                      "on-tertiary": "#ffffff",
+                      "on-tertiary-fixed-variant": "#2f2ebe",
+                      "primary": "#004ac6",
+                      "on-secondary-fixed-variant": "#00504a",
+                      "outline-variant": "#c3c6d7",
+                      "on-surface-variant": "#434655",
+                      "error": "#ba1a1a",
+                      "surface-container-low": "#eef4ff",
+                      "on-secondary": "#ffffff",
+                      "surface-container-high": "#dbe9ff",
+                      "inverse-primary": "#b4c5ff",
+                      "primary-fixed": "#dbe1ff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "margin": "32px",
+                      "max_width": "1440px",
+                      "unit": "8px",
+                      "gutter": "24px",
+                      "grid_columns": "12"
+              },
+              "fontFamily": {
+                      "display-lg": [
+                              "Inter"
+                      ],
+                      "label-caps": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Noto Sans"
+                      ],
+                      "metric-value": [
+                              "Inter"
+                      ],
+                      "display-md": [
+                              "Inter"
+                      ],
+                      "headline-sm": [
+                              "Noto Sans"
+                      ],
+                      "body-md": [
+                              "Noto Sans"
+                      ]
+              },
+              "fontSize": {
+                      "display-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "metric-value": [
+                              "28px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "display-md": [
+                              "26px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-sm": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+        }
+        .material-symbols-outlined[style*="font-variation-settings: 'FILL' 1;"] {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+        }
+        
+        /* Custom scrollbar for workbench feel */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f8f9ff;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c3c6d7;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #737686;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-lg min-h-screen">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center h-16 px-gutter max-w-max_width mx-auto bg-surface border-b border-outline-variant flat no shadows hidden md:flex">
+<div class="flex items-center gap-6">
+<h1 class="text-headline-sm font-headline-sm font-bold text-primary">PolicyScope 政策浪潮</h1>
+<nav aria-label="Global Navigation" class="flex gap-4">
+<a class="text-on-surface-variant font-label-caps text-label-caps hover:text-primary transition-colors flex flex-col justify-center h-16" href="#">T0: Base</a>
+<a class="text-on-surface-variant font-label-caps text-label-caps hover:text-primary transition-colors flex flex-col justify-center h-16" href="#">T1: Release</a>
+<a class="text-on-surface-variant font-label-caps text-label-caps hover:text-primary transition-colors flex flex-col justify-center h-16" href="#">T2: Impact</a>
+<a class="text-on-surface-variant font-label-caps text-label-caps hover:text-primary transition-colors flex flex-col justify-center h-16" href="#">T3: Feedback</a>
+<a class="text-on-surface-variant font-label-caps text-label-caps hover:text-primary transition-colors flex flex-col justify-center h-16" href="#">T4: Adjust</a>
+<a aria-current="page" class="text-primary border-b-2 border-primary font-bold pb-1 font-label-caps text-label-caps flex flex-col justify-center h-16 opacity-80 transition-all duration-150" href="#">T5: Final</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="database">database</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Main Layout -->
+<div class="flex max-w-max_width mx-auto pt-16 h-screen overflow-hidden">
+<!-- SideNavBar -->
+<nav class="fixed left-0 top-16 h-[calc(100vh-64px)] w-64 flex flex-col py-margin z-40 bg-surface-container-low shadow-sm hidden md:flex">
+<div class="px-6 mb-8">
+<img class="w-10 h-10 rounded-full mb-3 object-cover" data-alt="A small, professional avatar icon for a central policy coordinator, featuring a geometric crest or stylized seal in deep teal and navy blue, conveying authority and institutional trust. Light mode, high resolution, minimalist." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVMXa1emJ4T5jHsh4EEhNwhpc65okWDdOr4UvJ2hP4rTTa3D9GVVXBOYxMZWiV0ow7gnuSnidFC8ZwXpGAhUjwzNxjmAbi5Z2DtwcpXErDI2NhJMfkYTK9lldxIfWfEIGRkRpxxmwET9Ez3aweqYq_4XyZQPGs3DUa6d_gfR18eCvB8vsYdKQK7_xzJuhqs4SS9OuCOGMPpQKHZJK7YbOHm_XVjcISwvUBymJxF8SkdTp79TJOlzme"/>
+<h2 class="font-body-md text-body-md font-bold text-on-surface">中央政策协调席</h2>
+<p class="font-label-caps text-label-caps text-outline">制造业设备更新专项</p>
+</div>
+<div class="flex-1 overflow-y-auto">
+<ul class="space-y-1">
+<li>
+<a class="flex items-center gap-3 px-6 py-2 text-on-surface-variant hover:bg-surface-variant font-label-caps text-label-caps transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="gavel">gavel</span> Central Policy
+                        </a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-6 py-2 text-on-surface-variant hover:bg-surface-variant font-label-caps text-label-caps transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="analytics">analytics</span> National Simulation
+                        </a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-6 py-2 text-on-surface-variant hover:bg-surface-variant font-label-caps text-label-caps transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="account_tree">account_tree</span> Provincial &amp; Enterprise
+                        </a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-6 py-2 text-on-surface-variant hover:bg-surface-variant font-label-caps text-label-caps transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="fact_check">fact_check</span> Intervention Approval
+                        </a>
+</li>
+<li>
+<a aria-current="page" class="flex items-center gap-3 px-6 py-2 text-secondary font-bold border-r-4 border-secondary bg-surface-variant font-label-caps text-label-caps scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="compare_arrows" data-weight="fill" style="font-variation-settings: 'FILL' 1;">compare_arrows</span> A/B Comparison
+                        </a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-6 py-2 text-on-surface-variant hover:bg-surface-variant font-label-caps text-label-caps transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="source">source</span> Methods &amp; Evidence
+                        </a>
+</li>
+</ul>
+</div>
+<div class="mt-auto border-t border-outline-variant pt-4">
+<ul class="space-y-1">
+<li>
+<a class="flex items-center gap-3 px-6 py-2 text-on-surface-variant hover:bg-surface-variant font-label-caps text-label-caps transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="settings">settings</span> Settings
+                        </a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-6 py-2 text-on-surface-variant hover:bg-surface-variant font-label-caps text-label-caps transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="help">help</span> Support
+                        </a>
+</li>
+</ul>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 ml-0 md:ml-64 bg-background overflow-y-auto overflow-x-hidden p-gutter">
+<!-- Fairness Statement Top Bar -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-DEFAULT p-4 mb-6 shadow-[0_2px_4px_rgba(0,0,0,0.05)] flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary" data-icon="verified_user">verified_user</span>
+<div>
+<h3 class="font-body-md text-body-md font-bold text-on-surface">同源对照公平性声明</h3>
+<p class="font-body-md text-[12px] text-on-surface-variant">Same T3 parent, Same data, Same mechanism, Same seed.</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-label-caps text-label-caps text-outline bg-surface px-2 py-1 rounded-sm border border-outline-variant">Difference:</span>
+<span class="font-label-caps text-label-caps text-primary bg-primary-container/10 px-2 py-1 rounded-sm border border-primary/20">Approved Policy</span>
+</div>
+</div>
+<!-- Metric Bar -->
+<div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+<div class="bg-surface-container-lowest border border-outline-variant rounded-DEFAULT p-4 shadow-[0_2px_4px_rgba(0,0,0,0.05)] flex flex-col items-center">
+<span class="font-label-caps text-label-caps text-on-surface-variant mb-1">Participation</span>
+<div class="flex items-center gap-1">
+<span class="font-metric-value text-metric-value text-on-surface">82%</span>
+<span class="font-body-md text-[12px] text-secondary flex items-center"><span class="material-symbols-outlined text-[14px]" data-icon="arrow_upward">arrow_upward</span>6.8</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-DEFAULT p-4 shadow-[0_2px_4px_rgba(0,0,0,0.05)] flex flex-col items-center">
+<span class="font-label-caps text-label-caps text-on-surface-variant mb-1">SME Access</span>
+<div class="flex items-center gap-1">
+<span class="font-metric-value text-metric-value text-on-surface">45%</span>
+<span class="font-body-md text-[12px] text-secondary flex items-center"><span class="material-symbols-outlined text-[14px]" data-icon="arrow_upward">arrow_upward</span>8.4</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-DEFAULT p-4 shadow-[0_2px_4px_rgba(0,0,0,0.05)] flex flex-col items-center">
+<span class="font-label-caps text-label-caps text-on-surface-variant mb-1">Gap</span>
+<div class="flex items-center gap-1">
+<span class="font-metric-value text-metric-value text-on-surface">12%</span>
+<span class="font-body-md text-[12px] text-secondary flex items-center"><span class="material-symbols-outlined text-[14px]" data-icon="arrow_downward">arrow_downward</span>3.2</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-DEFAULT p-4 shadow-[0_2px_4px_rgba(0,0,0,0.05)] flex flex-col items-center">
+<span class="font-label-caps text-label-caps text-on-surface-variant mb-1">Fiscal</span>
+<div class="flex items-center gap-1">
+<span class="font-metric-value text-metric-value text-on-surface">¥4.2B</span>
+<span class="font-body-md text-[12px] text-error flex items-center"><span class="material-symbols-outlined text-[14px]" data-icon="arrow_upward">arrow_upward</span>2.4</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-DEFAULT p-4 shadow-[0_2px_4px_rgba(0,0,0,0.05)] flex flex-col items-center">
+<span class="font-label-caps text-label-caps text-on-surface-variant mb-1">High-end Speed</span>
+<div class="flex items-center gap-1">
+<span class="font-metric-value text-metric-value text-on-surface">1.2x</span>
+<span class="font-body-md text-[12px] text-outline flex items-center"><span class="material-symbols-outlined text-[14px]" data-icon="arrow_downward">arrow_downward</span>1.3</span>
+</div>
+</div>
+</div>
+<!-- Split View: Maps -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+<!-- Control Map -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-6 shadow-[0_2px_4px_rgba(0,0,0,0.05)] flex flex-col h-[400px]">
+<div class="flex justify-between items-center mb-4">
+<h4 class="font-headline-sm text-headline-sm text-on-surface">Control: 原始方案</h4>
+<span class="font-label-caps text-label-caps text-on-surface-variant bg-surface-container px-2 py-1 rounded">Base Line</span>
+</div>
+<div class="flex-1 relative border border-outline-variant/50 rounded bg-surface overflow-hidden">
+<div class="absolute inset-0 flex items-center justify-center opacity-30 text-on-surface-variant">
+<span class="material-symbols-outlined text-4xl" data-icon="map">map</span>
+<span class="ml-2 font-body-md">China Map Projection (Control)</span>
+</div>
+<!-- Simulated Heatmap Overlay -->
+<div class="absolute bottom-4 left-4 right-4 h-2 bg-gradient-to-r from-surface-variant via-secondary-container to-secondary rounded-full opacity-70"></div>
+<div class="absolute bottom-8 left-4 text-[10px] font-label-caps text-on-surface-variant">Low Access</div>
+<div class="absolute bottom-8 right-4 text-[10px] font-label-caps text-on-surface-variant">High Access</div>
+</div>
+</div>
+<!-- Treatment Map -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-6 shadow-[0_2px_4px_rgba(0,0,0,0.05)] flex flex-col h-[400px]">
+<div class="flex justify-between items-center mb-4">
+<h4 class="font-headline-sm text-headline-sm text-on-surface">Treatment: 优化方案</h4>
+<span class="font-label-caps text-label-caps text-primary bg-primary-container/10 px-2 py-1 rounded">Delta Applied</span>
+</div>
+<div class="flex-1 relative border border-outline-variant/50 rounded bg-surface overflow-hidden">
+<div class="absolute inset-0 flex items-center justify-center opacity-30 text-on-surface-variant">
+<span class="material-symbols-outlined text-4xl" data-icon="map">map</span>
+<span class="ml-2 font-body-md">China Map Projection (Treatment)</span>
+</div>
+<!-- Simulated Heatmap Overlay showing more intense color -->
+<div class="absolute bottom-4 left-4 right-4 h-2 bg-gradient-to-r from-surface-variant via-secondary-fixed to-secondary rounded-full opacity-90"></div>
+<div class="absolute bottom-8 left-4 text-[10px] font-label-caps text-on-surface-variant">Low Access</div>
+<div class="absolute bottom-8 right-4 text-[10px] font-label-caps text-on-surface-variant">High Access</div>
+<!-- Highlight marker for significant change -->
+<div class="absolute top-[40%] left-[60%] w-3 h-3 bg-secondary rounded-full animate-ping opacity-75"></div>
+<div class="absolute top-[40%] left-[60%] w-3 h-3 bg-secondary rounded-full"></div>
+</div>
+</div>
+</div>
+<!-- Visualizations Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+<!-- Action Migration Path -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-6 shadow-[0_2px_4px_rgba(0,0,0,0.05)] col-span-1 md:col-span-2">
+<h4 class="font-headline-sm text-headline-sm text-on-surface mb-4">Action Migration Path</h4>
+<div class="flex items-center justify-between mt-8 relative">
+<!-- Connecting Line -->
+<div class="absolute top-1/2 left-10 right-10 h-[2px] bg-outline-variant -z-10 -translate-y-1/2"></div>
+<!-- Nodes -->
+<div class="flex flex-col items-center gap-2">
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center border-2 border-outline-variant z-10">
+<span class="font-label-caps text-label-caps text-on-surface-variant">WAIT</span>
+</div>
+<span class="font-body-md text-body-md text-on-surface-variant">32%</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-12 h-12 rounded-full bg-secondary-container flex items-center justify-center border-2 border-secondary z-10 shadow-[0_0_10px_rgba(0,106,99,0.2)]">
+<span class="font-label-caps text-label-caps text-on-secondary-container">APPLY</span>
+</div>
+<span class="font-body-md text-body-md text-secondary font-bold">+18% Delta</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-12 h-12 rounded-full bg-primary-container/10 flex items-center justify-center border-2 border-primary z-10">
+<span class="font-label-caps text-label-caps text-primary">UPGRADE</span>
+</div>
+<span class="font-body-md text-body-md text-primary">+5% Delta</span>
+</div>
+</div>
+</div>
+<!-- Province Rank -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-6 shadow-[0_2px_4px_rgba(0,0,0,0.05)]">
+<h4 class="font-headline-sm text-headline-sm text-on-surface mb-4">Province Impact Rank</h4>
+<div class="space-y-4">
+<div>
+<span class="font-label-caps text-label-caps text-secondary mb-1 block">Most Improved</span>
+<div class="flex items-center justify-between bg-surface-container-low p-2 rounded">
+<span class="font-body-md text-body-md">Henan (河南)</span>
+<span class="font-body-md text-body-md font-bold text-secondary">+12.4%</span>
+</div>
+</div>
+<div>
+<span class="font-label-caps text-label-caps text-error mb-1 block">Most Fiscal Pressure</span>
+<div class="flex items-center justify-between bg-surface-container-low p-2 rounded">
+<span class="font-body-md text-body-md">Zhejiang (浙江)</span>
+<span class="font-body-md text-body-md font-bold text-error">-4.2%</span>
+</div>
+</div>
+<div>
+<span class="font-label-caps text-label-caps text-outline mb-1 block">Neutral Shift</span>
+<div class="flex items-center justify-between bg-surface-container-low p-2 rounded">
+<span class="font-body-md text-body-md">Sichuan (四川)</span>
+<span class="font-body-md text-body-md font-bold text-outline">+0.8%</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Debrief Section -->
+<div class="bg-surface-container border border-outline-variant rounded-lg p-6 mb-8 shadow-[0_2px_4px_rgba(0,0,0,0.05)]">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-primary" data-icon="smart_toy">smart_toy</span>
+<h4 class="font-headline-sm text-headline-sm text-on-surface">中央政策研判 Agent · 复盘</h4>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="bg-surface-container-lowest p-4 rounded border border-outline-variant/50">
+<p class="font-body-md text-body-md text-on-surface mb-3">中小企业申请意愿显著提升，主要归因于审批流程简化至3天以内。</p>
+<a class="text-primary hover:text-primary-fixed-variant font-body-md text-[12px] flex items-center gap-1" href="#">
+<span class="material-symbols-outlined text-[14px]" data-icon="description">description</span> View Evidence
+                        </a>
+</div>
+<div class="bg-surface-container-lowest p-4 rounded border border-outline-variant/50">
+<p class="font-body-md text-body-md text-on-surface mb-3">东部沿海省份出现地方财政配套资金缺口预警，需重点关注浙江、江苏。</p>
+<a class="text-primary hover:text-primary-fixed-variant font-body-md text-[12px] flex items-center gap-1" href="#">
+<span class="material-symbols-outlined text-[14px]" data-icon="description">description</span> View Evidence
+                        </a>
+</div>
+<div class="bg-surface-container-lowest p-4 rounded border border-outline-variant/50">
+<p class="font-body-md text-body-md text-on-surface mb-3">高端设备升级速度略有放缓，补贴门槛降低导致部分资金流向基础改造。</p>
+<a class="text-primary hover:text-primary-fixed-variant font-body-md text-[12px] flex items-center gap-1" href="#">
+<span class="material-symbols-outlined text-[14px]" data-icon="description">description</span> View Evidence
+                        </a>
+</div>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="flex justify-end gap-4 mb-16">
+<button class="px-6 py-2 border border-outline-variant rounded bg-surface hover:bg-surface-variant text-on-surface font-body-md transition-colors shadow-sm">
+                    导出实验摘要
+                </button>
+<button class="px-6 py-2 border border-secondary rounded bg-surface hover:bg-surface-variant text-secondary font-body-md transition-colors shadow-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]" data-icon="replay">replay</span> 回放T3干预
+                </button>
+<button class="px-6 py-2 rounded bg-primary hover:bg-on-primary-fixed-variant text-on-primary font-body-md transition-colors shadow-sm">
+                    查看河南变化
+                </button>
+</div>
+<!-- Push down footer slightly -->
+<div class="h-8"></div>
+</main>
+</div>
+<!-- Footer -->
+<footer class="fixed bottom-0 w-full z-50 flex justify-between items-center py-4 px-gutter bg-surface-dim border-t border-outline-variant text-xs flat no shadows">
+<div class="font-label-caps text-label-caps text-outline">
+            PolicyScope Simulation Workbench. Official Institutional Use Only. Simulation outcomes do not constitute legal or financial advice.
+        </div>
+<div class="flex gap-4">
+<a class="text-outline hover:text-primary transition-colors duration-200 font-body-md text-body-md" href="#">Legal</a>
+<a class="text-outline hover:text-primary transition-colors duration-200 font-body-md text-body-md" href="#">Methodology</a>
+<a class="text-outline hover:text-primary transition-colors duration-200 font-body-md text-body-md" href="#">API Status</a>
+</div>
+</footer>
+</body></html>

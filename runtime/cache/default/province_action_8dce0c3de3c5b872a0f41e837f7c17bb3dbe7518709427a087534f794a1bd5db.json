@@ -1,0 +1,28 @@
+{
+  "schema_version": "province-action-v1",
+  "action_id": "act_33_T4_28b27a5fd9eb",
+  "province_code": "33",
+  "phase": "T4",
+  "stance": "aggressive",
+  "implementation_intensity": 0.8578,
+  "local_budget_ratio": 0.7008,
+  "priority_industries": [
+    "ai",
+    "advanced_manufacturing"
+  ],
+  "talent_strategy": "expand",
+  "interaction_strategy": "compete",
+  "target_provinces": [
+    "31",
+    "32"
+  ],
+  "requested_central_support": 0.1554,
+  "reason_codes": [
+    "HIGH_INDUSTRY_FIT",
+    "HIGH_FISCAL_CAPACITY",
+    "TALENT_COMPETITION"
+  ],
+  "public_summary": "围绕人工智能配置地方资源，并关注区域竞争。",
+  "run_mode": "fallback",
+  "fallback_used": true
+}

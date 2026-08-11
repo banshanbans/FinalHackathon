@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "policyscope"
+version = "0.1.0"
+description = "Data-grounded hybrid multi-agent policy simulation MVP"
+readme = "README.md"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+  "fastapi>=0.116,<1",
+  "httpx>=0.28,<1",
+  "openai>=1.99,<3",
+  "pydantic>=2.11,<3",
+  "pydantic-settings>=2.10,<3",
+  "PyYAML>=6.0,<7",
+  "sse-starlette>=2.4,<4",
+  "uvicorn[standard]>=0.35,<1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.4,<10",
+  "pytest-asyncio>=1.1,<2",
+  "pytest-cov>=6.2,<8",
+  "ruff>=0.12,<1",
+]
+agentsociety = ["agentsociety2==2.8.4", "mcp>=1.29,<2"]
+
+[tool.setuptools.packages.find]
+where = [".", "apps/api/src"]
+include = ["simulation*", "policyscope_api*"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+asyncio_mode = "auto"
+testpaths = ["simulation/tests", "apps/api/tests"]
+pythonpath = [".", "apps/api/src"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+exclude = [".venv", "apps/web"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "ASYNC"]
+ignore = ["B008"]
+
+[tool.ruff.format]
+quote-style = "double"
