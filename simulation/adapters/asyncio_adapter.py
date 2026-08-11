@@ -5,28 +5,28 @@ from datetime import UTC, datetime
 from pathlib import Path
 from uuid import uuid4
 
+from simulation.agents.enterprise_agent import EnterpriseBatchAgent
 from simulation.agents.province_agent import ProvinceAgent
 from simulation.agents.state_council_agent import StateCouncilAgent
-from simulation.data import NetworkEdge, load_network, load_profiles, load_scenario_policy
+from simulation.data import (
+    NetworkEdge,
+    enterprise_profiles_by_province,
+    load_enterprise_profiles,
+    load_network,
+    load_profiles,
+    load_scenario_policy,
+)
 from simulation.envs.china_policy_env import ChinaPolicyEnv
 from simulation.llm.base import LLMProvider
-from simulation.llm.fake_provider import FakeLLMProvider
+from simulation.llm.fake_provider import FakeLLMProvider, policy_diff
 from simulation.models.action import ProvinceAction
-from simulation.models.central import (
-    CentralIntervention,
-    CentralPolicyDirective,
-    ParameterChange,
-)
-from simulation.models.common import (
-    ApprovalStatus,
-    BranchKind,
-    ExperimentStatus,
-    Phase,
-)
+from simulation.models.central import CentralIntervention, CentralPolicyDirective
+from simulation.models.common import ApprovalStatus, BranchKind, ExperimentStatus, Phase
+from simulation.models.enterprise import EnterpriseAction, EnterpriseActionBatch
 from simulation.models.event import EventEnvelope
 from simulation.models.experiment import Branch, Checkpoint, ExperimentConfig, ExperimentRecord
 from simulation.models.policy import PolicySchema
-from simulation.models.province import ProvinceProfile
+from simulation.models.province import ProvinceFeedback, ProvinceProfile
 from simulation.models.world import ComparisonResult, VersionInfo, WorldState
 from simulation.services.checkpoint import CheckpointService
 from simulation.services.comparison import ComparisonService
@@ -43,12 +43,13 @@ class ExperimentRuntime:
     branches: dict[str, Branch] = field(default_factory=dict)
     approved_interventions: dict[str, CentralIntervention] = field(default_factory=dict)
     comparison: ComparisonResult | None = None
+    intervention_rejected: bool = False
     lock: asyncio.Lock = field(default_factory=asyncio.Lock)
     condition: asyncio.Condition = field(default_factory=asyncio.Condition)
 
 
 class AsyncioSimulationAdapter:
-    """In-process simulation runtime with strong contracts and branch isolation."""
+    """In-process V2 runtime with atomic phases, explicit approvals and branch isolation."""
 
     def __init__(
         self,
@@ -63,11 +64,17 @@ class AsyncioSimulationAdapter:
         self.fallback_provider = FakeLLMProvider()
         self.profiles = profiles or load_profiles()
         self.network = network or load_network()
+        self.enterprise_profiles = load_enterprise_profiles()
+        self.enterprise_by_province = enterprise_profiles_by_province(self.enterprise_profiles)
         self.agent_timeout_seconds = agent_timeout_seconds
         self.default_policy = load_scenario_policy()
         self.state_council = StateCouncilAgent(provider)
         self.province_agents = {
             code: ProvinceAgent(profile, provider) for code, profile in self.profiles.items()
+        }
+        self.enterprise_agents = {
+            code: EnterpriseBatchAgent(profile, self.enterprise_by_province[code], provider)
+            for code, profile in self.profiles.items()
         }
         self.checkpoints = CheckpointService()
         self.comparisons = ComparisonService()
@@ -107,8 +114,11 @@ class AsyncioSimulationAdapter:
     async def initialize(self, config: ExperimentConfig) -> WorldState:
         experiment_id = f"exp_{uuid4().hex[:14]}"
         directive = await self.state_council.draft_directive(config, self.default_policy)
-        initial_env = ChinaPolicyEnv(
-            profiles=self.profiles, network=self.network, policy=directive.policy
+        env = ChinaPolicyEnv(
+            profiles=self.profiles,
+            network=self.network,
+            enterprise_profiles=self.enterprise_profiles,
+            policy=directive.policy,
         )
         world = WorldState(
             experiment_id=experiment_id,
@@ -118,8 +128,11 @@ class AsyncioSimulationAdapter:
             run_mode=config.run_mode,
             policy=directive.policy.model_copy(deep=True),
             directive=directive,
-            national_metrics=initial_env.calculate_national_metrics(),
-            provinces=deepcopy(initial_env.states),
+            national_metrics=env.calculate_national_metrics(),
+            province_profiles=deepcopy(self.profiles),
+            province_states=deepcopy(env.province_states),
+            enterprise_profiles=deepcopy(self.enterprise_profiles),
+            enterprise_states=deepcopy(env.enterprise_states),
             versions=VersionInfo(
                 data=config.data_version,
                 mechanism=config.mechanism_version,
@@ -164,9 +177,11 @@ class AsyncioSimulationAdapter:
                 },
                 deep=True,
             )
-            world.directive = directive
-            world.policy = approved_policy
-            world.status = ExperimentStatus.READY
+            next_world = world.model_copy(deep=True)
+            next_world.directive = directive
+            next_world.policy = approved_policy
+            next_world.status = ExperimentStatus.READY
+            runtime.worlds["control"] = next_world
             runtime.record.directive = directive
             runtime.record.status = ExperimentStatus.READY
             runtime.record.updated_at = datetime.now(UTC)
@@ -175,10 +190,13 @@ class AsyncioSimulationAdapter:
                 event_type="central.directive.approved",
                 branch_id="control",
                 phase=Phase.T0,
-                payload={"directive_id": directive.directive_id},
+                payload={
+                    "directive_id": directive.directive_id,
+                    "policy_schema": approved_policy.schema_version,
+                },
             )
-            self.replay.write_state(world)
-            return world.model_copy(deep=True)
+            self.replay.write_state(next_world)
+            return next_world.model_copy(deep=True)
 
     @staticmethod
     def _expected_next(current: Phase) -> Phase | None:
@@ -186,22 +204,25 @@ class AsyncioSimulationAdapter:
         index = order.index(current)
         return order[index + 1] if index < len(order) - 1 else None
 
-    async def _generate_actions(
-        self,
-        *,
-        runtime: ExperimentRuntime,
-        world: WorldState,
-        phase: Phase,
+    def _call_context(self, world: WorldState) -> dict[str, object]:
+        return {
+            "seed": world.seed,
+            "prompt_version": world.versions.prompt,
+            "model_version": world.versions.model,
+        }
+
+    async def _generate_province_actions(
+        self, runtime: ExperimentRuntime, world: WorldState, phase: Phase
     ) -> dict[str, ProvinceAction]:
-        previous = world.actions
+        previous = world.province_actions
 
         async def decide(code: str) -> tuple[str, ProvinceAction]:
             await self._emit(
                 runtime,
-                event_type="agent.decision.started",
+                event_type="province.decision.started",
                 branch_id=world.branch_id,
                 phase=phase,
-                payload={"agent_type": "province", "province_code": code},
+                payload={"province_code": code},
             )
             related = self.network[code]
             neighbors = {
@@ -210,35 +231,36 @@ class AsyncioSimulationAdapter:
             try:
                 action = await asyncio.wait_for(
                     self.province_agents[code].decide(
-                        state=world.provinces[code],
+                        state=world.province_states[code],
                         policy=world.policy,
                         phase=phase,
                         related=related,
                         neighbor_actions=neighbors,
+                        **self._call_context(world),
                     ),
                     timeout=self.agent_timeout_seconds,
                 )
             except Exception:
                 action = await self.fallback_provider.generate_province_action(
                     profile=self.profiles[code],
-                    state=world.provinces[code],
+                    state=world.province_states[code],
                     policy=world.policy,
                     phase=phase,
                     related=related,
                     neighbor_actions=neighbors,
+                    **self._call_context(world),
                 )
                 action = action.model_copy(update={"run_mode": "fallback", "fallback_used": True})
             await self._emit(
                 runtime,
                 event_type=(
-                    "agent.decision.fallback"
+                    "province.decision.fallback"
                     if action.fallback_used
-                    else "agent.decision.completed"
+                    else "province.decision.completed"
                 ),
                 branch_id=world.branch_id,
                 phase=phase,
                 payload={
-                    "agent_type": "province",
                     "province_code": code,
                     "action_id": action.action_id,
                     "summary": action.public_summary,
@@ -251,6 +273,172 @@ class AsyncioSimulationAdapter:
         pairs = await asyncio.gather(*(decide(code) for code in sorted(self.profiles)))
         return dict(pairs)
 
+    async def _generate_enterprise_batches(
+        self, runtime: ExperimentRuntime, world: WorldState, phase: Phase
+    ) -> tuple[dict[str, EnterpriseAction], list[str]]:
+        if set(world.province_actions) != set(self.profiles):
+            raise ValueError("enterprise decisions require 31 province actions")
+
+        async def decide(code: str) -> EnterpriseActionBatch:
+            await self._emit(
+                runtime,
+                event_type="enterprise.batch.started",
+                branch_id=world.branch_id,
+                phase=phase,
+                payload={"province_code": code, "expected_actions": 6},
+            )
+            enterprise_ids = {
+                profile.enterprise_id for profile in self.enterprise_by_province[code]
+            }
+            states = {key: world.enterprise_states[key] for key in sorted(enterprise_ids)}
+            try:
+                batch = await asyncio.wait_for(
+                    self.enterprise_agents[code].decide(
+                        province_action=world.province_actions[code],
+                        enterprise_states=states,
+                        policy=world.policy,
+                        phase=phase,
+                        **self._call_context(world),
+                    ),
+                    timeout=self.agent_timeout_seconds,
+                )
+            except Exception as error:
+                batch = await self.fallback_provider.generate_enterprise_actions_batch(
+                    province_profile=self.profiles[code],
+                    province_action=world.province_actions[code],
+                    enterprise_profiles=self.enterprise_by_province[code],
+                    enterprise_states=states,
+                    policy=world.policy,
+                    phase=phase,
+                    **self._call_context(world),
+                )
+                batch = batch.model_copy(
+                    update={
+                        "run_mode": "fallback",
+                        "fallback_used": True,
+                        "fallback_reason": type(error).__name__,
+                    }
+                )
+            await self._emit(
+                runtime,
+                event_type=(
+                    "enterprise.batch.fallback"
+                    if batch.fallback_used
+                    else "enterprise.batch.completed"
+                ),
+                branch_id=world.branch_id,
+                phase=phase,
+                payload={
+                    "province_code": code,
+                    "batch_id": batch.batch_id,
+                    "action_count": len(batch.actions),
+                    "run_mode": batch.run_mode,
+                    "fallback_used": batch.fallback_used,
+                    "fallback_reason": batch.fallback_reason,
+                },
+            )
+            return batch
+
+        batches = await asyncio.gather(*(decide(code) for code in sorted(self.profiles)))
+        actions = {item.enterprise_id: item for batch in batches for item in batch.actions}
+        fallback_provinces = [batch.province_code for batch in batches if batch.fallback_used]
+        if len(actions) != 186:
+            raise ValueError(f"expected 186 enterprise actions, got {len(actions)}")
+        return actions, fallback_provinces
+
+    async def _generate_feedback(
+        self, runtime: ExperimentRuntime, world: WorldState
+    ) -> dict[str, ProvinceFeedback]:
+        if set(world.enterprise_aggregates) != set(self.profiles):
+            raise ValueError("T3 feedback requires enterprise aggregates from T2")
+
+        async def decide(code: str) -> tuple[str, ProvinceFeedback]:
+            actions = [
+                action
+                for action in world.enterprise_actions.values()
+                if action.province_code == code
+            ]
+            try:
+                feedback = await asyncio.wait_for(
+                    self.province_agents[code].feedback(
+                        state=world.province_states[code],
+                        aggregate=world.enterprise_aggregates[code],
+                        enterprise_actions=actions,
+                        policy=world.policy,
+                        **self._call_context(world),
+                    ),
+                    timeout=self.agent_timeout_seconds,
+                )
+            except Exception:
+                feedback = await self.fallback_provider.generate_province_feedback(
+                    profile=self.profiles[code],
+                    state=world.province_states[code],
+                    aggregate=world.enterprise_aggregates[code],
+                    enterprise_actions=actions,
+                    policy=world.policy,
+                    **self._call_context(world),
+                )
+                feedback = feedback.model_copy(
+                    update={"run_mode": "fallback", "fallback_used": True}
+                )
+            await self._emit(
+                runtime,
+                event_type="province.feedback.completed",
+                branch_id=world.branch_id,
+                phase=Phase.T3,
+                payload={
+                    "province_code": code,
+                    "feedback_id": feedback.feedback_id,
+                    "summary": feedback.public_summary,
+                    "run_mode": feedback.run_mode,
+                    "fallback_used": feedback.fallback_used,
+                },
+            )
+            return code, feedback
+
+        pairs = await asyncio.gather(*(decide(code) for code in sorted(self.profiles)))
+        return dict(pairs)
+
+    def _environment(self, world: WorldState) -> ChinaPolicyEnv:
+        return ChinaPolicyEnv(
+            profiles=world.province_profiles,
+            network=self.network,
+            enterprise_profiles=world.enterprise_profiles,
+            policy=world.policy,
+            province_states=deepcopy(world.province_states),
+            enterprise_states=deepcopy(world.enterprise_states),
+        )
+
+    async def _settle_environment(
+        self, runtime: ExperimentRuntime, world: WorldState, phase: Phase
+    ) -> None:
+        env = self._environment(world)
+        province_states, enterprise_states, aggregates, contributions = env.process_actions(
+            world.province_actions, world.enterprise_actions, phase
+        )
+        world.province_states = province_states
+        world.enterprise_states = enterprise_states
+        world.enterprise_aggregates = aggregates
+        world.contributions = contributions
+        world.national_metrics = env.calculate_national_metrics()
+        await self._emit(
+            runtime,
+            event_type="enterprise.aggregate.updated",
+            branch_id=world.branch_id,
+            phase=phase,
+            payload={
+                "province_count": len(aggregates),
+                "enterprise_count": len(enterprise_states),
+            },
+        )
+        await self._emit(
+            runtime,
+            event_type="environment.updated",
+            branch_id=world.branch_id,
+            phase=phase,
+            payload=world.national_metrics.model_dump(mode="json"),
+        )
+
     async def run_phase(
         self, experiment_id: str, phase: Phase, branch_id: str = "control"
     ) -> WorldState:
@@ -258,22 +446,20 @@ class AsyncioSimulationAdapter:
         async with runtime.lock:
             if branch_id not in runtime.worlds:
                 raise KeyError(f"branch not found: {branch_id}")
-            current_world = runtime.worlds[branch_id]
-            if current_world.status == ExperimentStatus.AWAITING_APPROVAL:
+            current = runtime.worlds[branch_id]
+            if current.status == ExperimentStatus.AWAITING_APPROVAL:
                 raise PermissionError("central directive must be approved before running")
-            if current_world.status == ExperimentStatus.AWAITING_INTERVENTION:
+            if current.status == ExperimentStatus.AWAITING_INTERVENTION:
                 raise PermissionError("T3 intervention decision is required before continuing")
-            expected = self._expected_next(current_world.phase)
+            expected = self._expected_next(current.phase)
             if phase != expected:
                 raise ValueError(
-                    f"invalid phase transition: {current_world.phase.value} -> {phase.value}"
+                    f"invalid phase transition: {current.phase.value} -> {phase.value}"
                 )
-            if phase == Phase.T4 and branch_id == "control" and runtime.checkpoint is None:
+            if phase == Phase.T4 and runtime.checkpoint is None:
                 raise ValueError("T4 requires a T3 checkpoint")
 
-            # A phase computes against a private copy and only replaces the
-            # authoritative branch state after every calculation validates.
-            world = current_world.model_copy(deep=True)
+            world = current.model_copy(deep=True)
             world.status = ExperimentStatus.RUNNING
             await self._emit(
                 runtime,
@@ -282,68 +468,72 @@ class AsyncioSimulationAdapter:
                 phase=phase,
                 payload={"phase": phase.value},
             )
-            env = ChinaPolicyEnv(
-                profiles=self.profiles,
-                network=self.network,
-                policy=world.policy,
-                states=deepcopy(world.provinces),
-            )
 
-            if phase in {Phase.T1, Phase.T3, Phase.T4}:
-                actions = await self._generate_actions(runtime=runtime, world=world, phase=phase)
-                world.actions = actions
-                if phase in {Phase.T3, Phase.T4}:
-                    states, contributions = env.process_actions(actions, phase)
-                    world.provinces = states
-                    world.contributions = contributions
-                    world.network_effects = deepcopy(env.network_effects)
-                    world.national_metrics = env.calculate_national_metrics()
-            elif phase in {Phase.T2, Phase.T5}:
-                if not world.actions:
-                    raise ValueError(
-                        f"{phase.value} requires actions from the previous decision phase"
-                    )
-                states, contributions = env.process_actions(world.actions, phase)
-                world.provinces = states
-                world.contributions = contributions
-                world.network_effects = deepcopy(env.network_effects)
-                world.national_metrics = env.calculate_national_metrics()
-
-            world.phase = phase
             pending_checkpoint: Checkpoint | None = None
-            pending_control_branch: Branch | None = None
-            if phase == Phase.T3:
-                proposals = await self.state_council.analyze_and_propose(
+            world.phase = phase
+            if phase == Phase.T1:
+                world.province_actions = await self._generate_province_actions(
+                    runtime, world, phase
+                )
+            elif phase == Phase.T2:
+                (
+                    world.enterprise_actions,
+                    world.fallback_provinces,
+                ) = await self._generate_enterprise_batches(runtime, world, phase)
+                await self._settle_environment(runtime, world, phase)
+            elif phase == Phase.T3:
+                world.province_feedback = await self._generate_feedback(runtime, world)
+                world.intervention_proposals = await self.state_council.analyze_and_propose(
                     policy=world.policy,
                     metrics=world.national_metrics,
-                    states=world.provinces,
-                    actions=world.actions,
+                    states=world.province_states,
+                    feedback=world.province_feedback,
+                    enterprise_actions=world.enterprise_actions,
                 )
-                world.intervention_proposals = proposals
+                if not world.intervention_proposals:
+                    raise ValueError("central agent returned no intervention proposal")
                 world.status = ExperimentStatus.AWAITING_INTERVENTION
                 checkpoint_id = f"cp_{uuid4().hex[:14]}"
                 world.parent_checkpoint_id = checkpoint_id
                 pending_checkpoint = self.checkpoints.create(world, checkpoint_id)
-                pending_control_branch = Branch(
+            elif phase == Phase.T4:
+                world.province_actions = await self._generate_province_actions(
+                    runtime, world, phase
+                )
+                (
+                    world.enterprise_actions,
+                    branch_fallbacks,
+                ) = await self._generate_enterprise_batches(runtime, world, phase)
+                world.fallback_provinces = sorted(
+                    set(world.fallback_provinces) | set(branch_fallbacks)
+                )
+                await self._settle_environment(runtime, world, phase)
+            elif phase == Phase.T5:
+                if len(world.enterprise_actions) != 186:
+                    raise ValueError("T5 requires 186 enterprise actions from T4")
+                await self._settle_environment(runtime, world, phase)
+                world.status = ExperimentStatus.COMPLETED
+                if branch_id == "control" and runtime.intervention_rejected:
+                    world.central_review = await self.state_council.review(world)
+
+            if phase not in {Phase.T3, Phase.T5}:
+                world.status = ExperimentStatus.READY
+            runtime.worlds[branch_id] = world
+            if pending_checkpoint:
+                runtime.checkpoint = pending_checkpoint
+                runtime.branches["control"] = Branch(
                     branch_id="control",
                     experiment_id=experiment_id,
                     kind=BranchKind.CONTROL,
                     parent_checkpoint_id=pending_checkpoint.checkpoint_id,
                 )
-            elif phase == Phase.T5:
-                world.status = ExperimentStatus.COMPLETED
-            else:
-                world.status = ExperimentStatus.READY
-
-            self.replay.write_state(world)
-            runtime.worlds[branch_id] = world
-            if pending_checkpoint and pending_control_branch:
-                runtime.checkpoint = pending_checkpoint
-                runtime.branches["control"] = pending_control_branch
-            runtime.record.current_phase = phase
-            runtime.record.status = world.status
-            runtime.record.updated_at = datetime.now(UTC)
-            if phase == Phase.T3:
+                await self._emit(
+                    runtime,
+                    event_type="checkpoint.created",
+                    branch_id=branch_id,
+                    phase=phase,
+                    payload={"checkpoint_id": pending_checkpoint.checkpoint_id},
+                )
                 await self._emit(
                     runtime,
                     event_type="central.intervention.proposed",
@@ -354,29 +544,20 @@ class AsyncioSimulationAdapter:
                         "summary": world.intervention_proposals[0].public_summary,
                     },
                 )
-                await self._emit(
-                    runtime,
-                    event_type="checkpoint.created",
-                    branch_id=branch_id,
-                    phase=phase,
-                    payload={"checkpoint_id": pending_checkpoint.checkpoint_id},
-                )
-            await self._emit(
-                runtime,
-                event_type="environment.updated",
-                branch_id=branch_id,
-                phase=phase,
-                payload={
-                    "overall_policy_benefit": world.national_metrics.overall_policy_benefit,
-                    "regional_gap": world.national_metrics.regional_gap,
-                },
-            )
+            runtime.record.current_phase = phase
+            runtime.record.status = world.status
+            runtime.record.updated_at = datetime.now(UTC)
+            self.replay.write_state(world)
             await self._emit(
                 runtime,
                 event_type="world_state.updated",
                 branch_id=branch_id,
                 phase=phase,
-                payload={"status": world.status.value, "province_count": len(world.provinces)},
+                payload={
+                    "status": world.status.value,
+                    "province_count": len(world.province_states),
+                    "enterprise_count": len(world.enterprise_states),
+                },
             )
             await self._emit(
                 runtime,
@@ -415,7 +596,7 @@ class AsyncioSimulationAdapter:
         self,
         experiment_id: str,
         proposal_id: str,
-        overrides: dict[str, float] | None = None,
+        approved_policy: PolicySchema | None = None,
     ) -> CentralIntervention:
         runtime = self._runtime(experiment_id)
         async with runtime.lock:
@@ -428,19 +609,14 @@ class AsyncioSimulationAdapter:
             )
             if proposal is None:
                 raise KeyError(f"intervention proposal not found: {proposal_id}")
-            changes = {
-                field: change.model_copy(deep=True)
-                for field, change in proposal.parameter_changes.items()
-            }
-            for field, to_value in (overrides or {}).items():
-                if field not in changes:
-                    raise ValueError(f"cannot override field outside proposal: {field}")
-                changes[field] = ParameterChange(
-                    from_value=float(getattr(world.policy, field)), to_value=to_value
-                )
+            selected = (approved_policy or proposal.proposed_policy).model_copy(deep=True)
+            changes = policy_diff(world.policy, selected)
+            if not changes:
+                raise ValueError("approved intervention must change at least one policy field")
             intervention = CentralIntervention(
                 intervention_id=f"intervention_{uuid4().hex[:12]}",
                 proposal_id=proposal_id,
+                approved_policy=selected,
                 parameter_changes=changes,
                 approved_at=datetime.now(UTC),
             )
@@ -453,9 +629,50 @@ class AsyncioSimulationAdapter:
                 payload={
                     "intervention_id": intervention.intervention_id,
                     "proposal_id": proposal_id,
+                    "change_count": len(changes),
                 },
             )
             return intervention.model_copy(deep=True)
+
+    async def reject_intervention(self, experiment_id: str, proposal_id: str) -> WorldState:
+        runtime = self._runtime(experiment_id)
+        async with runtime.lock:
+            world = runtime.worlds["control"]
+            if world.phase != Phase.T3 or world.status != ExperimentStatus.AWAITING_INTERVENTION:
+                raise ValueError("intervention can only be rejected at the T3 checkpoint")
+            proposal = next(
+                (item for item in world.intervention_proposals if item.proposal_id == proposal_id),
+                None,
+            )
+            if proposal is None:
+                raise KeyError(f"intervention proposal not found: {proposal_id}")
+            next_world = world.model_copy(deep=True)
+            next_world.intervention_decision = "rejected"
+            next_world.intervention_proposals = [
+                item.model_copy(
+                    update={
+                        "approval_status": (
+                            ApprovalStatus.REJECTED
+                            if item.proposal_id == proposal_id
+                            else item.approval_status
+                        )
+                    }
+                )
+                for item in next_world.intervention_proposals
+            ]
+            next_world.status = ExperimentStatus.READY
+            runtime.intervention_rejected = True
+            runtime.worlds["control"] = next_world
+            runtime.record.status = ExperimentStatus.READY
+            await self._emit(
+                runtime,
+                event_type="central.intervention.rejected",
+                branch_id="control",
+                phase=Phase.T3,
+                payload={"proposal_id": proposal_id, "treatment_created": False},
+            )
+            self.replay.write_state(next_world)
+            return next_world.model_copy(deep=True)
 
     async def create_branch(self, checkpoint_id: str, intervention: CentralIntervention) -> Branch:
         runtime = next(
@@ -471,6 +688,8 @@ class AsyncioSimulationAdapter:
         if intervention.intervention_id not in runtime.approved_interventions:
             raise PermissionError("intervention has not been approved by the user")
         async with runtime.lock:
+            if runtime.intervention_rejected:
+                raise PermissionError("rejected intervention cannot create a treatment branch")
             if any(branch.kind == BranchKind.TREATMENT for branch in runtime.branches.values()):
                 raise ValueError("treatment branch already exists")
             treatment_id = f"treatment_{uuid4().hex[:8]}"
@@ -478,17 +697,13 @@ class AsyncioSimulationAdapter:
             treatment.branch_id = treatment_id
             treatment.parent_checkpoint_id = checkpoint_id
             treatment.status = ExperimentStatus.READY
+            treatment.intervention_decision = "approved"
             treatment.approved_intervention = intervention.model_copy(deep=True)
-            env = ChinaPolicyEnv(
-                profiles=self.profiles,
-                network=self.network,
-                policy=treatment.policy,
-                states=deepcopy(treatment.provinces),
-            )
-            treatment.policy = env.apply_approved_intervention(intervention)
-            control = runtime.worlds["control"]
+            treatment.policy = intervention.approved_policy.model_copy(deep=True)
+            control = runtime.worlds["control"].model_copy(deep=True)
             control.parent_checkpoint_id = checkpoint_id
             control.status = ExperimentStatus.READY
+            control.intervention_decision = "approved_control_unchanged"
             branch = Branch(
                 branch_id=treatment_id,
                 experiment_id=treatment.experiment_id,
@@ -496,6 +711,7 @@ class AsyncioSimulationAdapter:
                 parent_checkpoint_id=checkpoint_id,
                 intervention=intervention,
             )
+            runtime.worlds["control"] = control
             runtime.worlds[treatment_id] = treatment
             runtime.branches[treatment_id] = branch
             await self._emit(
@@ -515,8 +731,10 @@ class AsyncioSimulationAdapter:
             (branch for branch in runtime.branches.values() if branch.kind == BranchKind.TREATMENT),
             None,
         )
-        if runtime.checkpoint is None or treatment_branch is None:
-            raise ValueError("comparison requires a T3 checkpoint and treatment branch")
+        if runtime.intervention_rejected or treatment_branch is None:
+            raise ValueError("COMPARISON_NOT_AVAILABLE")
+        if runtime.checkpoint is None:
+            raise ValueError("comparison requires a T3 checkpoint")
         control = runtime.worlds["control"]
         treatment = runtime.worlds[treatment_branch.branch_id]
         if control.phase != Phase.T5 or treatment.phase != Phase.T5:
@@ -536,9 +754,9 @@ class AsyncioSimulationAdapter:
         await self._emit(
             runtime,
             event_type="experiment.completed",
-            branch_id="treatment",
+            branch_id=treatment.branch_id,
             phase=Phase.T5,
-            payload={"review_id": review.review_id},
+            payload={"review_id": review.review_id, "review_mode": review.review_mode.value},
         )
         self.replay.write_state(control)
         self.replay.write_state(treatment)
@@ -614,17 +832,48 @@ class AsyncioSimulationAdapter:
             raise KeyError(f"branch not found or ambiguous: {branch_id}")
         return matches[0]
 
+    async def get_evidence(self, experiment_id: str, evidence_id: str) -> dict[str, object]:
+        world = await self.get_state(experiment_id)
+        is_method = evidence_id == "method"
+        return {
+            "evidence_id": evidence_id,
+            "experiment_id": experiment_id,
+            "kind": "method_and_versions" if is_method else "simulation_evidence",
+            "quality": "demo" if evidence_id.startswith("enterprise:") else "proxy",
+            "source": (
+                "PolicyScope 实验方法、版本与父检查点记录"
+                if is_method
+                else "当前实验快照中的结构化字段与 Replay 事件"
+            ),
+            "source_url": None,
+            "source_year": 2024,
+            "unit": "指数/100 或指数点变化",
+            "transformation": "版本化机制确定性计算；LLM 不输出最终结果指标",
+            "missing_value_handling": (
+                "缺失或校验失败时按整省 deterministic fallback 处理并显式标记"
+            ),
+            "data_version": world.versions.data,
+            "mechanism_version": world.versions.mechanism,
+            "prompt_version": world.versions.prompt,
+            "model_version": world.versions.model,
+            "app_version": world.versions.app,
+            "seed": world.seed,
+            "parent_checkpoint_id": world.parent_checkpoint_id,
+            "description": "该证据来自当前实验快照中的结构化字段与版本记录。",
+            "disclaimer": "情景实验，不构成现实政策预测或决策建议。",
+        }
+
     async def run_full_demo(self, config: ExperimentConfig) -> ComparisonResult:
         world = await self.initialize(config)
-        await self.approve_directive(world.experiment_id)
+        await self.approve_directive(world.experiment_id, world.policy)
         await self.run_to_phase(world.experiment_id, Phase.T3)
         control = await self.get_state(world.experiment_id)
         proposal = control.intervention_proposals[0]
-        intervention = await self.approve_intervention(world.experiment_id, proposal.proposal_id)
-        if self._runtime(world.experiment_id).checkpoint is None:
-            raise RuntimeError("T3 checkpoint missing")
-        branch = await self.create_branch(
-            self._runtime(world.experiment_id).checkpoint.checkpoint_id, intervention
+        intervention = await self.approve_intervention(
+            world.experiment_id, proposal.proposal_id, proposal.proposed_policy
+        )
+        branch = await self.create_approved_branch(
+            world.experiment_id, intervention.intervention_id
         )
         await self.run_to_phase(world.experiment_id, Phase.T5, "control")
         await self.run_to_phase(world.experiment_id, Phase.T5, branch.branch_id)

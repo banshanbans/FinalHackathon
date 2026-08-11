@@ -8,10 +8,17 @@ from simulation.models.central import (
     CentralReview,
 )
 from simulation.models.common import Phase
+from simulation.models.enterprise import (
+    EnterpriseAction,
+    EnterpriseActionBatch,
+    EnterpriseAggregate,
+    EnterpriseGroupProfile,
+    EnterpriseGroupState,
+)
 from simulation.models.experiment import ExperimentConfig
 from simulation.models.policy import PolicySchema
-from simulation.models.province import ProvinceProfile, ProvinceState
-from simulation.models.world import ComparisonResult, NationalMetrics
+from simulation.models.province import ProvinceFeedback, ProvinceProfile, ProvinceState
+from simulation.models.world import ComparisonResult, NationalMetrics, WorldState
 
 
 class LLMProvider(Protocol):
@@ -28,7 +35,37 @@ class LLMProvider(Protocol):
         phase: Phase,
         related: list[NetworkEdge],
         neighbor_actions: dict[str, ProvinceAction],
+        seed: int,
+        prompt_version: str,
+        model_version: str,
     ) -> ProvinceAction: ...
+
+    async def generate_enterprise_actions_batch(
+        self,
+        *,
+        province_profile: ProvinceProfile,
+        province_action: ProvinceAction,
+        enterprise_profiles: list[EnterpriseGroupProfile],
+        enterprise_states: dict[str, EnterpriseGroupState],
+        policy: PolicySchema,
+        phase: Phase,
+        seed: int,
+        prompt_version: str,
+        model_version: str,
+    ) -> EnterpriseActionBatch: ...
+
+    async def generate_province_feedback(
+        self,
+        *,
+        profile: ProvinceProfile,
+        state: ProvinceState,
+        aggregate: EnterpriseAggregate,
+        enterprise_actions: list[EnterpriseAction],
+        policy: PolicySchema,
+        seed: int,
+        prompt_version: str,
+        model_version: str,
+    ) -> ProvinceFeedback: ...
 
     async def generate_intervention_proposals(
         self,
@@ -36,7 +73,10 @@ class LLMProvider(Protocol):
         policy: PolicySchema,
         metrics: NationalMetrics,
         states: dict[str, ProvinceState],
-        actions: dict[str, ProvinceAction],
+        feedback: dict[str, ProvinceFeedback],
+        enterprise_actions: dict[str, EnterpriseAction],
     ) -> list[CentralInterventionProposal]: ...
 
-    async def generate_central_review(self, comparison: ComparisonResult) -> CentralReview: ...
+    async def generate_central_review(
+        self, result: ComparisonResult | WorldState
+    ) -> CentralReview: ...

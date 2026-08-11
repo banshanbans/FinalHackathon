@@ -1,83 +1,197 @@
-import type { ProvinceProfile, ProvinceState } from "../types";
+import { MapChart } from "echarts/charts";
+import { TooltipComponent, VisualMapComponent } from "echarts/components";
+import * as echarts from "echarts/core";
+import { SVGRenderer } from "echarts/renderers";
+import ReactEChartsCore from "echarts-for-react/lib/core";
+import { useEffect, useMemo, useState } from "react";
 
-const COORDINATES: Record<string, [number, number]> = {
-  "11": [70, 32], "12": [75, 35], "13": [68, 38], "14": [59, 39],
-  "15": [56, 24], "21": [80, 27], "22": [86, 19], "23": [89, 9],
-  "31": [78, 55], "32": [73, 52], "33": [75, 62], "34": [67, 57],
-  "35": [69, 71], "36": [61, 66], "37": [69, 45], "41": [60, 50],
-  "42": [55, 59], "43": [53, 68], "44": [57, 81], "45": [46, 81],
-  "46": [50, 93], "50": [43, 62], "51": [34, 59], "52": [42, 71],
-  "53": [31, 80], "54": [14, 58], "61": [49, 49], "62": [35, 40],
-  "63": [25, 48], "64": [44, 39], "65": [13, 28],
-};
+import chinaStandardMapUrl from "../assets/maps/china-standard-map.svg?url";
+import type { ProvinceProfile } from "../types";
 
-const OUTLINE = "M5 21 L16 9 L31 11 L43 4 L58 10 L70 5 L88 8 L96 21 L89 35 L93 48 L83 58 L80 72 L68 76 L61 88 L51 86 L43 96 L31 87 L21 79 L9 67 L13 52 L4 41 Z";
+echarts.use([MapChart, TooltipComponent, VisualMapComponent, SVGRenderer]);
 
-function valueColor(value: number) {
-  if (value >= 64) return "#26d7b0";
-  if (value >= 56) return "#28b8df";
-  if (value >= 48) return "#6485e8";
-  return "#7a6f9e";
+const MAP_NAME = "policyscope-china-standard-map";
+let mapRegistration: Promise<void> | undefined;
+
+function ensureMapRegistered() {
+  if (!mapRegistration) {
+    mapRegistration = fetch(chinaStandardMapUrl)
+      .then((response) => {
+        if (!response.ok) throw new Error(`MAP_ASSET_${response.status}`);
+        return response.text();
+      })
+      .then((svg) => {
+        echarts.registerMap(MAP_NAME, { svg });
+      });
+  }
+  return mapRegistration;
 }
 
-interface ProvinceMapProps {
+const EXCLUDED_NAMES = new Set(["台湾", "香港", "澳门", "南海诸岛"]);
+
+function metricColor(value: number) {
+  if (value < 45) return "#e9ecff";
+  if (value < 55) return "#cfd5ff";
+  if (value < 65) return "#aeb8ff";
+  if (value < 75) return "#6674ed";
+  return "#2638cc";
+}
+
+export function ProvinceMap({
+  profiles,
+  values,
+  selectedCode,
+  onSelect,
+  compact = false,
+  metricLabel = "企业参与指数",
+}: {
   profiles: ProvinceProfile[];
-  states: Record<string, ProvinceState>;
-  selectedCode: string;
-  onSelect: (code: string) => void;
-}
+  values: Record<string, number>;
+  selectedCode?: string;
+  onSelect?: (provinceCode: string) => void;
+  compact?: boolean;
+  metricLabel?: string;
+}) {
+  const [mapState, setMapState] = useState<"loading" | "ready" | "error">("loading");
+  useEffect(() => {
+    let active = true;
+    void ensureMapRegistered()
+      .then(() => active && setMapState("ready"))
+      .catch(() => active && setMapState("error"));
+    return () => {
+      active = false;
+    };
+  }, []);
+  const byName = useMemo(
+    () => new Map(profiles.map((profile) => [profile.short_name, profile])),
+    [profiles],
+  );
+  const selectedName = profiles.find((item) => item.province_code === selectedCode)?.short_name;
+  const data = useMemo(
+    () => [
+      ...profiles.map((profile) => ({
+        name: profile.short_name,
+        value: values[profile.province_code] ?? 0,
+        itemStyle: {
+          areaColor: metricColor(values[profile.province_code] ?? 0),
+          color: metricColor(values[profile.province_code] ?? 0),
+          borderColor: "#ffffff",
+          borderWidth: 0.8,
+        },
+      })),
+      ...["台湾", "香港", "澳门", "南海诸岛"].map((name) => ({
+        name,
+        value: 0,
+        itemStyle: { areaColor: "#e8ebf5", color: "#e8ebf5", borderColor: "#b9c1d6" },
+        emphasis: { disabled: true },
+      })),
+    ],
+    [profiles, values],
+  );
 
-export function ProvinceMap({ profiles, states, selectedCode, onSelect }: ProvinceMapProps) {
+  const option = useMemo(
+    () => ({
+      animationDuration: 350,
+      tooltip: {
+        trigger: "item",
+        borderColor: "#dfe3ef",
+        backgroundColor: "rgba(255,255,255,.98)",
+        textStyle: { color: "#172033", fontFamily: "Inter, Noto Sans SC" },
+        formatter: (params: { name: string; value?: number }) => {
+          if (EXCLUDED_NAMES.has(params.name)) return `${params.name}<br/>不进入本次 31 省计算`;
+          return `<strong>${params.name}</strong><br/>${metricLabel} ${Number(params.value ?? 0).toFixed(1)} / 100`;
+        },
+      },
+      visualMap: {
+        min: 35,
+        max: 85,
+        calculable: false,
+        orient: "horizontal",
+        left: 12,
+        bottom: 8,
+        itemWidth: compact ? 88 : 122,
+        itemHeight: 8,
+        text: ["高", "低"],
+        textGap: 8,
+        textStyle: { color: "#677189", fontSize: 10 },
+        inRange: { color: ["#e9ecff", "#aeb8ff", "#5d6cf0", "#2638cc"] },
+        outOfRange: { color: "#e8ebf5" },
+      },
+      series: [
+        {
+          type: "map",
+          map: MAP_NAME,
+          roam: false,
+          selectedMode: "single",
+          selectedMap: selectedName ? { [selectedName]: true } : {},
+          nameProperty: "name",
+          data,
+          left: compact ? 8 : 22,
+          right: compact ? 8 : 22,
+          top: 2,
+          bottom: 22,
+          label: {
+            show: !compact,
+            color: "#34405a",
+            fontSize: 9,
+            formatter: (params: { name: string }) =>
+              EXCLUDED_NAMES.has(params.name) ? "" : params.name,
+          },
+          itemStyle: { areaColor: "#eef0ff", color: "#eef0ff", borderColor: "#ffffff", borderWidth: 1 },
+          select: {
+            label: { color: "#ffffff", fontWeight: 700 },
+            itemStyle: { areaColor: "#2737d5", color: "#2737d5", borderColor: "#111b8a", borderWidth: 1.8 },
+          },
+          emphasis: {
+            label: { color: "#111a3b", fontWeight: 700 },
+            itemStyle: { areaColor: "#7480f5", color: "#7480f5", borderColor: "#ffffff" },
+          },
+        },
+      ],
+    }),
+    [compact, data, metricLabel, selectedName],
+  );
+
+  if (mapState === "loading") {
+    return <div className="map-loading"><span className="spinner" />正在加载自然资源部标准地图矢量资源…</div>;
+  }
+  if (mapState === "error") {
+    return <div className="map-loading map-error">标准地图资源加载失败，请刷新后重试。</div>;
+  }
+
   return (
-    <div className="map-wrap" aria-label="中国省域态势示意图">
-      <svg className="province-map" role="img" viewBox="0 0 100 100">
-        <title>31 省政策收益指数态势图</title>
-        <defs>
-          <linearGradient id="map-surface" x1="0" x2="1" y1="0" y2="1">
-            <stop offset="0" stopColor="#0d2940" />
-            <stop offset="1" stopColor="#081923" />
-          </linearGradient>
-          <filter id="node-glow" x="-100%" y="-100%" width="300%" height="300%">
-            <feGaussianBlur stdDeviation="1.2" result="blur" />
-            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-          </filter>
-        </defs>
-        <path d={OUTLINE} fill="url(#map-surface)" stroke="#28536a" strokeDasharray="1.2 1.2" strokeWidth=".5" />
-        {profiles.map((profile) => {
-          const coordinate = COORDINATES[profile.province_code];
-          if (!coordinate) return null;
-          const value = states[profile.province_code]?.policy_benefit_index ?? 50;
-          const selected = selectedCode === profile.province_code;
-          return (
-            <g
-              className="map-province"
-              data-testid={`province-${profile.province_code}`}
+    <div className={`province-map ${compact ? "compact" : ""}`}>
+      <ReactEChartsCore
+        echarts={echarts}
+        option={option}
+        notMerge
+        opts={{ renderer: "svg" }}
+        style={{ height: compact ? 250 : 410, width: "100%" }}
+        onEvents={{
+          click: (params: { name: string }) => {
+            const profile = byName.get(params.name);
+            if (profile && onSelect) onSelect(profile.province_code);
+          },
+        }}
+      />
+      {!compact && (
+        <div className="province-keyboard-list" aria-label="31 个省级行政区">
+          {profiles.map((profile) => (
+            <button
+              aria-pressed={profile.province_code === selectedCode}
+              className={profile.province_code === selectedCode ? "selected" : ""}
               key={profile.province_code}
-              onClick={() => onSelect(profile.province_code)}
-              onKeyDown={(event) => event.key === "Enter" && onSelect(profile.province_code)}
-              role="button"
-              tabIndex={0}
-              transform={`translate(${coordinate[0]} ${coordinate[1]})`}
+              onClick={() => onSelect?.(profile.province_code)}
+              type="button"
             >
-              {selected && <circle fill="none" r="4" stroke="#ffb55b" strokeWidth=".7" />}
-              <circle
-                fill={valueColor(value)}
-                filter={selected ? "url(#node-glow)" : undefined}
-                r={selected ? 2.3 : 1.8}
-                stroke="#d8fbff"
-                strokeWidth=".25"
-              />
-              <text className="map-label" textAnchor="middle" y="-2.8">{profile.short_name}</text>
-            </g>
-          );
-        })}
-      </svg>
-      <div className="map-legend">
-        <span>政策收益指数</span>
-        <i className="legend-gradient" />
-        <small>低</small><small>高</small>
-      </div>
-      <span className="map-note">示意布局 · 非行政边界底图</span>
+              {profile.short_name}
+            </button>
+          ))}
+        </div>
+      )}
+      <p className="map-source-note">
+        计算范围：中国大陆 31 个省级行政区；港澳台不进入模型。底图：自然资源部标准地图 GS(2016)1609，公开发布前须完成地图合规复核。
+      </p>
     </div>
   );
 }

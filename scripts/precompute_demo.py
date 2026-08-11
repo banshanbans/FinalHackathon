@@ -16,12 +16,15 @@ async def main() -> None:
     adapter = AsyncioSimulationAdapter(provider, runtime_dir=Path("runtime"))
     await adapter.run_full_demo(
         ExperimentConfig(
-            objective="促进战略性新兴产业创新，同时兼顾区域均衡与财政效率。",
+            objective=(
+                "在有限财政支持下推动制造业设备升级，提高中小企业参与度，"
+                "并兼顾绿色转型、就业稳定和区域可达性。"
+            ),
             run_mode=RunMode.CACHE,
-            model_version="cache-v1",
+            model_version="cache-v2",
         )
     )
-    print("Default PolicyScope cache precomputed.")
+    print("Default PolicyScope V2 cache precomputed.")
 
 
 if __name__ == "__main__":

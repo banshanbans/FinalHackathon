@@ -1,15 +1,28 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import Field, model_validator
+from pydantic import Field, JsonValue, model_validator
 
 from simulation.models.base import DomainModel
-from simulation.models.common import ApprovalStatus
+from simulation.models.common import ApprovalStatus, ReviewMode
 from simulation.models.policy import PolicySchema
+
+ALLOWED_POLICY_PATHS = {
+    "support_intensity",
+    "local_match_requirement",
+    "sme_preference",
+    "regional_support_bias",
+    "instrument_mix.direct_subsidy",
+    "instrument_mix.interest_subsidy",
+    "instrument_mix.financing_guarantee",
+    "technology_mix.digital",
+    "technology_mix.green",
+    "technology_mix.general",
+}
 
 
 class CentralPolicyDirective(DomainModel):
-    schema_version: str = "central-directive-v1"
+    schema_version: str = "central-directive-v2"
     directive_id: str
     policy: PolicySchema
     policy_objectives: list[str] = Field(min_length=1, max_length=5)
@@ -19,16 +32,24 @@ class CentralPolicyDirective(DomainModel):
     approval_status: ApprovalStatus = ApprovalStatus.DRAFT
 
 
-class ParameterChange(DomainModel):
-    from_value: float
-    to_value: float
+class PolicyFieldChange(DomainModel):
+    path: str
+    from_value: JsonValue
+    to_value: JsonValue
+
+    @model_validator(mode="after")
+    def path_is_supported(self) -> "PolicyFieldChange":
+        if self.path not in ALLOWED_POLICY_PATHS:
+            raise ValueError(f"unsupported policy field path: {self.path}")
+        return self
 
 
 class CentralInterventionProposal(DomainModel):
-    schema_version: str = "central-intervention-proposal-v1"
+    schema_version: str = "central-intervention-proposal-v2"
     proposal_id: str
-    parameter_changes: dict[str, ParameterChange] = Field(min_length=1, max_length=5)
-    target_metrics: list[str] = Field(min_length=1, max_length=5)
+    proposed_policy: PolicySchema
+    parameter_changes: list[PolicyFieldChange] = Field(min_length=1, max_length=10)
+    target_metrics: list[str] = Field(min_length=1, max_length=6)
     expected_directions: dict[str, Literal["increase", "decrease", "may_increase", "may_decrease"]]
     tradeoffs: list[str] = Field(default_factory=list, max_length=5)
     evidence_refs: list[str] = Field(min_length=1, max_length=12)
@@ -38,26 +59,14 @@ class CentralInterventionProposal(DomainModel):
 
 
 class CentralIntervention(DomainModel):
-    schema_version: str = "central-intervention-v1"
+    schema_version: str = "central-intervention-v2"
     intervention_id: str
     proposal_id: str
-    parameter_changes: dict[str, ParameterChange] = Field(min_length=1, max_length=5)
+    approved_policy: PolicySchema
+    parameter_changes: list[PolicyFieldChange] = Field(min_length=1, max_length=10)
     approved_at: datetime
     approved_by: Literal["user"] = "user"
     approval_status: Literal[ApprovalStatus.APPROVED] = ApprovalStatus.APPROVED
-
-    @model_validator(mode="after")
-    def only_supported_policy_fields(self) -> "CentralIntervention":
-        supported = {
-            "central_budget_index",
-            "local_match_requirement",
-            "regional_bias",
-            "cooperation_incentive",
-        }
-        unsupported = set(self.parameter_changes) - supported
-        if unsupported:
-            raise ValueError(f"unsupported intervention fields: {sorted(unsupported)}")
-        return self
 
 
 class ReviewFinding(DomainModel):
@@ -68,8 +77,9 @@ class ReviewFinding(DomainModel):
 
 
 class CentralReview(DomainModel):
-    schema_version: str = "central-review-v1"
+    schema_version: str = "central-review-v2"
     review_id: str
+    review_mode: ReviewMode
     findings: list[ReviewFinding] = Field(min_length=1, max_length=5)
     limitations: list[str] = Field(min_length=1, max_length=5)
     public_summary: str = Field(min_length=1, max_length=500)

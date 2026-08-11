@@ -6,17 +6,17 @@
 
 ## 1. 当前阶段与工作门禁
 
-当前仓库已有可重复验证的 V1 回滚基线，V2 最终产品契约已经获得用户批准，正在按原地迁移策略实施。V2 的目标产品是：
+当前仓库已完成 V2 原地迁移和产品 QA；V1 回滚基线保留在 Git 提交 `6ea8e9d`。V2 的目标产品是：
 
 > 面向国务院层面政策统筹人员的“制造业设备更新政企互动 Agent 推演台”。
 
 当前状态：
 
-- V1 FastAPI、React、31 省仿真、审批、Checkpoint、Replay 和 A/B 基础代码已经存在。
-- V2 PRD、开发计划和 Stitch 规范已经获得用户批准，代码迁移门禁已经解除。
-- V1 尚无企业群体领域模型，也尚未形成 31 × 6 企业闭环。
-- `FOUND-200` 已完成：`make test`、`make lint`、`make validate-data` 与 `make smoke` 均已通过。
-- 迁移采用原地升级 V1 模块；初始 Git 提交作为 V1 回滚点，不建立并行 V2 运行时。
+- V2 FastAPI、React、31 省 × 6 企业群体、审批、Checkpoint、Replay、A/B 与单线复盘已完成。
+- V2 PRD、开发计划和 Stitch 规范已批准并冻结；公共 DTO 使用 `policy-v2`、`world-state-v2`、`comparison-v2` 和 `event-v2`。
+- Fake/Cache/Live Provider 共用统一接口；默认演示为 Cache，测试为 Fake，Live 不得阻塞交付。
+- Stitch 四路由、河南省企抽屉、证据抽屉和本地标准地图衍生 SVG 已交付，`design-qa.md` 为 `passed`。
+- 全国地图的技术校验已完成，但公开发布前仍必须完成标准地图合规人工复核。
 
 如果用户在后续回合明确改变门禁，以用户最新要求为准，并在同一变更中同步所有受影响文档。
 
@@ -475,7 +475,7 @@ make demo
 make smoke
 ```
 
-`FOUND-200` 已完成；当前 V1 回滚基线的 `make test`、`make lint`、`make validate-data` 和 `make smoke` 均已实际通过。V2 迁移后必须重新运行全部门禁，不能沿用基线结论。
+V2 冻结基线的 `make test`、`make lint`、`make validate-data`、`make smoke` 和连续三次 Cache 产品流程均已实际通过。后续任何 Schema、机制、Provider、API、SSE、地图或主流程变更都必须重新运行与风险相称的门禁，不能沿用冻结结论。
 
 任务完成必须同时满足：
 
@@ -493,4 +493,4 @@ make smoke
 
 ## 18. 当前唯一下一步
 
-建立 V1 初始 Git 回滚提交，然后按 `DEVELOPMENT_PLAN.md` 顺序实施 `ADR-200`、`MODEL-200` 至 `DATA-201`，不得绕过领域契约直接改前端。
+保持产品冻结，不扩展 P0 范围。若要公开部署，先完成标准地图使用、审图号标注和编辑后审核要求的人工合规复核；若继续开发，按 `DEVELOPMENT_PLAN.md` 的冻结契约更新测试、调用方与文档。

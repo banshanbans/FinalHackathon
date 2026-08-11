@@ -1,0 +1,18 @@
+{
+  "schema_version": "scenario-v2",
+  "scenario_id": "equipment_renewal_default",
+  "name": "制造业大规模设备更新与技术改造专项",
+  "default_objective": "在有限财政支持下推动制造业设备升级，提高中小企业参与度，并兼顾绿色转型、就业稳定和区域可达性。",
+  "policy": {
+    "schema_version": "policy-v2",
+    "policy_id": "equipment_renewal_v2",
+    "domain": "manufacturing_equipment_renewal",
+    "support_intensity": 70,
+    "local_match_requirement": 0.5,
+    "instrument_mix": {"direct_subsidy": 0.45, "interest_subsidy": 0.35, "financing_guarantee": 0.2},
+    "sme_preference": 0.6,
+    "regional_support_bias": 0.0,
+    "technology_mix": {"digital": 0.4, "green": 0.3, "general": 0.3},
+    "mechanism_version": "equipment-renewal-env-v2"
+  }
+}

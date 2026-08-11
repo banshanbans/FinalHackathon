@@ -1,14 +1,14 @@
 from simulation.llm.base import LLMProvider
-from simulation.models.action import ProvinceAction
 from simulation.models.central import (
     CentralInterventionProposal,
     CentralPolicyDirective,
     CentralReview,
 )
+from simulation.models.enterprise import EnterpriseAction
 from simulation.models.experiment import ExperimentConfig
 from simulation.models.policy import PolicySchema
-from simulation.models.province import ProvinceState
-from simulation.models.world import ComparisonResult, NationalMetrics
+from simulation.models.province import ProvinceFeedback, ProvinceState
+from simulation.models.world import ComparisonResult, NationalMetrics, WorldState
 
 
 class StateCouncilAgent:
@@ -28,14 +28,16 @@ class StateCouncilAgent:
         policy: PolicySchema,
         metrics: NationalMetrics,
         states: dict[str, ProvinceState],
-        actions: dict[str, ProvinceAction],
+        feedback: dict[str, ProvinceFeedback],
+        enterprise_actions: dict[str, EnterpriseAction],
     ) -> list[CentralInterventionProposal]:
         return await self.provider.generate_intervention_proposals(
             policy=policy,
             metrics=metrics,
             states=states,
-            actions=actions,
+            feedback=feedback,
+            enterprise_actions=enterprise_actions,
         )
 
-    async def review(self, comparison: ComparisonResult) -> CentralReview:
-        return await self.provider.generate_central_review(comparison)
+    async def review(self, result: ComparisonResult | WorldState) -> CentralReview:
+        return await self.provider.generate_central_review(result)

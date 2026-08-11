@@ -20,5 +20,11 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": [
+    "src/api/client 2.ts",
+    "src/components/ProvinceMap 2.tsx",
+    "src/hooks/usePolicyScope 2.ts",
+    "src/types 2.ts"
+  ]
 }

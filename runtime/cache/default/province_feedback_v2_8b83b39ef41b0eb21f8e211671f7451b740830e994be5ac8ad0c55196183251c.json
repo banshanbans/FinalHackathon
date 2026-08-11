@@ -1,0 +1,24 @@
+{
+  "schema_version": "province-feedback-v2",
+  "feedback_id": "feedback_45_fc7434652f2e",
+  "province_code": "45",
+  "phase": "T3",
+  "implementation_assessment": "融资可达性仍是主要约束",
+  "priority_enterprise_groups": [
+    "traditional_sme",
+    "technology_sme"
+  ],
+  "requested_central_support": 0.4125,
+  "reason_codes": [
+    "MANUFACTURING_BASE",
+    "FINANCING_GAP",
+    "SME_ACCESS_PRIORITY"
+  ],
+  "evidence_refs": [
+    "metric:45:sme_financing_accessibility_index:T2",
+    "enterprise:45:traditional_sme:action:T2"
+  ],
+  "public_summary": "地方反馈显示企业参与存在分化，融资约束集中在中小企业群体。",
+  "run_mode": "fallback",
+  "fallback_used": true
+}

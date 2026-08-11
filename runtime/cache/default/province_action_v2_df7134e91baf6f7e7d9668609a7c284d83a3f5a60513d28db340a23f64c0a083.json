@@ -1,0 +1,30 @@
+{
+  "schema_version": "province-action-v2",
+  "action_id": "province_45_T4_356b58d1b903",
+  "province_code": "45",
+  "phase": "T4",
+  "implementation_intensity": 0.599,
+  "local_match_ratio": 0.3534,
+  "instrument_mix": {
+    "direct_subsidy": 0.269668,
+    "interest_subsidy": 0.39103,
+    "financing_guarantee": 0.339302
+  },
+  "sme_preference": 0.8045,
+  "regional_delivery_focus": 0.643,
+  "technology_mix": {
+    "digital": 0.3888,
+    "green": 0.3112,
+    "general": 0.3
+  },
+  "requested_central_support": 0.569,
+  "reason_codes": [
+    "MANUFACTURING_BASE",
+    "FINANCING_GAP",
+    "FISCAL_CONSTRAINT",
+    "CENTRAL_SUPPORT_REQUEST"
+  ],
+  "public_summary": "结合制造基础与融资约束配置补贴、贴息和担保工具。",
+  "run_mode": "fallback",
+  "fallback_used": true
+}

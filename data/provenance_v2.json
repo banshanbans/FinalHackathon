@@ -1,0 +1,14 @@
+{
+  "schema_version": "provenance-v2",
+  "data_version": "equipment-renewal-profiles-v2",
+  "province_source": "province_profiles_v1.json",
+  "province_projection": "V1 省级公开信息代理画像按已冻结公式投影为制造业设备更新 Profile；不构成官方评价。",
+  "enterprise_source": "enterprise_archetypes_v2.json",
+  "enterprise_projection": "六类企业原型与省级 Profile 确定性混合生成 31×6 合成企业群体；全部企业字段标记为 demo。",
+  "quality_labels": ["verified", "proxy", "demo"],
+  "limitations": [
+    "企业群体不代表现实企业。",
+    "指数与机制贡献不映射为现实金额、GDP、就业或生产率预测。",
+    "港澳台不进入本次 31 省计算范围。"
+  ]
+}

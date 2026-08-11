@@ -1,6 +1,6 @@
 import hashlib
 import json
-from statistics import mean
+from statistics import fmean
 
 from simulation.data import NetworkEdge
 from simulation.models.action import ProvinceAction
@@ -8,22 +8,31 @@ from simulation.models.central import (
     CentralInterventionProposal,
     CentralPolicyDirective,
     CentralReview,
-    ParameterChange,
+    PolicyFieldChange,
     ReviewFinding,
 )
 from simulation.models.common import (
     ApprovalStatus,
-    Industry,
-    InteractionStrategy,
+    EnterpriseArchetype,
+    EnterpriseReasonCode,
+    FinancingChoice,
+    Participation,
     Phase,
-    ReasonCode,
-    Stance,
-    TalentStrategy,
+    ProvinceReasonCode,
+    ReviewMode,
+    UpgradeType,
+)
+from simulation.models.enterprise import (
+    EnterpriseAction,
+    EnterpriseActionBatch,
+    EnterpriseAggregate,
+    EnterpriseGroupProfile,
+    EnterpriseGroupState,
 )
 from simulation.models.experiment import ExperimentConfig
-from simulation.models.policy import PolicySchema
-from simulation.models.province import ProvinceProfile, ProvinceState
-from simulation.models.world import ComparisonResult, NationalMetrics
+from simulation.models.policy import InstrumentMix, PolicySchema, TechnologyMix
+from simulation.models.province import ProvinceFeedback, ProvinceProfile, ProvinceState
+from simulation.models.world import ComparisonResult, NationalMetrics, WorldState
 
 
 def _clamp(value: float, minimum: float = 0, maximum: float = 1) -> float:
@@ -35,8 +44,35 @@ def _stable_id(prefix: str, payload: object) -> str:
     return f"{prefix}_{hashlib.sha256(raw.encode()).hexdigest()[:12]}"
 
 
+def policy_diff(before: PolicySchema, after: PolicySchema) -> list[PolicyFieldChange]:
+    fields = [
+        "support_intensity",
+        "local_match_requirement",
+        "sme_preference",
+        "regional_support_bias",
+        "instrument_mix.direct_subsidy",
+        "instrument_mix.interest_subsidy",
+        "instrument_mix.financing_guarantee",
+        "technology_mix.digital",
+        "technology_mix.green",
+        "technology_mix.general",
+    ]
+
+    def value(policy: PolicySchema, path: str) -> float:
+        current: object = policy
+        for part in path.split("."):
+            current = getattr(current, part)
+        return float(current)
+
+    return [
+        PolicyFieldChange(path=path, from_value=value(before, path), to_value=value(after, path))
+        for path in fields
+        if abs(value(before, path) - value(after, path)) > 1e-9
+    ]
+
+
 class FakeLLMProvider:
-    """Deterministic structured decision policy used for tests and offline demos."""
+    """Deterministic V2 strategy provider for tests, fallback and offline demos."""
 
     run_mode = "fake"
 
@@ -50,15 +86,19 @@ class FakeLLMProvider:
             ),
             policy=default_policy.model_copy(deep=True),
             policy_objectives=[
-                config.objective,
-                "在创新、就业、区域均衡与财政效率之间保留可审计权衡",
+                "推动制造业设备更新",
+                "提高中小企业参与",
+                "促进绿色转型",
+                "保持就业稳定",
+                "改善区域可达性",
             ],
             hard_constraints=[
-                "evaluation_weights_sum_to_1",
-                "approved_policy_domain_only",
+                "instrument_mix_sum_to_1",
+                "technology_mix_sum_to_1",
                 "human_approval_required",
+                "no_real_world_forecast",
             ],
-            public_summary="国务院 Agent 已形成战略性新兴产业扶持实验指令，等待用户审批。",
+            public_summary="中央政策研判 Agent 已形成设备更新实验草案，等待用户核对并批准。",
             approval_status=ApprovalStatus.DRAFT,
         )
 
@@ -71,116 +111,252 @@ class FakeLLMProvider:
         phase: Phase,
         related: list[NetworkEdge],
         neighbor_actions: dict[str, ProvinceAction],
+        seed: int,
+        prompt_version: str,
+        model_version: str,
     ) -> ProvinceAction:
-        industry_scores = {
-            Industry.AI: profile.ai_base,
-            Industry.ADVANCED_MANUFACTURING: profile.advanced_manufacturing_base,
-            Industry.GREEN_ENERGY: profile.green_energy_base,
-        }
-        allowed_scores = {
-            industry: score
-            for industry, score in industry_scores.items()
-            if industry in policy.priority_industries
-        }
-        priorities = sorted(allowed_scores, key=allowed_scores.get, reverse=True)[:2]
-        fit = mean(allowed_scores[industry] for industry in priorities)
-        observed_competition = mean(
-            [
-                action.implementation_intensity
-                for action in neighbor_actions.values()
-                if action.interaction_strategy == InteractionStrategy.COMPETE
-            ]
-            or [0]
+        del seed, prompt_version, model_version
+        observed = fmean(
+            [item.implementation_intensity for item in neighbor_actions.values()] or [0.5]
         )
         intensity = _clamp(
             0.28
-            + 0.43 * fit
-            + 0.23 * profile.fiscal_capacity
-            - 0.14 * profile.fiscal_conservatism
-            + (0.06 * observed_competition if phase in {Phase.T3, Phase.T4} else 0)
+            + 0.30 * profile.advanced_manufacturing_base
+            + 0.18 * profile.fiscal_capacity
+            + 0.12 * profile.transition_pressure
+            + (0.06 * observed if phase == Phase.T4 else 0)
         )
-        budget = _clamp(
-            0.20 + 0.50 * profile.fiscal_capacity + 0.18 * fit - 0.22 * profile.fiscal_conservatism
+        local_match = _clamp(
+            policy.local_match_requirement
+            * (0.66 + 0.48 * profile.fiscal_capacity - 0.18 * profile.fiscal_conservatism)
         )
-        request_support = _clamp(
-            0.62 * (1 - profile.fiscal_capacity) + 0.30 * profile.transition_pressure
+        guarantee_shift = 0.10 * (1 - profile.credit_access)
+        direct = _clamp(policy.instrument_mix.direct_subsidy - guarantee_shift * 0.55)
+        interest = _clamp(policy.instrument_mix.interest_subsidy + guarantee_shift * 0.20)
+        direct = round(direct, 6)
+        interest = round(interest, 6)
+        guarantee = round(1 - direct - interest, 6)
+        instrument_mix = InstrumentMix(
+            direct_subsidy=direct,
+            interest_subsidy=interest,
+            financing_guarantee=guarantee,
         )
-        if intensity >= 0.72:
-            stance = Stance.AGGRESSIVE
-        elif intensity >= 0.52:
-            stance = Stance.BALANCED
-        else:
-            stance = Stance.CAUTIOUS
-
-        cooperation_score = profile.cooperation_tendency * policy.cooperation_incentive
-        if cooperation_score >= 0.42:
-            interaction = InteractionStrategy.COOPERATE
-        elif profile.talent_attractiveness >= 0.70 and intensity >= 0.65:
-            interaction = InteractionStrategy.COMPETE
-        else:
-            interaction = InteractionStrategy.OBSERVE
-        targets = (
-            [edge.target for edge in related[:2]]
-            if interaction != InteractionStrategy.OBSERVE
-            else []
+        digital = _clamp(
+            policy.technology_mix.digital
+            + 0.08 * (profile.digital_infrastructure - profile.green_energy_base)
         )
-
-        if priorities[0] == Industry.GREEN_ENERGY and profile.transition_pressure >= 0.65:
-            talent_strategy = TalentStrategy.RESKILL
-        elif profile.talent_attractiveness >= 0.72:
-            talent_strategy = TalentStrategy.EXPAND
-        elif profile.employment_pressure >= 0.62:
-            talent_strategy = TalentStrategy.RETAIN
-        else:
-            talent_strategy = TalentStrategy.STABLE
-
-        reasons: list[ReasonCode] = [ReasonCode.HIGH_INDUSTRY_FIT]
-        if profile.fiscal_capacity >= 0.65:
-            reasons.append(ReasonCode.HIGH_FISCAL_CAPACITY)
-        else:
-            reasons.append(ReasonCode.FISCAL_CONSTRAINT)
-        if profile.transition_pressure >= 0.65:
-            reasons.append(ReasonCode.TRANSITION_PRIORITY)
-        if interaction == InteractionStrategy.COMPETE:
-            reasons.append(ReasonCode.TALENT_COMPETITION)
-        elif interaction == InteractionStrategy.COOPERATE:
-            reasons.append(ReasonCode.REGIONAL_COOPERATION)
-        if request_support >= 0.60:
-            reasons.append(ReasonCode.CENTRAL_SUPPORT_REQUEST)
-
-        industry_names = {
-            Industry.AI: "人工智能",
-            Industry.ADVANCED_MANUFACTURING: "先进制造",
-            Industry.GREEN_ENERGY: "绿色能源",
-        }
-        strategy_text = {
-            InteractionStrategy.COMPETE: "并关注区域竞争",
-            InteractionStrategy.COOPERATE: "并推动跨省协作",
-            InteractionStrategy.OBSERVE: "并保持审慎观察",
-        }[interaction]
+        green = _clamp(
+            policy.technology_mix.green
+            + 0.08 * (profile.green_energy_base - profile.digital_infrastructure)
+        )
+        digital = round(digital, 6)
+        green = round(green, 6)
+        general = round(1 - digital - green, 6)
+        technology_mix = TechnologyMix(digital=digital, green=green, general=general)
+        requested = _clamp(
+            0.55 * (1 - profile.fiscal_capacity) + 0.35 * profile.transition_pressure
+        )
+        reasons = [ProvinceReasonCode.MANUFACTURING_BASE]
+        if profile.credit_access < 0.55:
+            reasons.append(ProvinceReasonCode.FINANCING_GAP)
+        if profile.fiscal_capacity < 0.5:
+            reasons.append(ProvinceReasonCode.FISCAL_CONSTRAINT)
+        if profile.transition_pressure > 0.62:
+            reasons.append(ProvinceReasonCode.GREEN_TRANSITION)
+        if requested > 0.55:
+            reasons.append(ProvinceReasonCode.CENTRAL_SUPPORT_REQUEST)
         return ProvinceAction(
             action_id=_stable_id(
-                f"act_{profile.province_code}_{phase.value}",
+                f"province_{profile.province_code}_{phase.value}",
                 {
+                    "profile": profile.model_dump(mode="json"),
                     "state": state.model_dump(mode="json"),
                     "policy": policy.model_dump(mode="json"),
-                    "neighbors": {
-                        code: action.action_id for code, action in sorted(neighbor_actions.items())
-                    },
+                    "neighbors": sorted(neighbor_actions),
                 },
             ),
             province_code=profile.province_code,
             phase=phase,
-            stance=stance,
             implementation_intensity=round(intensity, 4),
-            local_budget_ratio=round(budget, 4),
-            priority_industries=priorities,
-            talent_strategy=talent_strategy,
-            interaction_strategy=interaction,
-            target_provinces=targets,
-            requested_central_support=round(request_support, 4),
+            local_match_ratio=round(local_match, 4),
+            instrument_mix=instrument_mix,
+            sme_preference=round(_clamp(policy.sme_preference + 0.12 * profile.sme_density), 4),
+            regional_delivery_focus=round(_clamp(0.45 + 0.35 * (1 - profile.credit_access)), 4),
+            technology_mix=technology_mix,
+            requested_central_support=round(requested, 4),
             reason_codes=reasons[:5],
-            public_summary=(f"围绕{industry_names[priorities[0]]}配置地方资源，{strategy_text}。"),
+            public_summary="结合制造基础与融资约束配置补贴、贴息和担保工具。",
+            run_mode=self.run_mode,
+        )
+
+    @staticmethod
+    def _upgrade_type(profile: EnterpriseGroupProfile, policy: PolicySchema) -> UpgradeType:
+        scores = {
+            UpgradeType.DIGITAL: profile.digital_readiness * policy.technology_mix.digital,
+            UpgradeType.GREEN: profile.green_transition_pressure * policy.technology_mix.green,
+            UpgradeType.GENERAL: profile.equipment_age_pressure * policy.technology_mix.general,
+        }
+        return max(scores, key=scores.get)
+
+    @staticmethod
+    def _financing_choice(
+        profile: EnterpriseGroupProfile, province_action: ProvinceAction
+    ) -> FinancingChoice:
+        if profile.financing_constraint >= 0.62:
+            return FinancingChoice.GUARANTEE_LOAN
+        if profile.archetype == EnterpriseArchetype.TECHNOLOGY_SME:
+            return FinancingChoice.INTEREST_SUBSIDY
+        if profile.cash_flow_resilience >= 0.74:
+            return FinancingChoice.SELF_FUNDED
+        if province_action.instrument_mix.direct_subsidy >= 0.42:
+            return FinancingChoice.DIRECT_SUBSIDY
+        return FinancingChoice.INTEREST_SUBSIDY
+
+    async def generate_enterprise_actions_batch(
+        self,
+        *,
+        province_profile: ProvinceProfile,
+        province_action: ProvinceAction,
+        enterprise_profiles: list[EnterpriseGroupProfile],
+        enterprise_states: dict[str, EnterpriseGroupState],
+        policy: PolicySchema,
+        phase: Phase,
+        seed: int,
+        prompt_version: str,
+        model_version: str,
+    ) -> EnterpriseActionBatch:
+        del seed, prompt_version, model_version
+        actions: list[EnterpriseAction] = []
+        for profile in enterprise_profiles:
+            state = enterprise_states[profile.enterprise_id]
+            support = (
+                policy.support_intensity / 100 * province_action.implementation_intensity
+                + 0.18 * province_profile.credit_access
+                + (0.14 * policy.sme_preference if "sme" in profile.archetype.value else 0)
+                - 0.46 * profile.financing_constraint
+                + 0.18 * profile.equipment_age_pressure
+            )
+            if phase == Phase.T4:
+                support += 0.04 * (state.renewal_willingness / 100 - 0.5)
+            if support >= 0.52:
+                participation = Participation.PARTICIPATE
+            elif support >= 0.34:
+                participation = Participation.CONDITIONAL
+            elif support >= 0.20:
+                participation = Participation.WAIT
+            else:
+                participation = Participation.DECLINE
+            active = participation in {Participation.PARTICIPATE, Participation.CONDITIONAL}
+            upgrade = self._upgrade_type(profile, policy) if active else UpgradeType.NONE
+            financing = (
+                self._financing_choice(profile, province_action)
+                if participation != Participation.DECLINE
+                else FinancingChoice.NONE
+            )
+            if participation == Participation.WAIT:
+                financing = FinancingChoice.NONE
+            investment = 0.0 if not active else _clamp(0.36 + 0.46 * support)
+            request = _clamp(
+                0.62 * profile.financing_constraint
+                + 0.28 * profile.equipment_age_pressure
+                - 0.18 * province_profile.credit_access
+            )
+            reasons = [EnterpriseReasonCode.POLICY_MATCH]
+            if profile.financing_constraint > 0.62:
+                reasons.append(EnterpriseReasonCode.CASH_FLOW_CONSTRAINT)
+                reasons.append(EnterpriseReasonCode.GUARANTEE_NEEDED)
+            if participation == Participation.WAIT:
+                reasons.append(EnterpriseReasonCode.DEMAND_UNCERTAINTY)
+            if financing == FinancingChoice.INTEREST_SUBSIDY:
+                reasons.append(EnterpriseReasonCode.CREDIT_ACCESS)
+            if upgrade == UpgradeType.GREEN:
+                reasons.append(EnterpriseReasonCode.GREEN_COMPLIANCE)
+            actions.append(
+                EnterpriseAction(
+                    action_id=_stable_id(
+                        f"enterprise_{profile.enterprise_id}_{phase.value}",
+                        {
+                            "profile": profile.model_dump(mode="json"),
+                            "state": state.model_dump(mode="json"),
+                            "policy": policy.model_dump(mode="json"),
+                            "province_action": province_action.model_dump(mode="json"),
+                        },
+                    ),
+                    enterprise_id=profile.enterprise_id,
+                    province_code=profile.province_code,
+                    archetype=profile.archetype,
+                    phase=phase,
+                    participation=participation,
+                    upgrade_type=upgrade,
+                    financing_choice=financing,
+                    investment_intensity=round(investment, 4),
+                    requested_support=round(request, 4),
+                    reason_codes=reasons[:5],
+                    public_summary=(
+                        "在当前支持与融资条件下参与设备更新。"
+                        if active
+                        else "当前融资与需求约束较强，暂不启动设备更新。"
+                    ),
+                )
+            )
+        return EnterpriseActionBatch(
+            batch_id=_stable_id(
+                f"batch_{province_profile.province_code}_{phase.value}",
+                [item.action_id for item in actions],
+            ),
+            province_code=province_profile.province_code,
+            phase=phase,
+            actions=actions,
+            run_mode=self.run_mode,
+        )
+
+    async def generate_province_feedback(
+        self,
+        *,
+        profile: ProvinceProfile,
+        state: ProvinceState,
+        aggregate: EnterpriseAggregate,
+        enterprise_actions: list[EnterpriseAction],
+        policy: PolicySchema,
+        seed: int,
+        prompt_version: str,
+        model_version: str,
+    ) -> ProvinceFeedback:
+        del policy, seed, prompt_version, model_version
+        constrained = sorted(
+            enterprise_actions, key=lambda item: item.requested_support, reverse=True
+        )[:2]
+        reasons = [ProvinceReasonCode.MANUFACTURING_BASE]
+        if aggregate.sme_financing_accessibility_index < 55:
+            reasons.extend(
+                [ProvinceReasonCode.FINANCING_GAP, ProvinceReasonCode.SME_ACCESS_PRIORITY]
+            )
+        if state.fiscal_pressure_index > 55:
+            reasons.append(ProvinceReasonCode.FISCAL_CONSTRAINT)
+        return ProvinceFeedback(
+            feedback_id=_stable_id(
+                f"feedback_{profile.province_code}",
+                {
+                    "state": state.model_dump(mode="json"),
+                    "aggregate": aggregate.model_dump(mode="json"),
+                },
+            ),
+            province_code=profile.province_code,
+            implementation_assessment=(
+                "融资可达性仍是主要约束"
+                if aggregate.sme_financing_accessibility_index < 55
+                else "设备更新参与度稳步形成"
+            ),
+            priority_enterprise_groups=[item.archetype.value for item in constrained],
+            requested_central_support=round(
+                fmean(item.requested_support for item in enterprise_actions), 4
+            ),
+            reason_codes=reasons[:5],
+            evidence_refs=[
+                f"metric:{profile.province_code}:sme_financing_accessibility_index:T2",
+                f"enterprise:{constrained[0].enterprise_id}:action:T2",
+            ],
+            public_summary="地方反馈显示企业参与存在分化，融资约束集中在中小企业群体。",
             run_mode=self.run_mode,
         )
 
@@ -190,13 +366,26 @@ class FakeLLMProvider:
         policy: PolicySchema,
         metrics: NationalMetrics,
         states: dict[str, ProvinceState],
-        actions: dict[str, ProvinceAction],
+        feedback: dict[str, ProvinceFeedback],
+        enterprise_actions: dict[str, EnterpriseAction],
     ) -> list[CentralInterventionProposal]:
-        target_bias = max(policy.regional_bias, 0.45)
-        target_cooperation = max(policy.cooperation_incentive, 0.65)
-        support_requests = mean(
-            [action.requested_central_support for action in actions.values()] or [0]
+        del states, enterprise_actions
+        target_guarantee = min(0.36, policy.instrument_mix.financing_guarantee + 0.12)
+        target_interest = min(0.40, policy.instrument_mix.interest_subsidy + 0.03)
+        target_direct = 1 - target_guarantee - target_interest
+        proposed = policy.model_copy(
+            update={
+                "instrument_mix": InstrumentMix(
+                    direct_subsidy=round(target_direct, 6),
+                    interest_subsidy=round(target_interest, 6),
+                    financing_guarantee=round(target_guarantee, 6),
+                ),
+                "sme_preference": min(0.82, policy.sme_preference + 0.14),
+                "regional_support_bias": max(0.35, policy.regional_support_bias),
+            },
+            deep=True,
         )
+        support_request = fmean(item.requested_central_support for item in feedback.values())
         return [
             CentralInterventionProposal(
                 proposal_id=_stable_id(
@@ -206,63 +395,85 @@ class FakeLLMProvider:
                         "metrics": metrics.model_dump(mode="json"),
                     },
                 ),
-                parameter_changes={
-                    "regional_bias": ParameterChange(
-                        from_value=policy.regional_bias, to_value=round(target_bias, 2)
-                    ),
-                    "cooperation_incentive": ParameterChange(
-                        from_value=policy.cooperation_incentive,
-                        to_value=round(target_cooperation, 2),
-                    ),
-                },
-                target_metrics=["policy_accessibility", "regional_gap"],
-                expected_directions={
-                    "policy_accessibility": "increase",
-                    "regional_gap": "decrease",
-                    "fiscal_pressure": "may_increase",
-                },
-                tradeoffs=["区域覆盖改善可能增加财政与协调成本"],
-                evidence_refs=[
-                    "metric:regional_gap:T3",
-                    "metric:policy_accessibility:T3",
-                    f"metric:mean_support_request:{support_requests:.2f}",
+                proposed_policy=proposed,
+                parameter_changes=policy_diff(policy, proposed),
+                target_metrics=[
+                    "enterprise_participation_index",
+                    "sme_financing_accessibility_index",
+                    "regional_gap_index",
                 ],
-                public_summary=(
-                    "国务院 Agent 建议提高中西部与东北倾斜并增强跨省合作激励，"
-                    "其效果仍需通过 Treatment 分支验证。"
+                expected_directions={
+                    "enterprise_participation_index": "increase",
+                    "sme_financing_accessibility_index": "increase",
+                    "regional_gap_index": "decrease",
+                    "local_fiscal_pressure_index": "may_increase",
+                },
+                tradeoffs=["担保与区域倾斜提高可达性的同时可能增加财政压力。"],
+                evidence_refs=[
+                    "metric:national:sme_financing_accessibility_index:T2",
+                    "metric:national:regional_gap_index:T2",
+                    f"feedback:mean_support_request:{support_request:.3f}",
+                ],
+                public_summary="".join(
+                    [
+                        "中央政策研判 Agent 建议提高担保、SME 与区域倾斜；",
+                        "预期方向待同源分支验证。",
+                    ]
                 ),
             )
         ]
 
-    async def generate_central_review(self, comparison: ComparisonResult) -> CentralReview:
-        accessibility = comparison.national_metrics["policy_accessibility"]
-        fiscal = comparison.national_metrics["fiscal_pressure"]
-        gap = comparison.national_metrics["regional_gap"]
-        benefit = comparison.national_metrics["overall_policy_benefit"]
-        findings = [
-            ReviewFinding(
-                title="政策可达性变化",
-                summary=f"Treatment 相对 Control 的政策可达性指数变化 {accessibility.delta:+.2f}。",
-                evidence_refs=["comparison:national_metrics:policy_accessibility"],
-                tradeoff=f"财政压力指数同步变化 {fiscal.delta:+.2f}。",
-            ),
-            ReviewFinding(
-                title="区域差距变化",
-                summary=f"区域差距指数变化 {gap.delta:+.2f}，需与总收益共同判断。",
-                evidence_refs=["comparison:national_metrics:regional_gap"],
-                tradeoff=f"综合政策收益指数变化 {benefit.delta:+.2f}。",
-            ),
-        ]
+    async def generate_central_review(self, result: ComparisonResult | WorldState) -> CentralReview:
+        if isinstance(result, ComparisonResult):
+            access = result.national_metrics["sme_financing_accessibility_index"]
+            fiscal = result.national_metrics["local_fiscal_pressure_index"]
+            participation = result.national_metrics["enterprise_participation_index"]
+            findings = [
+                ReviewFinding(
+                    title="企业参与变化",
+                    summary=f"干预方案相对原始方案变化 {participation.delta:+.1f} 指数点。",
+                    evidence_refs=["comparison:national_metrics:enterprise_participation_index"],
+                ),
+                ReviewFinding(
+                    title="融资可达性与财政代价",
+                    summary=f"SME 融资可达性变化 {access.delta:+.1f} 指数点。",
+                    evidence_refs=["comparison:national_metrics:sme_financing_accessibility_index"],
+                    tradeoff=f"地方财政压力同步变化 {fiscal.delta:+.1f} 指数点。",
+                ),
+            ]
+            review_mode = ReviewMode.COMPARISON
+            public_summary = "".join(
+                [
+                    "中央政策研判 Agent 已完成同源 A/B 复盘，",
+                    "请结合参与、可达性与财政代价判断。",
+                ]
+            )
+            payload = result.model_dump(mode="json", exclude={"central_review"})
+        else:
+            metrics = result.national_metrics
+            findings = [
+                ReviewFinding(
+                    title="原始方案单线结算",
+                    summary=(
+                        f"企业参与指数为 {metrics.enterprise_participation_index:.1f} / 100，"
+                        "本次未创建干预分支。"
+                    ),
+                    evidence_refs=["world:control:national_metrics:T5"],
+                    tradeoff=(
+                        f"地方财政压力指数为 {metrics.local_fiscal_pressure_index:.1f} / 100。"
+                    ),
+                )
+            ]
+            review_mode = ReviewMode.SINGLE_BRANCH
+            public_summary = "用户拒绝干预后，原始方案已单线结算；系统未伪造 A/B 结果。"
+            payload = result.model_dump(mode="json", exclude={"central_review"})
         return CentralReview(
-            review_id=_stable_id(
-                "review", comparison.model_dump(mode="json", exclude={"central_review"})
-            ),
+            review_id=_stable_id("review", payload),
+            review_mode=review_mode,
             findings=findings,
             limitations=[
-                "结果只适用于当前数据、参数、模型与机制版本。",
-                "省级响应代理不代表现实政府立场，指数不映射为现实GDP或就业变化。",
+                "结果只适用于当前数据、参数、机制版本与 seed。",
+                "企业群体为合成主体，指数不映射现实金额、GDP、就业或生产率。",
             ],
-            public_summary=(
-                "国务院 Agent 已完成结构化对照复盘；请结合收益、区域均衡与财政代价共同判断。"
-            ),
+            public_summary=public_summary,
         )

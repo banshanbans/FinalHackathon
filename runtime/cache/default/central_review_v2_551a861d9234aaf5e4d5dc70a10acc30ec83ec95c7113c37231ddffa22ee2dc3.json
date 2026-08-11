@@ -1,0 +1,28 @@
+{
+  "schema_version": "central-review-v2",
+  "review_id": "review_873b8b4334cc",
+  "review_mode": "comparison",
+  "findings": [
+    {
+      "title": "企业参与变化",
+      "summary": "干预方案相对原始方案变化 +1.1 指数点。",
+      "evidence_refs": [
+        "comparison:national_metrics:enterprise_participation_index"
+      ],
+      "tradeoff": null
+    },
+    {
+      "title": "融资可达性与财政代价",
+      "summary": "SME 融资可达性变化 +1.3 指数点。",
+      "evidence_refs": [
+        "comparison:national_metrics:sme_financing_accessibility_index"
+      ],
+      "tradeoff": "地方财政压力同步变化 +1.5 指数点。"
+    }
+  ],
+  "limitations": [
+    "结果只适用于当前数据、参数、机制版本与 seed。",
+    "企业群体为合成主体，指数不映射现实金额、GDP、就业或生产率。"
+  ],
+  "public_summary": "中央政策研判 Agent 已完成同源 A/B 复盘，请结合参与、可达性与财政代价判断。"
+}

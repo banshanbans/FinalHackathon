@@ -55,37 +55,59 @@ class RegionGroup(StrEnum):
     NORTHEAST = "northeast"
 
 
-class Industry(StrEnum):
-    AI = "ai"
-    ADVANCED_MANUFACTURING = "advanced_manufacturing"
-    GREEN_ENERGY = "green_energy"
+class EnterpriseArchetype(StrEnum):
+    LARGE_STATE_OWNED = "large_state_owned"
+    LARGE_PRIVATE = "large_private"
+    TECHNOLOGY_SME = "technology_sme"
+    TRADITIONAL_SME = "traditional_sme"
+    HIGH_ENERGY_INDUSTRIAL = "high_energy_industrial"
+    EXPORT_MANUFACTURER = "export_manufacturer"
 
 
-class Stance(StrEnum):
-    AGGRESSIVE = "aggressive"
-    BALANCED = "balanced"
-    CAUTIOUS = "cautious"
+class Participation(StrEnum):
+    PARTICIPATE = "participate"
+    CONDITIONAL = "conditional"
+    WAIT = "wait"
+    DECLINE = "decline"
 
 
-class TalentStrategy(StrEnum):
-    EXPAND = "expand"
-    RETAIN = "retain"
-    RESKILL = "reskill"
-    STABLE = "stable"
+class UpgradeType(StrEnum):
+    DIGITAL = "digital"
+    GREEN = "green"
+    GENERAL = "general"
+    NONE = "none"
 
 
-class InteractionStrategy(StrEnum):
-    COMPETE = "compete"
-    COOPERATE = "cooperate"
-    OBSERVE = "observe"
+class FinancingChoice(StrEnum):
+    SELF_FUNDED = "self_funded"
+    DIRECT_SUBSIDY = "direct_subsidy"
+    INTEREST_SUBSIDY = "interest_subsidy"
+    GUARANTEE_LOAN = "guarantee_loan"
+    NONE = "none"
 
 
-class ReasonCode(StrEnum):
-    HIGH_INDUSTRY_FIT = "HIGH_INDUSTRY_FIT"
-    TRANSITION_PRIORITY = "TRANSITION_PRIORITY"
-    HIGH_FISCAL_CAPACITY = "HIGH_FISCAL_CAPACITY"
+class ProvinceReasonCode(StrEnum):
+    MANUFACTURING_BASE = "MANUFACTURING_BASE"
     FISCAL_CONSTRAINT = "FISCAL_CONSTRAINT"
-    TALENT_COMPETITION = "TALENT_COMPETITION"
-    REGIONAL_COOPERATION = "REGIONAL_COOPERATION"
-    EMPLOYMENT_PRESSURE = "EMPLOYMENT_PRESSURE"
+    SME_ACCESS_PRIORITY = "SME_ACCESS_PRIORITY"
+    GREEN_TRANSITION = "GREEN_TRANSITION"
+    FINANCING_GAP = "FINANCING_GAP"
+    REGIONAL_ACCESS = "REGIONAL_ACCESS"
     CENTRAL_SUPPORT_REQUEST = "CENTRAL_SUPPORT_REQUEST"
+
+
+class EnterpriseReasonCode(StrEnum):
+    POLICY_MATCH = "POLICY_MATCH"
+    SUBSIDY_ATTRACTIVE = "SUBSIDY_ATTRACTIVE"
+    CREDIT_ACCESS = "CREDIT_ACCESS"
+    GUARANTEE_NEEDED = "GUARANTEE_NEEDED"
+    CASH_FLOW_CONSTRAINT = "CASH_FLOW_CONSTRAINT"
+    TECHNOLOGY_READINESS = "TECHNOLOGY_READINESS"
+    GREEN_COMPLIANCE = "GREEN_COMPLIANCE"
+    DEMAND_UNCERTAINTY = "DEMAND_UNCERTAINTY"
+    SUPPORT_INSUFFICIENT = "SUPPORT_INSUFFICIENT"
+
+
+class ReviewMode(StrEnum):
+    COMPARISON = "comparison"
+    SINGLE_BRANCH = "single_branch"

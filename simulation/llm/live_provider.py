@@ -15,16 +15,27 @@ from simulation.models.central import (
     CentralReview,
 )
 from simulation.models.common import Phase
+from simulation.models.enterprise import (
+    EnterpriseAction,
+    EnterpriseActionBatch,
+    EnterpriseAggregate,
+    EnterpriseGroupProfile,
+    EnterpriseGroupState,
+)
 from simulation.models.experiment import ExperimentConfig
 from simulation.models.policy import PolicySchema
-from simulation.models.province import ProvinceProfile, ProvinceState
-from simulation.models.world import ComparisonResult, NationalMetrics
+from simulation.models.province import ProvinceFeedback, ProvinceProfile, ProvinceState
+from simulation.models.world import ComparisonResult, NationalMetrics, WorldState
 
 ModelT = TypeVar("ModelT", bound=BaseModel)
 
 
+class ProposalList(BaseModel):
+    proposals: list[CentralInterventionProposal]
+
+
 class LiveLLMProvider:
-    """OpenAI-compatible structured provider with one repair and deterministic fallback."""
+    """OpenAI-compatible V2 provider with one schema repair and deterministic fallback."""
 
     def __init__(
         self,
@@ -52,19 +63,22 @@ class LiveLLMProvider:
         response_type: type[ModelT],
         fallback: Callable[[], Awaitable[ModelT]],
     ) -> ModelT:
-        schema = response_type.model_json_schema()
-        messages = [
+        messages: list[dict[str, str]] = [
             {
                 "role": "system",
                 "content": (
-                    "你是PolicyScope中的结构化策略Agent。只返回JSON，不生成现实预测，"
-                    "不得输出长思维链。输出必须符合给定JSON Schema。"
+                    "你是PolicyScope中的结构化策略Agent。只返回JSON；不生成现实金额、GDP、"
+                    "就业或生产率预测；不输出长思维链。严格遵守输入中的JSON Schema。"
                 ),
             },
             {
                 "role": "user",
                 "content": json.dumps(
-                    {"instruction": instruction, "input": payload, "schema": schema},
+                    {
+                        "instruction": instruction,
+                        "input": payload,
+                        "schema": response_type.model_json_schema(),
+                    },
                     ensure_ascii=False,
                 ),
             },
@@ -72,13 +86,13 @@ class LiveLLMProvider:
         invalid_content = ""
         invalid_error = ""
         for attempt in range(2):
-            if attempt == 1:
+            if attempt:
                 messages.append(
                     {
                         "role": "user",
                         "content": json.dumps(
                             {
-                                "repair": "上一响应未通过校验，请只返回修复后的JSON。",
+                                "repair": "上一响应未通过校验，仅返回修复后的完整JSON。",
                                 "validation_error": invalid_error,
                                 "invalid_response": invalid_content[:2000],
                             },
@@ -94,10 +108,9 @@ class LiveLLMProvider:
                         response_format={"type": "json_object"},
                         temperature=0.1,
                     )
-                content = response.choices[0].message.content or "{}"
-                return response_type.model_validate_json(content)
+                invalid_content = response.choices[0].message.content or "{}"
+                return response_type.model_validate_json(invalid_content)
             except (ValidationError, json.JSONDecodeError, ValueError, RuntimeError) as error:
-                invalid_content = locals().get("content", "")
                 invalid_error = str(error)
             except Exception:
                 break
@@ -108,7 +121,7 @@ class LiveLLMProvider:
     ) -> CentralPolicyDirective:
         return await self._structured(
             model=self.central_model,
-            instruction="根据用户目标和限定模板形成待人工审批的中央政策指令。",
+            instruction="将用户目标整理为待人工审批的制造业设备更新政策指令。",
             payload={
                 "config": config.model_dump(mode="json"),
                 "default_policy": default_policy.model_dump(mode="json"),
@@ -126,6 +139,9 @@ class LiveLLMProvider:
         phase: Phase,
         related: list[NetworkEdge],
         neighbor_actions: dict[str, ProvinceAction],
+        seed: int,
+        prompt_version: str,
+        model_version: str,
     ) -> ProvinceAction:
         async def fallback_action() -> ProvinceAction:
             action = await self.fallback.generate_province_action(
@@ -135,32 +151,139 @@ class LiveLLMProvider:
                 phase=phase,
                 related=related,
                 neighbor_actions=neighbor_actions,
+                seed=seed,
+                prompt_version=prompt_version,
+                model_version=model_version,
             )
             return action.model_copy(update={"run_mode": "fallback", "fallback_used": True})
 
-        action = await self._structured(
+        result = await self._structured(
             model=self.province_model,
-            instruction="依据本省画像、当前状态和相关省公开动作选择结构化执行策略。",
+            instruction="选择本省设备更新的地方工具组合；不得输出结果指标。",
             payload={
                 "profile": profile.model_dump(mode="json"),
                 "state": state.model_dump(mode="json"),
                 "policy": policy.model_dump(mode="json"),
                 "phase": phase.value,
-                "related": [edge.model_dump(mode="json") for edge in related],
+                "related": [item.model_dump(mode="json") for item in related],
                 "neighbor_actions": {
                     code: item.model_dump(mode="json") for code, item in neighbor_actions.items()
                 },
+                "seed": seed,
+                "prompt_version": prompt_version,
+                "model_version": model_version,
             },
             response_type=ProvinceAction,
             fallback=fallback_action,
         )
-        allowed_targets = {edge.target for edge in related}
-        if (
-            action.province_code != profile.province_code
-            or not set(action.target_provinces) <= allowed_targets
-        ):
+        if result.province_code != profile.province_code:
             return await fallback_action()
-        return action.model_copy(update={"run_mode": "live"})
+        return result.model_copy(update={"run_mode": "live"})
+
+    async def generate_enterprise_actions_batch(
+        self,
+        *,
+        province_profile: ProvinceProfile,
+        province_action: ProvinceAction,
+        enterprise_profiles: list[EnterpriseGroupProfile],
+        enterprise_states: dict[str, EnterpriseGroupState],
+        policy: PolicySchema,
+        phase: Phase,
+        seed: int,
+        prompt_version: str,
+        model_version: str,
+    ) -> EnterpriseActionBatch:
+        async def fallback_batch() -> EnterpriseActionBatch:
+            batch = await self.fallback.generate_enterprise_actions_batch(
+                province_profile=province_profile,
+                province_action=province_action,
+                enterprise_profiles=enterprise_profiles,
+                enterprise_states=enterprise_states,
+                policy=policy,
+                phase=phase,
+                seed=seed,
+                prompt_version=prompt_version,
+                model_version=model_version,
+            )
+            return batch.model_copy(
+                update={
+                    "run_mode": "fallback",
+                    "fallback_used": True,
+                    "fallback_reason": "schema_or_provider_failure_after_repair",
+                }
+            )
+
+        result = await self._structured(
+            model=self.province_model,
+            instruction=(
+                "一次返回本省六类企业群体的独立行动。必须恰好六类；不得输出金额或最终指标。"
+            ),
+            payload={
+                "province_profile": province_profile.model_dump(mode="json"),
+                "province_action": province_action.model_dump(mode="json"),
+                "enterprise_profiles": [
+                    item.model_dump(mode="json") for item in enterprise_profiles
+                ],
+                "enterprise_states": {
+                    key: item.model_dump(mode="json") for key, item in enterprise_states.items()
+                },
+                "policy": policy.model_dump(mode="json"),
+                "phase": phase.value,
+                "seed": seed,
+                "prompt_version": prompt_version,
+                "model_version": model_version,
+            },
+            response_type=EnterpriseActionBatch,
+            fallback=fallback_batch,
+        )
+        if result.province_code != province_profile.province_code:
+            return await fallback_batch()
+        return result.model_copy(update={"run_mode": "live"})
+
+    async def generate_province_feedback(
+        self,
+        *,
+        profile: ProvinceProfile,
+        state: ProvinceState,
+        aggregate: EnterpriseAggregate,
+        enterprise_actions: list[EnterpriseAction],
+        policy: PolicySchema,
+        seed: int,
+        prompt_version: str,
+        model_version: str,
+    ) -> ProvinceFeedback:
+        async def fallback_feedback() -> ProvinceFeedback:
+            item = await self.fallback.generate_province_feedback(
+                profile=profile,
+                state=state,
+                aggregate=aggregate,
+                enterprise_actions=enterprise_actions,
+                policy=policy,
+                seed=seed,
+                prompt_version=prompt_version,
+                model_version=model_version,
+            )
+            return item.model_copy(update={"run_mode": "fallback", "fallback_used": True})
+
+        result = await self._structured(
+            model=self.province_model,
+            instruction="基于环境指标和六类企业行动生成地方实施反馈，不得自行计算结果。",
+            payload={
+                "profile": profile.model_dump(mode="json"),
+                "state": state.model_dump(mode="json"),
+                "aggregate": aggregate.model_dump(mode="json"),
+                "enterprise_actions": [item.model_dump(mode="json") for item in enterprise_actions],
+                "policy": policy.model_dump(mode="json"),
+                "seed": seed,
+                "prompt_version": prompt_version,
+                "model_version": model_version,
+            },
+            response_type=ProvinceFeedback,
+            fallback=fallback_feedback,
+        )
+        if result.province_code != profile.province_code:
+            return await fallback_feedback()
+        return result.model_copy(update={"run_mode": "live"})
 
     async def generate_intervention_proposals(
         self,
@@ -168,29 +291,29 @@ class LiveLLMProvider:
         policy: PolicySchema,
         metrics: NationalMetrics,
         states: dict[str, ProvinceState],
-        actions: dict[str, ProvinceAction],
+        feedback: dict[str, ProvinceFeedback],
+        enterprise_actions: dict[str, EnterpriseAction],
     ) -> list[CentralInterventionProposal]:
-        class ProposalList(BaseModel):
-            proposals: list[CentralInterventionProposal]
-
         async def fallback_proposals() -> ProposalList:
             proposals = await self.fallback.generate_intervention_proposals(
                 policy=policy,
                 metrics=metrics,
                 states=states,
-                actions=actions,
+                feedback=feedback,
+                enterprise_actions=enterprise_actions,
             )
             return ProposalList(proposals=proposals)
 
         result = await self._structured(
             model=self.central_model,
-            instruction="基于结构化全国态势提出最多3个待用户审批的政策参数干预选项。",
+            instruction="基于T2证据提出最多3个待用户审批的完整政策参数方案。",
             payload={
                 "policy": policy.model_dump(mode="json"),
                 "metrics": metrics.model_dump(mode="json"),
-                "states": {code: state.model_dump(mode="json") for code, state in states.items()},
-                "actions": {
-                    code: action.model_dump(mode="json") for code, action in actions.items()
+                "states": {code: item.model_dump(mode="json") for code, item in states.items()},
+                "feedback": {code: item.model_dump(mode="json") for code, item in feedback.items()},
+                "enterprise_actions": {
+                    key: item.model_dump(mode="json") for key, item in enterprise_actions.items()
                 },
             },
             response_type=ProposalList,
@@ -198,11 +321,11 @@ class LiveLLMProvider:
         )
         return result.proposals[:3]
 
-    async def generate_central_review(self, comparison: ComparisonResult) -> CentralReview:
+    async def generate_central_review(self, result: ComparisonResult | WorldState) -> CentralReview:
         return await self._structured(
             model=self.central_model,
-            instruction="只引用对照JSON中的事实，生成不超过5条收益、代价与限制并存的中央复盘。",
-            payload=comparison.model_dump(mode="json", exclude={"central_review"}),
+            instruction="只引用输入JSON中的事实生成中央复盘，明确收益、代价与限制。",
+            payload=result.model_dump(mode="json", exclude={"central_review"}),
             response_type=CentralReview,
-            fallback=lambda: self.fallback.generate_central_review(comparison),
+            fallback=lambda: self.fallback.generate_central_review(result),
         )

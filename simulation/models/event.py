@@ -7,7 +7,7 @@ from simulation.models.common import Phase
 
 
 class EventEnvelope(DomainModel):
-    schema_version: str = "event-v1"
+    schema_version: str = "event-v2"
     event_id: str
     type: str
     experiment_id: str

@@ -3,39 +3,42 @@ from math import isclose
 from pydantic import Field, model_validator
 
 from simulation.models.base import DomainModel
-from simulation.models.common import Industry
 
 
-class EvaluationWeights(DomainModel):
-    innovation: float = Field(default=0.35, ge=0, le=1)
-    employment: float = Field(default=0.25, ge=0, le=1)
-    equity: float = Field(default=0.25, ge=0, le=1)
-    fiscal_efficiency: float = Field(default=0.15, ge=0, le=1)
+class InstrumentMix(DomainModel):
+    direct_subsidy: float = Field(default=0.45, ge=0, le=1)
+    interest_subsidy: float = Field(default=0.35, ge=0, le=1)
+    financing_guarantee: float = Field(default=0.20, ge=0, le=1)
 
     @model_validator(mode="after")
-    def weights_sum_to_one(self) -> "EvaluationWeights":
-        total = self.innovation + self.employment + self.equity + self.fiscal_efficiency
+    def weights_sum_to_one(self) -> "InstrumentMix":
+        total = self.direct_subsidy + self.interest_subsidy + self.financing_guarantee
         if not isclose(total, 1.0, abs_tol=1e-6):
-            raise ValueError(f"evaluation weights must sum to 1.0, got {total}")
+            raise ValueError(f"instrument mix must sum to 1.0, got {total}")
+        return self
+
+
+class TechnologyMix(DomainModel):
+    digital: float = Field(default=0.40, ge=0, le=1)
+    green: float = Field(default=0.30, ge=0, le=1)
+    general: float = Field(default=0.30, ge=0, le=1)
+
+    @model_validator(mode="after")
+    def weights_sum_to_one(self) -> "TechnologyMix":
+        total = self.digital + self.green + self.general
+        if not isclose(total, 1.0, abs_tol=1e-6):
+            raise ValueError(f"technology mix must sum to 1.0, got {total}")
         return self
 
 
 class PolicySchema(DomainModel):
-    schema_version: str = "policy-v1"
-    policy_id: str = "strategic_industry_v1"
-    domain: str = "strategic_emerging_industry"
-    central_budget_index: float = Field(default=70, ge=0, le=100)
-    local_match_requirement: float = Field(default=0.5, ge=0, le=1)
-    regional_bias: float = Field(default=0, ge=-1, le=1)
-    cooperation_incentive: float = Field(default=0.4, ge=0, le=1)
-    evaluation_weights: EvaluationWeights = Field(default_factory=EvaluationWeights)
-    priority_industries: list[Industry] = Field(
-        default_factory=lambda: [
-            Industry.AI,
-            Industry.ADVANCED_MANUFACTURING,
-            Industry.GREEN_ENERGY,
-        ],
-        min_length=1,
-        max_length=3,
-    )
-    mechanism_version: str = "industry-policy-env-v1"
+    schema_version: str = "policy-v2"
+    policy_id: str = "equipment_renewal_v2"
+    domain: str = "manufacturing_equipment_renewal"
+    support_intensity: float = Field(default=70, ge=0, le=100)
+    local_match_requirement: float = Field(default=0.50, ge=0, le=1)
+    instrument_mix: InstrumentMix = Field(default_factory=InstrumentMix)
+    sme_preference: float = Field(default=0.60, ge=0, le=1)
+    regional_support_bias: float = Field(default=0.0, ge=-1, le=1)
+    technology_mix: TechnologyMix = Field(default_factory=TechnologyMix)
+    mechanism_version: str = "equipment-renewal-env-v2"

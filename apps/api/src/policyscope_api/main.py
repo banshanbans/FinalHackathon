@@ -1,6 +1,9 @@
 import asyncio
-from collections.abc import AsyncIterator
+import hashlib
+import json
+from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
+from typing import TypeVar
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,34 +15,52 @@ from policyscope_api.schemas import (
     ApproveInterventionRequest,
     CreateBranchRequest,
     CreateExperimentRequest,
+    RejectInterventionRequest,
     RunBranchRequest,
     RunExperimentRequest,
 )
 from policyscope_api.settings import Settings, get_settings
 from simulation.adapters.asyncio_adapter import AsyncioSimulationAdapter
+from simulation.data import load_enterprise_archetypes
 from simulation.models.experiment import ExperimentConfig
+
+ResponseT = TypeVar("ResponseT")
 
 
 def _http_error(error: Exception) -> HTTPException:
+    message = str(error)
+    if "COMPARISON_NOT_AVAILABLE" in message:
+        return HTTPException(
+            status_code=409,
+            detail={
+                "error_code": "COMPARISON_NOT_AVAILABLE",
+                "message": "用户未创建干预分支，当前实验只有原始方案单线复盘。",
+            },
+        )
     if isinstance(error, KeyError):
         return HTTPException(
             status_code=404,
-            detail={"error_code": "NOT_FOUND", "message": str(error)},
+            detail={"error_code": "NOT_FOUND", "message": message},
         )
     if isinstance(error, PermissionError):
         return HTTPException(
             status_code=403,
-            detail={"error_code": "APPROVAL_REQUIRED", "message": str(error)},
+            detail={"error_code": "APPROVAL_REQUIRED", "message": message},
         )
     if isinstance(error, ValueError):
         return HTTPException(
             status_code=409,
-            detail={"error_code": "INVALID_STATE", "message": str(error)},
+            detail={"error_code": "INVALID_STATE", "message": message},
         )
     return HTTPException(
         status_code=500,
         detail={"error_code": "INTERNAL_ERROR", "message": "Internal simulation error"},
     )
+
+
+def _request_hash(payload: object) -> str:
+    raw = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(raw.encode()).hexdigest()
 
 
 def create_app(
@@ -51,13 +72,14 @@ def create_app(
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncIterator[None]:
         application.state.adapter = adapter or build_adapter(app_settings)
+        application.state.idempotency = {}
         yield
         await application.state.adapter.close()
 
     application = FastAPI(
         title="PolicyScope API",
-        version="0.1.0",
-        description="Auditable hybrid multi-agent policy simulation API",
+        version="0.2.0",
+        description="PolicyScope V2 auditable government-enterprise policy simulation API",
         lifespan=lifespan,
     )
     application.add_middleware(
@@ -68,13 +90,40 @@ def create_app(
         allow_headers=["*"],
     )
 
+    async def idempotent(
+        *,
+        scope: str,
+        key: str | None,
+        payload: object,
+        operation: Callable[[], Awaitable[ResponseT]],
+    ) -> ResponseT:
+        if not key:
+            return await operation()
+        digest = _request_hash(payload)
+        cache_key = (scope, key)
+        existing = application.state.idempotency.get(cache_key)
+        if existing:
+            old_digest, response = existing
+            if old_digest != digest:
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "error_code": "IDEMPOTENCY_CONFLICT",
+                        "message": "同一 Idempotency-Key 不能用于不同请求。",
+                    },
+                )
+            return response
+        response = await operation()
+        application.state.idempotency[cache_key] = (digest, response)
+        return response
+
     @application.get("/api/health")
     async def health() -> dict[str, str]:
         return {
             "status": "ok",
             "runtime": "asyncio",
             "run_mode": app_settings.run_mode.value,
-            "version": "0.1.0",
+            "version": "0.2.0",
         }
 
     @application.get("/api/meta/provinces")
@@ -83,6 +132,15 @@ def create_app(
     ) -> list[dict[str, object]]:
         return [
             profile.model_dump(mode="json") for _, profile in sorted(simulation.profiles.items())
+        ]
+
+    @application.get("/api/meta/enterprise-archetypes")
+    async def enterprise_archetypes() -> list[dict[str, object]]:
+        return [
+            item.model_dump(mode="json")
+            for _, item in sorted(
+                load_enterprise_archetypes().items(), key=lambda pair: pair[0].value
+            )
         ]
 
     @application.get("/api/meta/default-policy")
@@ -94,9 +152,10 @@ def create_app(
     @application.post("/api/experiments", status_code=status.HTTP_201_CREATED)
     async def create_experiment(
         body: CreateExperimentRequest,
+        idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
         simulation: AsyncioSimulationAdapter = Depends(get_adapter),
     ) -> dict[str, object]:
-        try:
+        async def operation() -> dict[str, object]:
             selected_mode = body.run_mode or app_settings.run_mode
             if selected_mode != app_settings.run_mode:
                 raise ValueError("experiment run_mode must match the configured server run mode")
@@ -108,11 +167,21 @@ def create_app(
                 model_version=(
                     app_settings.central_model
                     if selected_mode.value == "live"
-                    else f"{selected_mode.value}-v1"
+                    else f"{selected_mode.value}-v2"
                 ),
             )
             state = await simulation.initialize(config)
             return state.model_dump(mode="json")
+
+        try:
+            return await idempotent(
+                scope="create-experiment",
+                key=idempotency_key,
+                payload=body.model_dump(mode="json"),
+                operation=operation,
+            )
+        except HTTPException:
+            raise
         except Exception as error:
             raise _http_error(error) from error
 
@@ -122,8 +191,7 @@ def create_app(
         simulation: AsyncioSimulationAdapter = Depends(get_adapter),
     ) -> dict[str, object]:
         try:
-            record = await simulation.get_record(experiment_id)
-            return record.model_dump(mode="json")
+            return (await simulation.get_record(experiment_id)).model_dump(mode="json")
         except Exception as error:
             raise _http_error(error) from error
 
@@ -131,11 +199,22 @@ def create_app(
     async def approve_directive(
         experiment_id: str,
         body: ApproveDirectiveRequest,
+        idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
         simulation: AsyncioSimulationAdapter = Depends(get_adapter),
     ) -> dict[str, object]:
-        try:
+        async def operation() -> dict[str, object]:
             state = await simulation.approve_directive(experiment_id, body.policy)
             return state.model_dump(mode="json")
+
+        try:
+            return await idempotent(
+                scope=f"approve-directive:{experiment_id}",
+                key=idempotency_key,
+                payload=body.model_dump(mode="json"),
+                operation=operation,
+            )
+        except HTTPException:
+            raise
         except Exception as error:
             raise _http_error(error) from error
 
@@ -143,11 +222,22 @@ def create_app(
     async def run_experiment(
         experiment_id: str,
         body: RunExperimentRequest,
+        idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
         simulation: AsyncioSimulationAdapter = Depends(get_adapter),
     ) -> dict[str, object]:
-        try:
+        async def operation() -> dict[str, object]:
             state = await simulation.run_to_phase(experiment_id, body.until_phase, body.branch_id)
             return state.model_dump(mode="json")
+
+        try:
+            return await idempotent(
+                scope=f"run:{experiment_id}",
+                key=idempotency_key,
+                payload=body.model_dump(mode="json"),
+                operation=operation,
+            )
+        except HTTPException:
+            raise
         except Exception as error:
             raise _http_error(error) from error
 
@@ -158,8 +248,7 @@ def create_app(
         simulation: AsyncioSimulationAdapter = Depends(get_adapter),
     ) -> dict[str, object]:
         try:
-            state = await simulation.get_state(experiment_id, branch_id)
-            return state.model_dump(mode="json")
+            return (await simulation.get_state(experiment_id, branch_id)).model_dump(mode="json")
         except Exception as error:
             raise _http_error(error) from error
 
@@ -175,9 +264,7 @@ def create_app(
             while not await request.is_disconnected():
                 try:
                     events = await simulation.wait_for_events(
-                        experiment_id,
-                        cursor,
-                        timeout_seconds=10,
+                        experiment_id, cursor, timeout_seconds=10
                     )
                 except Exception as error:
                     yield {"event": "error", "data": _http_error(error).detail["message"]}
@@ -201,13 +288,48 @@ def create_app(
         experiment_id: str,
         proposal_id: str,
         body: ApproveInterventionRequest,
+        idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
         simulation: AsyncioSimulationAdapter = Depends(get_adapter),
     ) -> dict[str, object]:
+        async def operation() -> dict[str, object]:
+            result = await simulation.approve_intervention(experiment_id, proposal_id, body.policy)
+            return result.model_dump(mode="json")
+
         try:
-            intervention = await simulation.approve_intervention(
-                experiment_id, proposal_id, body.overrides
+            return await idempotent(
+                scope=f"approve-intervention:{experiment_id}:{proposal_id}",
+                key=idempotency_key,
+                payload=body.model_dump(mode="json"),
+                operation=operation,
             )
-            return intervention.model_dump(mode="json")
+        except HTTPException:
+            raise
+        except Exception as error:
+            raise _http_error(error) from error
+
+    @application.post("/api/experiments/{experiment_id}/interventions/{proposal_id}/reject")
+    async def reject_intervention(
+        experiment_id: str,
+        proposal_id: str,
+        body: RejectInterventionRequest,
+        idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+        simulation: AsyncioSimulationAdapter = Depends(get_adapter),
+    ) -> dict[str, object]:
+        async def operation() -> dict[str, object]:
+            state = await simulation.reject_intervention(experiment_id, proposal_id)
+            result = state.model_dump(mode="json")
+            result["user_reason"] = body.reason
+            return result
+
+        try:
+            return await idempotent(
+                scope=f"reject-intervention:{experiment_id}:{proposal_id}",
+                key=idempotency_key,
+                payload=body.model_dump(mode="json"),
+                operation=operation,
+            )
+        except HTTPException:
+            raise
         except Exception as error:
             raise _http_error(error) from error
 
@@ -215,11 +337,22 @@ def create_app(
     async def create_branch(
         experiment_id: str,
         body: CreateBranchRequest,
+        idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
         simulation: AsyncioSimulationAdapter = Depends(get_adapter),
     ) -> dict[str, object]:
-        try:
+        async def operation() -> dict[str, object]:
             branch = await simulation.create_approved_branch(experiment_id, body.intervention_id)
             return branch.model_dump(mode="json")
+
+        try:
+            return await idempotent(
+                scope=f"create-branch:{experiment_id}",
+                key=idempotency_key,
+                payload=body.model_dump(mode="json"),
+                operation=operation,
+            )
+        except HTTPException:
+            raise
         except Exception as error:
             raise _http_error(error) from error
 
@@ -227,12 +360,23 @@ def create_app(
     async def run_branch(
         branch_id: str,
         body: RunBranchRequest,
+        idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
         simulation: AsyncioSimulationAdapter = Depends(get_adapter),
     ) -> dict[str, object]:
-        try:
+        async def operation() -> dict[str, object]:
             experiment_id, _ = await simulation.find_branch(branch_id)
             state = await simulation.run_to_phase(experiment_id, body.until_phase, branch_id)
             return state.model_dump(mode="json")
+
+        try:
+            return await idempotent(
+                scope=f"run-branch:{branch_id}",
+                key=idempotency_key,
+                payload=body.model_dump(mode="json"),
+                operation=operation,
+            )
+        except HTTPException:
+            raise
         except Exception as error:
             raise _http_error(error) from error
 
@@ -242,8 +386,18 @@ def create_app(
         simulation: AsyncioSimulationAdapter = Depends(get_adapter),
     ) -> dict[str, object]:
         try:
-            result = await simulation.get_comparison(experiment_id)
-            return result.model_dump(mode="json")
+            return (await simulation.get_comparison(experiment_id)).model_dump(mode="json")
+        except Exception as error:
+            raise _http_error(error) from error
+
+    @application.get("/api/experiments/{experiment_id}/evidence/{evidence_id}")
+    async def evidence(
+        experiment_id: str,
+        evidence_id: str,
+        simulation: AsyncioSimulationAdapter = Depends(get_adapter),
+    ) -> dict[str, object]:
+        try:
+            return await simulation.get_evidence(experiment_id, evidence_id)
         except Exception as error:
             raise _http_error(error) from error
 

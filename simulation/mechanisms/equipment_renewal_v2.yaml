@@ -1,0 +1,25 @@
+schema_version: mechanism-config-v2
+mechanism_version: equipment-renewal-env-v2
+step_scale: 10.0
+contributions:
+  policy_match: 0.22
+  direct_subsidy: 0.17
+  interest_subsidy: 0.15
+  financing_guarantee: 0.14
+  sme_preference: 0.10
+  regional_support: 0.08
+  financing_constraint: -0.20
+  fiscal_cost: -0.12
+fiscal_pressure:
+  support_intensity: 0.28
+  direct_subsidy: 0.18
+  interest_subsidy: 0.10
+  financing_guarantee: 0.07
+  local_match: 0.16
+  sme_preference: 0.08
+  regional_support: 0.08
+aggregation:
+  participation: 0.32
+  renewal_willingness: 0.29
+  financing_accessibility: 0.21
+  industrial_upgrade: 0.18

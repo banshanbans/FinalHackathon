@@ -15,7 +15,7 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    run_mode: RunMode = RunMode.FAKE
+    run_mode: RunMode = RunMode.CACHE
     llm_base_url: str = "https://api.openai.com/v1"
     llm_api_key: str = ""
     central_model: str = Field(default="gpt-5-mini", alias="POLICYSCOPE_CENTRAL_MODEL")

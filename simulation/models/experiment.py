@@ -8,19 +8,19 @@ from simulation.models.common import BranchKind, ExperimentStatus, Phase, RunMod
 
 
 class ExperimentConfig(DomainModel):
-    schema_version: str = "experiment-config-v1"
+    schema_version: str = "experiment-config-v2"
     objective: str = Field(min_length=3, max_length=500)
-    scenario_id: str = "strategic_industry_default"
+    scenario_id: str = "equipment_renewal_default"
     seed: int = 20260812
     run_mode: RunMode = RunMode.FAKE
-    data_version: str = "province-profile-2024-v1"
-    mechanism_version: str = "industry-policy-env-v1"
-    prompt_version: str = "province-agent-v1"
-    model_version: str = "fake-v1"
+    data_version: str = "equipment-renewal-profiles-v2"
+    mechanism_version: str = "equipment-renewal-env-v2"
+    prompt_version: str = "equipment-renewal-agents-v2"
+    model_version: str = "fake-v2"
 
 
 class ExperimentRecord(DomainModel):
-    schema_version: str = "experiment-record-v1"
+    schema_version: str = "experiment-record-v2"
     experiment_id: str
     config: ExperimentConfig
     directive: CentralPolicyDirective
@@ -31,7 +31,7 @@ class ExperimentRecord(DomainModel):
 
 
 class Checkpoint(DomainModel):
-    schema_version: str = "checkpoint-v1"
+    schema_version: str = "checkpoint-v2"
     checkpoint_id: str
     experiment_id: str
     branch_id: str
@@ -42,7 +42,7 @@ class Checkpoint(DomainModel):
 
 
 class Branch(DomainModel):
-    schema_version: str = "branch-v1"
+    schema_version: str = "branch-v2"
     branch_id: str
     experiment_id: str
     kind: BranchKind

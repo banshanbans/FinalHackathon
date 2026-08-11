@@ -1,0 +1,75 @@
+[
+  {
+    "schema_version": "central-intervention-proposal-v2",
+    "proposal_id": "central_t3_2eea971f27ea",
+    "proposed_policy": {
+      "schema_version": "policy-v2",
+      "policy_id": "equipment_renewal_v2",
+      "domain": "manufacturing_equipment_renewal",
+      "support_intensity": 70.0,
+      "local_match_requirement": 0.5,
+      "instrument_mix": {
+        "direct_subsidy": 0.3,
+        "interest_subsidy": 0.38,
+        "financing_guarantee": 0.32
+      },
+      "sme_preference": 0.74,
+      "regional_support_bias": 0.35,
+      "technology_mix": {
+        "digital": 0.4,
+        "green": 0.3,
+        "general": 0.3
+      },
+      "mechanism_version": "equipment-renewal-env-v2"
+    },
+    "parameter_changes": [
+      {
+        "path": "sme_preference",
+        "from_value": 0.6,
+        "to_value": 0.74
+      },
+      {
+        "path": "regional_support_bias",
+        "from_value": 0.0,
+        "to_value": 0.35
+      },
+      {
+        "path": "instrument_mix.direct_subsidy",
+        "from_value": 0.45,
+        "to_value": 0.3
+      },
+      {
+        "path": "instrument_mix.interest_subsidy",
+        "from_value": 0.35,
+        "to_value": 0.38
+      },
+      {
+        "path": "instrument_mix.financing_guarantee",
+        "from_value": 0.2,
+        "to_value": 0.32
+      }
+    ],
+    "target_metrics": [
+      "enterprise_participation_index",
+      "sme_financing_accessibility_index",
+      "regional_gap_index"
+    ],
+    "expected_directions": {
+      "enterprise_participation_index": "increase",
+      "sme_financing_accessibility_index": "increase",
+      "regional_gap_index": "decrease",
+      "local_fiscal_pressure_index": "may_increase"
+    },
+    "tradeoffs": [
+      "担保与区域倾斜提高可达性的同时可能增加财政压力。"
+    ],
+    "evidence_refs": [
+      "metric:national:sme_financing_accessibility_index:T2",
+      "metric:national:regional_gap_index:T2",
+      "feedback:mean_support_request:0.366"
+    ],
+    "public_summary": "中央政策研判 Agent 建议提高担保、SME 与区域倾斜；预期方向待同源分支验证。",
+    "requires_human_approval": true,
+    "approval_status": "draft"
+  }
+]

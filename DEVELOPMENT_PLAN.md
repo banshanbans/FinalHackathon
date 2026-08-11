@@ -5,7 +5,7 @@
 > 计划版本：V2.0（已批准实施版）  
 > 更新日期：2026-08-12  
 > 目标周期：从 V2 文档获批起 48 小时  
-> 当前门禁：代码迁移已获授权，执行 V1 回滚提交与原地 V2 升级
+> 当前门禁：V2 原地迁移与产品 QA 已完成；公开发布仍受地图合规人工复核门禁约束
 
 ---
 
@@ -40,9 +40,9 @@
 
 ---
 
-## 2. 当前代码基线
+## 2. V1 回滚基线与 V2 交付基线
 
-### 2.1 已存在
+### 2.1 V1 回滚基线
 
 仓库已建立，不再按“代码尚未初始化”处理：
 
@@ -55,7 +55,7 @@
 - 单页 React 工作台、抽象省域图、行动流和 A/B 图表。
 - Stitch 五张高保真页面和视觉规范草稿。
 
-### 2.2 已验证事实
+### 2.2 V1 已验证事实
 
 2026-08-12 V2 迁移前基线检查：
 
@@ -69,12 +69,27 @@
 - 当前地图是自绘示意图，不是 31 省行政区矢量地图。
 - 当前代码没有企业群体领域模型和企业决策链。
 
-### 2.3 不可误标为完成
+V1 已冻结在 Git 提交 `6ea8e9d`，用于原地迁移的回滚，不再建立并行 V1/V2 运行时。
 
-- 现有 V1 测试通过不等于 V2 契约完成。
-- V1 的战略性新兴产业 Schema、指标和环境公式不能直接改名冒充设备更新。
-- Stitch 生成的静态 HTML 没有真实导航和 API 交互，不能作为可交付产品。
-- V2 文档已经批准；采用原地升级，初始 Git 提交承担 V1 回滚点，不建立并行 V2 运行时。
+### 2.3 V2 已验证事实
+
+2026-08-12 完成原地迁移后：
+
+- 领域版本统一为 `policy-v2`、`world-state-v2`、`comparison-v2` 与 `event-v2`。
+- 31 省 × 6 企业群体、企业批量 Agent、ProvinceFeedback、设备更新环境与八类机制贡献已接通。
+- T0–T5、批准/修改/拒绝、同源 A/B、单线复盘、企业迁移、REST、SSE、Evidence 与 Replay 已跑通。
+- React 已替换为四路由 Stitch 工作台和两个 query drawer；核心 CTA 使用真实 API。
+- 本地 ECharts SVG 地图来自标准地图 GS(2016)1609，31 省代码和几何经过自动验证；公开发布仍需人工合规复核。
+- 默认演示使用完整 Cache，测试使用 Fake，Live 为非阻断增强。
+- 路由级页面与 ECharts 已拆包，消除 V1 单包约 795 KB 的构建警告。
+- 冻结门禁：Python 24 项、Web 2 项、lint/build、数据与地图校验、Smoke 全部通过；Cache 完整 A/B 连续 3 次且两个分支均无 fallback 省份。
+
+### 2.4 不可误标为现实能力
+
+- V2 指数和行为只适用于当前数据、参数、机制版本与 seed，不是现实经济预测。
+- 合成企业群体不代表现实企业，`verified/proxy/demo` 是质量类别而非置信度。
+- Stitch 静态 HTML 仍只作为视觉参考，正式交付以 React/API 实现为准。
+- 地图技术验证完成不等于公开发布合规批准；人工复核前不得移除发布阻断提示。
 
 ---
 
@@ -298,8 +313,8 @@ DOC-200 → FOUND-200 → MODEL-200 → SIM-200 → SIM-201
 |---|---|---:|---|
 | DOC-200 | 用户批准 V2 PRD/计划/AGENTS/Stitch 规范 | 已完成 | 无 |
 | FOUND-200 | 修复 `make validate-data` 与 `make smoke` 导入路径 | 已完成 | DOC-200 |
-| FOUND-201 | 记录 V1 基线测试和迁移前快照 | 进行中 | DOC-200 |
-| ADR-200 | 冻结 V2 Schema、枚举、事件和版本号 | 1h | DOC-200 |
+| FOUND-201 | 记录 V1 基线测试和迁移前快照 | 已完成 | DOC-200 |
+| ADR-200 | 冻结 V2 Schema、枚举、事件和版本号 | 已完成 | DOC-200 |
 
 退出条件：
 
@@ -311,11 +326,11 @@ DOC-200 → FOUND-200 → MODEL-200 → SIM-200 → SIM-201
 
 | ID | 工作 | 预计 | 依赖 |
 |---|---|---:|---|
-| MODEL-200 | PolicySchema V2 与权重约束 | 1h | ADR-200 |
-| MODEL-201 | Enterprise Profile/State/Action/Batch | 1.5h | ADR-200 |
-| MODEL-202 | Province/World/Comparison V2 | 1.5h | MODEL-200, MODEL-201 |
-| DATA-200 | 六类企业原型和 provenance | 1h | MODEL-201 |
-| DATA-201 | 31×6 企业群体生成与验证 | 1h | DATA-200 |
+| MODEL-200 | PolicySchema V2 与权重约束 | 已完成 | ADR-200 |
+| MODEL-201 | Enterprise Profile/State/Action/Batch | 已完成 | ADR-200 |
+| MODEL-202 | Province/World/Comparison V2 | 已完成 | MODEL-200, MODEL-201 |
+| DATA-200 | 六类企业原型和 provenance | 已完成 | MODEL-201 |
+| DATA-201 | 31×6 企业群体生成与验证 | 已完成 | DATA-200 |
 
 必写测试：
 
@@ -334,10 +349,10 @@ DOC-200 → FOUND-200 → MODEL-200 → SIM-200 → SIM-201
 
 | ID | 工作 | 预计 | 依赖 |
 |---|---|---:|---|
-| AI-200 | Fake/Cached 企业批量 Provider | 1.5h | MODEL-201 |
-| AI-201 | EnterpriseGroupAgent 和整省 fallback | 1.5h | AI-200 |
-| SIM-200 | 工具激励、融资约束和财政成本 | 2.5h | MODEL-202 |
-| SIM-201 | 河南省六企业纵向闭环 | 1.5h | AI-201, SIM-200 |
+| AI-200 | Fake/Cached 企业批量 Provider | 已完成 | MODEL-201 |
+| AI-201 | EnterpriseGroupAgent 和整省 fallback | 已完成 | AI-200 |
+| SIM-200 | 工具激励、融资约束和财政成本 | 已完成 | MODEL-202 |
+| SIM-201 | 河南省六企业纵向闭环 | 已完成 | AI-201, SIM-200 |
 
 纵向场景：
 
@@ -357,11 +372,11 @@ DOC-200 → FOUND-200 → MODEL-200 → SIM-200 → SIM-201
 
 | ID | 工作 | 预计 | 依赖 |
 |---|---|---:|---|
-| SIM-202 | 扩展至 31 省×6 企业 | 2h | SIM-201, DATA-201 |
-| SIM-203 | V2 T0–T5 Orchestrator | 2h | SIM-202 |
-| SIM-204 | T3 Checkpoint 与审批 | 1h | SIM-203 |
-| SIM-205 | Control/Treatment 隔离 | 1.5h | SIM-204 |
-| SIM-206 | 企业迁移与 A/B Comparison | 1.5h | SIM-205 |
+| SIM-202 | 扩展至 31 省×6 企业 | 已完成 | SIM-201, DATA-201 |
+| SIM-203 | V2 T0–T5 Orchestrator | 已完成 | SIM-202 |
+| SIM-204 | T3 Checkpoint 与审批 | 已完成 | SIM-203 |
+| SIM-205 | Control/Treatment 隔离 | 已完成 | SIM-204 |
+| SIM-206 | 企业迁移与 A/B Comparison | 已完成 | SIM-205 |
 
 分支测试：
 
@@ -380,11 +395,11 @@ DOC-200 → FOUND-200 → MODEL-200 → SIM-200 → SIM-201
 
 | ID | 工作 | 预计 | 依赖 |
 |---|---|---:|---|
-| API-200 | REST 请求/响应升级到 V2 | 1.5h | MODEL-202, SIM-203 |
-| API-201 | 企业类型元数据接口 | 0.5h | DATA-200 |
-| API-202 | 企业 SSE 事件与恢复 | 1.5h | SIM-203 |
-| STORE-200 | Replay/Checkpoint V2 | 1h | SIM-204 |
-| API-203 | 稳定错误码与审批保护 | 1h | API-200 |
+| API-200 | REST 请求/响应升级到 V2 | 已完成 | MODEL-202, SIM-203 |
+| API-201 | 企业类型元数据接口 | 已完成 | DATA-200 |
+| API-202 | 企业 SSE 事件与恢复 | 已完成 | SIM-203 |
+| STORE-200 | Replay/Checkpoint V2 | 已完成 | SIM-204 |
+| API-203 | 稳定错误码与审批保护 | 已完成 | API-200 |
 
 退出条件：
 
@@ -397,13 +412,13 @@ DOC-200 → FOUND-200 → MODEL-200 → SIM-200 → SIM-201
 
 | ID | 工作 | 预计 | 依赖 |
 |---|---|---:|---|
-| WEB-200 | Stitch Token、字体、图标、AppShell | 1.5h | DOC-200 |
-| WEB-201 | 四路由和路由门禁 | 1.5h | WEB-200, API-200 |
-| WEB-202 | 中央政策设定页 | 1.5h | WEB-201 |
-| WEB-203 | 全国推演、真实地图、行动流 | 2h | WEB-201, API-202 |
-| WEB-204 | 省企详情与证据抽屉 | 1.5h | WEB-203 |
-| WEB-205 | 干预审批三栏页 | 1h | WEB-201 |
-| WEB-206 | A/B 双地图与企业迁移 | 1h | WEB-203, SIM-206 |
+| WEB-200 | Stitch Token、字体、图标、AppShell | 已完成 | DOC-200 |
+| WEB-201 | 四路由和路由门禁 | 已完成 | WEB-200, API-200 |
+| WEB-202 | 中央政策设定页 | 已完成 | WEB-201 |
+| WEB-203 | 全国推演、真实地图、行动流 | 已完成 | WEB-201, API-202 |
+| WEB-204 | 省企详情与证据抽屉 | 已完成 | WEB-203 |
+| WEB-205 | 干预审批三栏页 | 已完成 | WEB-201 |
+| WEB-206 | A/B 双地图与企业迁移 | 已完成 | WEB-203, SIM-206 |
 
 退出条件：
 
@@ -417,11 +432,11 @@ DOC-200 → FOUND-200 → MODEL-200 → SIM-200 → SIM-201
 
 | ID | 工作 | 预计 | 依赖 |
 |---|---|---:|---|
-| AI-202 | Live 企业批量结构化输出 | 1.5h | AI-201 |
-| AI-203 | 默认场景完整缓存 | 1h | AI-202 |
-| QA-200 | 31×6 Smoke 和三模式测试 | 1h | AI-203 |
-| QA-201 | 前端 E2E 与可访问性 | 1h | WEB-206 |
-| QA-202 | Stitch Design QA 迭代 | 1.5h | WEB-206 |
+| AI-202 | Live 企业批量结构化输出 | 已完成 | AI-201 |
+| AI-203 | 默认场景完整缓存 | 已完成 | AI-202 |
+| QA-200 | 31×6 Smoke 和三模式测试 | 已完成 | AI-203 |
+| QA-201 | 前端 E2E 与可访问性 | 已完成 | WEB-206 |
+| QA-202 | Stitch Design QA 迭代 | 已完成 | WEB-206 |
 
 退出条件：
 
@@ -434,10 +449,10 @@ DOC-200 → FOUND-200 → MODEL-200 → SIM-200 → SIM-201
 
 | ID | 工作 | 预计 | 依赖 |
 |---|---|---:|---|
-| DEMO-200 | 连续 3 次端到端产品运行 | 1.5h | M6 |
-| QA-203 | 最终验收与已知限制 | 0.5h | DEMO-200 |
-| RELEASE-200 | 冻结依赖、模型、机制和默认缓存 | 0.5h | QA-203 |
-| BUFFER | 只修 P0 阻断问题 | 0.5h | 全部 |
+| DEMO-200 | 连续 3 次端到端产品运行 | 已完成 | M6 |
+| QA-203 | 最终验收与已知限制 | 已完成 | DEMO-200 |
+| RELEASE-200 | 冻结依赖、模型、机制和默认缓存 | 已完成 | QA-203 |
+| BUFFER | 只修 P0 阻断问题 | 未使用 | 全部 |
 
 冻结规则：
 
@@ -453,57 +468,57 @@ DOC-200 → FOUND-200 → MODEL-200 → SIM-200 → SIM-201
 
 - [x] DOC-200 用户批准 V2 文档组
 - [x] FOUND-200 修复统一命令
-- [ ] FOUND-201 记录 V1 基线
-- [ ] ADR-200 冻结 V2 Schema/API/Event
+- [x] FOUND-201 记录 V1 基线
+- [x] ADR-200 冻结 V2 Schema/API/Event
 
 ### 9.2 领域与数据
 
-- [ ] MODEL-200 PolicySchema V2
-- [ ] MODEL-201 企业领域模型
-- [ ] MODEL-202 World/Comparison V2
-- [ ] DATA-200 企业原型与 provenance
-- [ ] DATA-201 31×6 完整数据
+- [x] MODEL-200 PolicySchema V2
+- [x] MODEL-201 企业领域模型
+- [x] MODEL-202 World/Comparison V2
+- [x] DATA-200 企业原型与 provenance
+- [x] DATA-201 31×6 完整数据
 
 ### 9.3 Agent 与环境
 
-- [ ] AI-200 Fake/Cached 企业批量 Provider
-- [ ] AI-201 企业 Agent、修复与 fallback
-- [ ] AI-202 Live 企业批量 Provider
-- [ ] AI-203 默认缓存
-- [ ] SIM-200 设备更新环境机制
-- [ ] SIM-201 河南纵向闭环
-- [ ] SIM-202 31 省扩展
-- [ ] SIM-203 T0–T5
-- [ ] SIM-204 不可变 Checkpoint
-- [ ] SIM-205 分支隔离
-- [ ] SIM-206 A/B 与企业迁移
+- [x] AI-200 Fake/Cached 企业批量 Provider
+- [x] AI-201 企业 Agent、修复与 fallback
+- [x] AI-202 Live 企业批量 Provider
+- [x] AI-203 默认缓存
+- [x] SIM-200 设备更新环境机制
+- [x] SIM-201 河南纵向闭环
+- [x] SIM-202 31 省扩展
+- [x] SIM-203 T0–T5
+- [x] SIM-204 不可变 Checkpoint
+- [x] SIM-205 分支隔离
+- [x] SIM-206 A/B 与企业迁移
 
 ### 9.4 API 与存储
 
-- [ ] API-200 V2 REST DTO
-- [ ] API-201 企业元数据
-- [ ] API-202 企业 SSE
-- [ ] API-203 审批和错误码
-- [ ] STORE-200 V2 Replay
+- [x] API-200 V2 REST DTO
+- [x] API-201 企业元数据
+- [x] API-202 企业 SSE
+- [x] API-203 审批和错误码
+- [x] STORE-200 V2 Replay
 
 ### 9.5 Stitch 前端
 
-- [ ] WEB-200 Design Token 与 AppShell
-- [ ] WEB-201 四路由门禁
-- [ ] WEB-202 中央政策页
-- [ ] WEB-203 全国推演与地图
-- [ ] WEB-204 省企/证据抽屉
-- [ ] WEB-205 干预审批页
-- [ ] WEB-206 A/B 对照页
+- [x] WEB-200 Design Token 与 AppShell
+- [x] WEB-201 四路由门禁
+- [x] WEB-202 中央政策页
+- [x] WEB-203 全国推演与地图
+- [x] WEB-204 省企/证据抽屉
+- [x] WEB-205 干预审批页
+- [x] WEB-206 A/B 对照页
 
 ### 9.6 QA 与冻结
 
-- [ ] QA-200 31×6 Smoke
-- [ ] QA-201 E2E/可访问性
-- [ ] QA-202 Design QA passed
-- [ ] QA-203 最终验收
-- [ ] DEMO-200 三次连续运行
-- [ ] RELEASE-200 产品冻结
+- [x] QA-200 31×6 Smoke
+- [x] QA-201 E2E/可访问性
+- [x] QA-202 Design QA passed
+- [x] QA-203 最终验收
+- [x] DEMO-200 三次连续运行
+- [x] RELEASE-200 产品冻结
 
 ---
 
@@ -666,34 +681,34 @@ M0 先修复脚本导入路径，再把 V2 验证接入相同命令。不得为�
 | 里程碑 | 状态 | 说明 |
 |---|---|---|
 | 文档评审门禁 | Complete | V2 文档已经用户批准 |
-| M0 基线修复 | In Progress | FOUND-200 完成，正在建立初始 Git 回滚点 |
-| M1 V2 Schema/数据 | Pending | 等待 M0 |
-| M2 企业 Agent/环境 | Pending | 等待 M1 |
-| M3 阶段/A-B | Pending | 等待 M2 |
-| M4 API/SSE | Pending | 等待 M3 |
-| M5 Stitch 前端 | Pending | 等待 API 和视觉规范 |
-| M6 可靠性/视觉 QA | Pending | 等待主流程 |
-| M7 冻结 | Pending | 等待全部 P0 |
+| M0 基线修复 | Complete | V1 回滚提交 `6ea8e9d`；V2 契约冻结 |
+| M1 V2 Schema/数据 | Complete | Policy V2、企业 Schema、31×6 数据和 provenance 完成 |
+| M2 企业 Agent/环境 | Complete | 三 Provider、企业批量决策、fallback 和设备更新机制完成 |
+| M3 阶段/A-B | Complete | T0–T5、审批/拒绝、同源分支与企业迁移完成 |
+| M4 API/SSE | Complete | V2 DTO、幂等、企业事件、Evidence 与 Replay 完成 |
+| M5 Stitch 前端 | Complete | 四路由、两抽屉、真实 API/SSE 和本地地图完成 |
+| M6 可靠性/视觉 QA | Complete | Cache/Fake、两条浏览器 E2E 与 `design-qa.md` passed |
+| M7 冻结 | Complete | 依赖、机制、默认缓存和产品边界冻结 |
 
 ### 当前唯一下一任务
 
-完成 `FOUND-201` 初始 Git 回滚提交，随后冻结 `ADR-200` 并原地升级 V2 Schema 与数据。
+保持默认 Cache 演示配置；如需公开部署，先完成标准地图使用与编辑后审核要求的人工合规复核。
 
 ---
 
 ## 15. V2 Definition of Done
 
 - [x] V2 文档组获得用户批准。
-- [ ] 1 个中央 Agent、31 个省级 Agent、186 个企业群体 Agent 有合法输出或显式 fallback。
-- [ ] 所有结果由确定性环境计算并带机制贡献。
-- [ ] T3 Checkpoint 不可变，A/B 同源隔离。
-- [ ] 用户审批控制所有中央政策改变。
-- [ ] 四个正式路由和两个抽屉真实可操作。
-- [ ] 全国和 A/B 使用经过来源核验的 31 省矢量地图。
-- [ ] SSE 恢复和单省失败不破坏完整实验。
-- [ ] 默认场景有完整离线缓存。
-- [ ] 31×6 Smoke、分支隔离、核心 E2E 通过。
-- [ ] `design-qa.md` 为 `passed`。
-- [ ] 三次连续产品运行成功。
-- [ ] 数据质量、版本、seed、证据和免责声明可见。
-- [ ] README 与实际运行方式一致。
+- [x] 1 个中央 Agent、31 个省级 Agent、186 个企业群体 Agent 有合法输出或显式 fallback。
+- [x] 所有结果由确定性环境计算并带机制贡献。
+- [x] T3 Checkpoint 不可变，A/B 同源隔离。
+- [x] 用户审批控制所有中央政策改变。
+- [x] 四个正式路由和两个抽屉真实可操作。
+- [x] 全国和 A/B 使用经过来源核验的 31 省矢量地图。
+- [x] SSE 恢复和单省失败不破坏完整实验。
+- [x] 默认场景有完整离线缓存。
+- [x] 31×6 Smoke、分支隔离、核心 E2E 通过。
+- [x] `design-qa.md` 为 `passed`。
+- [x] 三次连续产品运行成功。
+- [x] 数据质量、版本、seed、证据和免责声明可见。
+- [x] README 与实际运行方式一致。
