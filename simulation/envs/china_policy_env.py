@@ -1,884 +1,428 @@
-from __future__ import annotations
-
-from copy import deepcopy
 from math import isfinite
-from pathlib import Path
-from statistics import fmean, pstdev
+from statistics import fmean
+from typing import Literal
 
-import yaml
+from pydantic import Field
 
-from simulation.data import NetworkEdge, load_enterprise_profiles, load_network, load_profiles
-from simulation.models.action import MechanismContribution, ProvinceAction
-from simulation.models.audit import MechanismExplanation, MechanismTerm
-from simulation.models.common import (
-    EnterpriseArchetype,
-    FinancingChoice,
-    Participation,
-    Phase,
-    RegionGroup,
-    UpgradeType,
-)
-from simulation.models.enterprise import (
-    EnterpriseAction,
-    EnterpriseAggregate,
-    EnterpriseGroupProfile,
-    EnterpriseGroupState,
-)
+from simulation.data import load_automaker_profiles, load_profiles
+from simulation.domain_constants import AUTOMAKER_IDS, MAINLAND_PROVINCE_CODES
+from simulation.models.action import MechanismContribution, MechanismTerm
+from simulation.models.automaker import AutomakerAction, AutomakerProfile, AutomakerState
+from simulation.models.base import DomainModel
+from simulation.models.common import FacilityActionKind, Phase
 from simulation.models.policy import PolicySchema
-from simulation.models.province import ProvinceProfile, ProvinceState
+from simulation.models.province import ProvinceAction, ProvinceProfile, ProvinceState
 from simulation.models.world import NationalMetrics
 
-MECHANISM_PATH = Path(__file__).resolve().parents[1] / "mechanisms" / "equipment_renewal_v2.yaml"
+
+def _round(value: float) -> float:
+    return round(float(value), 4)
 
 
 def _clamp(value: float, minimum: float = 0, maximum: float = 100) -> float:
-    return round(max(minimum, min(maximum, value)), 4)
+    if not isfinite(value):
+        raise ValueError("environment value must be finite")
+    return _round(max(minimum, min(maximum, value)))
 
 
-def _weighted_state(
-    items: list[tuple[EnterpriseGroupProfile, EnterpriseGroupState, EnterpriseAction]],
-    field: str,
-) -> float:
-    total = sum(profile.weight for profile, _, _ in items)
-    return sum(profile.weight * float(getattr(state, field)) for profile, state, _ in items) / total
+def normalized_gini(values: list[float]) -> float:
+    if not values or any(not isfinite(value) or value < 0 for value in values):
+        raise ValueError("Gini requires finite non-negative values")
+    total = sum(values)
+    if total == 0 or len(values) == 1:
+        return 0.0
+    ordered = sorted(values)
+    n = len(ordered)
+    raw = sum((2 * index - n - 1) * value for index, value in enumerate(ordered, 1)) / (n * total)
+    return _round(_clamp(raw * n / (n - 1) * 100))
 
 
-def _explanation(
-    *,
-    scope: str,
-    subject_id: str,
-    metric: str,
-    phase: Phase,
-    formula_id: str,
-    formula_version: str,
-    terms: list[MechanismTerm],
-    raw_value: float,
-    final_value: float,
-    previous_value: float | None = None,
-    source_refs: list[str] | None = None,
-) -> MechanismExplanation:
-    values = [raw_value, final_value, *(item.contribution for item in terms)]
-    if not all(isfinite(value) for value in values):
-        raise ValueError(f"mechanism explanation contains a non-finite value: {formula_id}")
-    clamped = max(0.0, min(100.0, raw_value))
-    residual = final_value - round(clamped, 4)
-    if abs(residual) > 1e-3:
-        raise ValueError(f"mechanism explanation does not reconcile: {formula_id}")
-    safe_subject = subject_id.replace(":", "_")
-    return MechanismExplanation(
-        explanation_id=f"mex_{phase.value}_{scope}_{safe_subject}_{metric}",
-        scope=scope,  # type: ignore[arg-type]
-        subject_id=subject_id,
-        metric=metric,
-        formula_id=formula_id,
-        formula_version=formula_version,
-        source_refs=source_refs or [],
-        terms=terms,
-        previous_value=previous_value,
-        raw_value=round(raw_value, 4),
-        clamp_adjustment=round(final_value - raw_value, 4),
-        final_value=round(final_value, 4),
-        residual=round(residual, 6),
+def normalized_hhi(values: list[float]) -> float:
+    if not values or any(not isfinite(value) or value < 0 for value in values):
+        raise ValueError("HHI requires finite non-negative values")
+    total = sum(values)
+    n = len(values)
+    if total == 0 or n == 1:
+        return 0.0
+    hhi = sum((value / total) ** 2 for value in values)
+    return _round(_clamp((hhi - 1 / n) / (1 - 1 / n) * 100))
+
+
+def province_development_index(demand_index: float, industry_activity_index: float) -> float:
+    return _round(0.5 * demand_index + 0.5 * industry_activity_index)
+
+
+def delta_gap(treatment_gap: float, control_gap: float) -> float:
+    return _round(treatment_gap - control_gap)
+
+
+class FiscalOffer(DomainModel):
+    province_code: str
+    program_index: float = Field(ge=0)
+    central_funding_index: float = Field(ge=0)
+    local_matching_index: float = Field(ge=0)
+    fiscal_space_index: float = Field(ge=0, le=100)
+
+
+class FixedVariableThreshold(DomainModel):
+    province_code: str
+    crossing_quarter: int | None = Field(default=None, ge=1, le=4)
+    effective_scale_index: float | None = Field(default=None, ge=0, le=1)
+    fixed_support_effect: float = Field(ge=0)
+    variable_support_effects: list[float] = Field(min_length=4, max_length=4)
+
+
+class YearSettlement(DomainModel):
+    schema_version: Literal["year-settlement-v1"] = "year-settlement-v1"
+    phase: Phase
+    province_states: dict[str, ProvinceState]
+    automaker_states: dict[str, AutomakerState]
+    national_metrics: NationalMetrics
+    mechanism_contributions: dict[str, MechanismContribution]
+    fixed_variable_thresholds: dict[str, FixedVariableThreshold]
+
+
+def fixed_variable_cost_threshold(
+    province_code: str,
+    fixed_support: float,
+    variable_support: float,
+    entry_cost_sensitivity: float = 0.72,
+) -> FixedVariableThreshold:
+    fixed_effect = fixed_support * entry_cost_sensitivity
+    scales = [0.25, 0.50, 0.75, 1.0]
+    variable_effects = [variable_support * scale for scale in scales]
+    crossing = next(
+        (index for index, value in enumerate(variable_effects, 1) if value >= fixed_effect), None
+    )
+    return FixedVariableThreshold(
+        province_code=province_code,
+        crossing_quarter=crossing,
+        effective_scale_index=scales[crossing - 1] if crossing else None,
+        fixed_support_effect=_round(fixed_effect),
+        variable_support_effects=[_round(value) for value in variable_effects],
     )
 
 
 class ChinaPolicyEnv:
-    """Deterministic authority for V2 equipment-renewal state transitions."""
+    """Deterministic authority for fiscal, demand, ROI and industrial-layout outcomes."""
+
+    formula_version = "nev-policy-env-v1"
 
     def __init__(
         self,
         *,
         profiles: dict[str, ProvinceProfile] | None = None,
-        network: dict[str, list[NetworkEdge]] | None = None,
-        enterprise_profiles: dict[str, EnterpriseGroupProfile] | None = None,
-        policy: PolicySchema,
-        province_states: dict[str, ProvinceState] | None = None,
-        enterprise_states: dict[str, EnterpriseGroupState] | None = None,
-        mechanism_path: Path = MECHANISM_PATH,
+        automaker_profiles: dict[str, AutomakerProfile] | None = None,
+        policy: PolicySchema | None = None,
     ):
-        is_fresh_initialization = province_states is None and enterprise_states is None
         self.profiles = profiles or load_profiles()
-        self.network = network or load_network()
-        self.enterprise_profiles = enterprise_profiles or load_enterprise_profiles()
-        self.policy = policy.model_copy(deep=True)
-        with mechanism_path.open(encoding="utf-8") as handle:
-            raw = yaml.safe_load(handle)
-        if raw["mechanism_version"] != policy.mechanism_version:
-            raise ValueError("policy and mechanism configuration versions do not match")
-        self.config: dict[str, object] = raw
-        self.enterprise_states = enterprise_states or {
-            enterprise_id: self._initial_enterprise_state(profile)
-            for enterprise_id, profile in self.enterprise_profiles.items()
-        }
-        self.province_states = province_states or {
+        self.automaker_profiles = automaker_profiles or load_automaker_profiles()
+        self.policy = policy or PolicySchema()
+        if set(self.profiles) != set(MAINLAND_PROVINCE_CODES):
+            raise ValueError("environment requires exactly 31 province profiles")
+        if set(self.automaker_profiles) != set(AUTOMAKER_IDS):
+            raise ValueError("environment requires exactly 10 automaker profiles")
+        self.province_states = {
             code: self._initial_province_state(profile) for code, profile in self.profiles.items()
         }
-        self.enterprise_aggregates: dict[str, EnterpriseAggregate] = {}
-        self.contributions: dict[str, MechanismContribution] = {}
-        self.explanations: list[MechanismExplanation] = (
-            self._initial_explanations() if is_fresh_initialization else []
+        self.automaker_states = {
+            automaker_id: AutomakerState(
+                automaker_id=automaker_id,
+                simulated_roi_index=_round(35 + 35 * profile.profitability_index),
+                sales_activity_index=_round(30 + 50 * profile.sales_scale_index),
+                operating_cost_index=_round(45 + 30 * (1 - profile.liquidity_index)),
+            )
+            for automaker_id, profile in self.automaker_profiles.items()
+        }
+
+    def _fiscal_offer(self, profile: ProvinceProfile, policy: PolicySchema) -> FiscalOffer:
+        program = (
+            20
+            + 35 * profile.market_scale
+            + 25 * profile.vehicle_consumption_index
+            + 20 * profile.nev_penetration_index
         )
-
-    def _initial_explanations(self) -> list[MechanismExplanation]:
-        explanations: list[MechanismExplanation] = []
-        for enterprise_id, profile in self.enterprise_profiles.items():
-            state = self.enterprise_states[enterprise_id]
-            formulas = {
-                "participation_score": (
-                    "enterprise.initial.participation",
-                    [
-                        MechanismTerm(name="base", input_value=1, coefficient=38, contribution=38),
-                        MechanismTerm(
-                            name="cash_flow_resilience",
-                            input_value=profile.cash_flow_resilience,
-                            coefficient=24,
-                            contribution=24 * profile.cash_flow_resilience,
-                        ),
-                        MechanismTerm(
-                            name="financing_constraint",
-                            input_value=profile.financing_constraint,
-                            coefficient=-18,
-                            contribution=-18 * profile.financing_constraint,
-                        ),
-                    ],
-                ),
-                "renewal_willingness": (
-                    "enterprise.initial.renewal",
-                    [
-                        MechanismTerm(name="base", input_value=1, coefficient=38, contribution=38),
-                        MechanismTerm(
-                            name="equipment_age_pressure",
-                            input_value=profile.equipment_age_pressure,
-                            coefficient=36,
-                            contribution=36 * profile.equipment_age_pressure,
-                        ),
-                        MechanismTerm(
-                            name="digital_readiness",
-                            input_value=profile.digital_readiness,
-                            coefficient=8,
-                            contribution=8 * profile.digital_readiness,
-                        ),
-                    ],
-                ),
-                "financing_accessibility": (
-                    "enterprise.initial.financing",
-                    [
-                        MechanismTerm(name="base", input_value=1, coefficient=30, contribution=30),
-                        MechanismTerm(
-                            name="collateral_capacity",
-                            input_value=profile.collateral_capacity,
-                            coefficient=42,
-                            contribution=42 * profile.collateral_capacity,
-                        ),
-                        MechanismTerm(
-                            name="financing_constraint",
-                            input_value=profile.financing_constraint,
-                            coefficient=-20,
-                            contribution=-20 * profile.financing_constraint,
-                        ),
-                    ],
-                ),
-                "upgrade_progress": (
-                    "enterprise.initial.upgrade",
-                    [
-                        MechanismTerm(name="base", input_value=1, coefficient=26, contribution=26),
-                        MechanismTerm(
-                            name="digital_readiness",
-                            input_value=profile.digital_readiness,
-                            coefficient=23,
-                            contribution=23 * profile.digital_readiness,
-                        ),
-                        MechanismTerm(
-                            name="equipment_remaining",
-                            input_value=1 - profile.equipment_age_pressure,
-                            coefficient=14,
-                            contribution=14 * (1 - profile.equipment_age_pressure),
-                        ),
-                    ],
-                ),
-            }
-            for metric, (formula_id, terms) in formulas.items():
-                explanations.append(
-                    _explanation(
-                        scope="enterprise",
-                        subject_id=enterprise_id,
-                        metric=metric,
-                        phase=Phase.T0,
-                        formula_id=formula_id,
-                        formula_version=str(self.config["mechanism_version"]),
-                        terms=terms,
-                        raw_value=sum(item.contribution for item in terms),
-                        final_value=float(getattr(state, metric)),
-                        source_refs=[f"enterprise:{enterprise_id}:profile"],
-                    )
-                )
-        for code, profile in self.profiles.items():
-            state = self.province_states[code]
-            definitions = {
-                "enterprise_participation_index": (
-                    35,
-                    [
-                        ("credit_access", 22, profile.credit_access),
-                        ("advanced_manufacturing_base", 12, profile.advanced_manufacturing_base),
-                    ],
-                ),
-                "equipment_renewal_willingness_index": (
-                    40,
-                    [
-                        ("transition_pressure", 30, profile.transition_pressure),
-                        ("advanced_manufacturing_base", 10, profile.advanced_manufacturing_base),
-                    ],
-                ),
-                "sme_financing_accessibility_index": (
-                    28,
-                    [("credit_access", 48, profile.credit_access)],
-                ),
-                "industrial_upgrade_index": (
-                    28,
-                    [
-                        ("advanced_manufacturing_base", 24, profile.advanced_manufacturing_base),
-                        ("digital_infrastructure", 18, profile.digital_infrastructure),
-                    ],
-                ),
-                "fiscal_pressure_index": (
-                    24,
-                    [
-                        ("inverse_fiscal_capacity", 30, 1 - profile.fiscal_capacity),
-                        ("fiscal_conservatism", 12, profile.fiscal_conservatism),
-                    ],
-                ),
-            }
-            for metric, (base, factors) in definitions.items():
-                terms = [
-                    MechanismTerm(name="base", input_value=1, coefficient=base, contribution=base)
-                ]
-                terms.extend(
-                    MechanismTerm(
-                        name=name,
-                        input_value=value,
-                        coefficient=coefficient,
-                        contribution=coefficient * value,
-                    )
-                    for name, coefficient, value in factors
-                )
-                explanations.append(
-                    _explanation(
-                        scope="province",
-                        subject_id=code,
-                        metric=metric,
-                        phase=Phase.T0,
-                        formula_id=f"province.initial.{metric}",
-                        formula_version=str(self.config["mechanism_version"]),
-                        terms=terms,
-                        raw_value=sum(item.contribution for item in terms),
-                        final_value=float(getattr(state, metric)),
-                        source_refs=[f"province:{code}:profile"],
-                    )
-                )
-        return explanations
-
-    @staticmethod
-    def _initial_enterprise_state(profile: EnterpriseGroupProfile) -> EnterpriseGroupState:
-        return EnterpriseGroupState(
-            enterprise_id=profile.enterprise_id,
+        central = program * policy.central_share_for_region(profile.policy_region)
+        local = program - central
+        fiscal_space = _clamp(
+            100
+            * (
+                0.45 * profile.fiscal_capacity
+                + 0.30 * (1 - profile.fiscal_rigidity)
+                + 0.25 * (central / program)
+            )
+        )
+        return FiscalOffer(
             province_code=profile.province_code,
-            participation_score=_clamp(
-                38 + 24 * profile.cash_flow_resilience - 18 * profile.financing_constraint
-            ),
-            renewal_willingness=_clamp(
-                38 + 36 * profile.equipment_age_pressure + 8 * profile.digital_readiness
-            ),
-            financing_accessibility=_clamp(
-                30 + 42 * profile.collateral_capacity - 20 * profile.financing_constraint
-            ),
-            upgrade_progress=_clamp(
-                26 + 23 * profile.digital_readiness + 14 * (1 - profile.equipment_age_pressure)
-            ),
+            program_index=_round(program),
+            central_funding_index=_round(central),
+            local_matching_index=_round(local),
+            fiscal_space_index=fiscal_space,
         )
 
-    @staticmethod
-    def _initial_province_state(profile: ProvinceProfile) -> ProvinceState:
+    def _initial_province_state(self, profile: ProvinceProfile) -> ProvinceState:
+        offer = self._fiscal_offer(profile, self.policy)
+        demand = _clamp(
+            100
+            * (
+                0.35 * profile.willingness_to_pay_index
+                + 0.30 * profile.market_scale
+                + 0.20 * profile.charging_infrastructure_index
+                + 0.15 * profile.nev_penetration_index
+            )
+        )
+        industry = _clamp(
+            100
+            * (
+                0.35 * profile.nev_industry_base
+                + 0.25 * profile.vehicle_manufacturing_base
+                + 0.20 * profile.components_base
+                + 0.20 * (1 - profile.battery_supply_distance_index)
+            )
+        )
         return ProvinceState(
             province_code=profile.province_code,
-            enterprise_participation_index=_clamp(
-                35 + 22 * profile.credit_access + 12 * profile.advanced_manufacturing_base
-            ),
-            equipment_renewal_willingness_index=_clamp(
-                40 + 30 * profile.transition_pressure + 10 * profile.advanced_manufacturing_base
-            ),
-            sme_financing_accessibility_index=_clamp(28 + 48 * profile.credit_access),
-            industrial_upgrade_index=_clamp(
-                28 + 24 * profile.advanced_manufacturing_base + 18 * profile.digital_infrastructure
-            ),
+            local_matching_burden_index=_clamp(offer.local_matching_index),
+            fiscal_space_index=offer.fiscal_space_index,
+            demand_index=demand,
+            industry_activity_index=industry,
+            development_index=province_development_index(demand, industry),
             fiscal_pressure_index=_clamp(
-                24 + 30 * (1 - profile.fiscal_capacity) + 12 * profile.fiscal_conservatism
+                100
+                * (
+                    0.45 * profile.fiscal_rigidity
+                    + 0.35 * offer.local_matching_index / offer.program_index
+                    + 0.20 * (1 - profile.fiscal_capacity)
+                )
             ),
-        )
-
-    def _technology_match(self, action: EnterpriseAction) -> float:
-        if action.upgrade_type == UpgradeType.DIGITAL:
-            return self.policy.technology_mix.digital
-        if action.upgrade_type == UpgradeType.GREEN:
-            return self.policy.technology_mix.green
-        if action.upgrade_type == UpgradeType.GENERAL:
-            return self.policy.technology_mix.general
-        return 0.0
-
-    def _tool_value(
-        self, action: EnterpriseAction, province: ProvinceAction
-    ) -> tuple[float, float, float]:
-        support = self.policy.support_intensity / 100
-        if action.financing_choice == FinancingChoice.DIRECT_SUBSIDY:
-            return support * province.instrument_mix.direct_subsidy, 0.0, 0.0
-        if action.financing_choice == FinancingChoice.INTEREST_SUBSIDY:
-            return 0.0, support * province.instrument_mix.interest_subsidy, 0.0
-        if action.financing_choice == FinancingChoice.GUARANTEE_LOAN:
-            return 0.0, 0.0, support * province.instrument_mix.financing_guarantee
-        return 0.0, 0.0, 0.0
-
-    def _contribution(
-        self,
-        action: EnterpriseAction,
-        province_action: ProvinceAction,
-        profile: EnterpriseGroupProfile,
-        phase: Phase,
-    ) -> MechanismContribution:
-        weights = self.config["contributions"]
-        if not isinstance(weights, dict):
-            raise ValueError("mechanism contributions configuration is invalid")
-        step_scale = float(self.config["step_scale"])
-        active = {
-            Participation.PARTICIPATE: 1.0,
-            Participation.CONDITIONAL: 0.72,
-            Participation.WAIT: 0.15,
-            Participation.DECLINE: 0.0,
-        }[action.participation]
-        direct, interest, guarantee = self._tool_value(action, province_action)
-        is_sme = profile.archetype in {
-            EnterpriseArchetype.TECHNOLOGY_SME,
-            EnterpriseArchetype.TRADITIONAL_SME,
-        }
-        province = self.profiles[profile.province_code]
-        regional_need = 1.0 if province.region_group != RegionGroup.EAST else 0.35
-        regional_bias = max(0.0, self.policy.regional_support_bias)
-        minimum_intensity = 0.12 if action.participation == Participation.WAIT else 0
-        intensity = max(action.investment_intensity, minimum_intensity)
-        values = {
-            "policy_match": step_scale
-            * float(weights["policy_match"])
-            * self._technology_match(action)
-            * active,
-            "direct_subsidy": step_scale * float(weights["direct_subsidy"]) * direct * active,
-            "interest_subsidy": step_scale * float(weights["interest_subsidy"]) * interest * active,
-            "financing_guarantee": step_scale
-            * float(weights["financing_guarantee"])
-            * guarantee
-            * active,
-            "sme_preference": step_scale
-            * float(weights["sme_preference"])
-            * self.policy.sme_preference
-            * active
-            * (1.0 if is_sme else 0.18),
-            "regional_support": step_scale
-            * float(weights["regional_support"])
-            * regional_bias
-            * regional_need
-            * active,
-            "financing_constraint": step_scale
-            * float(weights["financing_constraint"])
-            * profile.financing_constraint
-            * (1 - guarantee * 0.7)
-            * max(active, 0.45),
-            "fiscal_cost": step_scale
-            * float(weights["fiscal_cost"])
-            * (self.policy.support_intensity / 100)
-            * province_action.local_match_ratio
-            * intensity,
-        }
-        return MechanismContribution(
-            enterprise_id=profile.enterprise_id,
-            province_code=profile.province_code,
-            phase=phase,
-            **{field: round(value, 4) for field, value in values.items()},
         )
 
     @staticmethod
-    def _participation_target(action: EnterpriseAction) -> float:
-        return {
-            Participation.PARTICIPATE: 84.0,
-            Participation.CONDITIONAL: 65.0,
-            Participation.WAIT: 42.0,
-            Participation.DECLINE: 20.0,
-        }[action.participation]
+    def _contribution(
+        province_code: str, metric: str, terms: list[MechanismTerm], evidence_refs: list[str]
+    ) -> MechanismContribution:
+        raw = sum(term.contribution for term in terms)
+        final = _clamp(raw)
+        return MechanismContribution(
+            province_code=province_code,
+            target_metric=metric,
+            terms=terms,
+            raw_value=raw,
+            clamp_adjustment=final - raw,
+            final_value=final,
+            evidence_refs=evidence_refs,
+        )
 
-    def process_actions(
+    def settle_year(
         self,
+        *,
+        policy: PolicySchema,
         province_actions: dict[str, ProvinceAction],
-        enterprise_actions: dict[str, EnterpriseAction],
+        automaker_actions: dict[str, AutomakerAction],
         phase: Phase,
-    ) -> tuple[
-        dict[str, ProvinceState],
-        dict[str, EnterpriseGroupState],
-        dict[str, EnterpriseAggregate],
-        dict[str, MechanismContribution],
-    ]:
-        if set(province_actions) != set(self.profiles):
-            raise ValueError("province actions must cover all 31 provinces")
-        if set(enterprise_actions) != set(self.enterprise_profiles):
-            raise ValueError("enterprise actions must cover all 186 groups")
-        self.explanations = []
-        next_enterprise: dict[str, EnterpriseGroupState] = {}
+        previous_province_states: dict[str, ProvinceState] | None = None,
+    ) -> YearSettlement:
+        if phase not in {Phase.Y1_Q4, Phase.Y2_Q4}:
+            raise ValueError("annual settlement is only valid in Q4")
+        if set(province_actions) != set(MAINLAND_PROVINCE_CODES):
+            raise ValueError("settlement requires 31 province actions")
+        if set(automaker_actions) != set(AUTOMAKER_IDS):
+            raise ValueError("settlement requires 10 automaker actions")
+        expected_province_phase = Phase.Y1_Q1 if phase is Phase.Y1_Q4 else Phase.Y2_Q1
+        expected_automaker_phase = Phase.Y1_Q2 if phase is Phase.Y1_Q4 else Phase.Y2_Q2
+        if any(action.phase is not expected_province_phase for action in province_actions.values()):
+            raise ValueError("province action year does not match settlement")
+        if any(
+            action.phase is not expected_automaker_phase for action in automaker_actions.values()
+        ):
+            raise ValueError("automaker action year does not match settlement")
+        states: dict[str, ProvinceState] = {}
         contributions: dict[str, MechanismContribution] = {}
-        for enterprise_id, profile in self.enterprise_profiles.items():
-            action = enterprise_actions[enterprise_id]
-            province_action = province_actions[profile.province_code]
-            previous = self.enterprise_states[enterprise_id]
-            contribution = self._contribution(action, province_action, profile, phase)
-            renewal = _clamp(previous.renewal_willingness + contribution.net_effect)
-            actual_delta = renewal - previous.renewal_willingness
-            if abs(actual_delta - contribution.net_effect) > 1e-6:
-                contribution = contribution.model_copy(
-                    update={
-                        "policy_match": round(
-                            contribution.policy_match + actual_delta - contribution.net_effect,
-                            4,
-                        )
-                    }
+        thresholds: dict[str, FixedVariableThreshold] = {}
+        central_total = 0.0
+        program_total = 0.0
+        facility_values: list[float] = []
+        for code in MAINLAND_PROVINCE_CODES:
+            profile = self.profiles[code]
+            action = province_actions[code]
+            offer = self._fiscal_offer(profile, policy)
+            central_total += offer.central_funding_index
+            program_total += offer.program_index
+            sales = fmean(
+                next(
+                    item.sales_investment_intensity
+                    for item in automaker.province_market_actions
+                    if item.province_code == code
                 )
-            direct, interest, guarantee = self._tool_value(action, province_action)
-            financing_gain = 12 * (direct + interest + guarantee) - 7 * profile.financing_constraint
-            participation = _clamp(
-                0.55 * previous.participation_score
-                + 0.45 * self._participation_target(action)
-                + 0.6 * contribution.net_effect
+                for automaker in automaker_actions.values()
             )
-            financing = _clamp(previous.financing_accessibility + financing_gain)
-            upgrade = _clamp(
-                previous.upgrade_progress
-                + action.investment_intensity * 7
-                + max(0, contribution.policy_match)
+            facility = sum(
+                item.investment_intensity
+                for automaker in automaker_actions.values()
+                for item in automaker.facility_actions
+                if item.province_code == code and item.action is not FacilityActionKind.DELAY
             )
-            next_enterprise[enterprise_id] = EnterpriseGroupState(
-                enterprise_id=enterprise_id,
-                province_code=profile.province_code,
+            facility_values.append(facility)
+            local_support = 100 * action.overall_support_intensity
+            demand_terms = [
+                MechanismTerm(
+                    name="consumer_wtp",
+                    input_value=profile.willingness_to_pay_index,
+                    coefficient=28,
+                    contribution=28 * profile.willingness_to_pay_index,
+                ),
+                MechanismTerm(
+                    name="consumer_subsidy",
+                    input_value=action.overall_support_intensity * action.subsidy_mix.consumer,
+                    coefficient=27,
+                    contribution=27
+                    * action.overall_support_intensity
+                    * action.subsidy_mix.consumer,
+                ),
+                MechanismTerm(
+                    name="automaker_sales",
+                    input_value=sales,
+                    coefficient=25,
+                    contribution=25 * sales,
+                ),
+                MechanismTerm(
+                    name="charging_access",
+                    input_value=profile.charging_infrastructure_index,
+                    coefficient=20,
+                    contribution=20 * profile.charging_infrastructure_index,
+                ),
+            ]
+            industry_terms = [
+                MechanismTerm(
+                    name="industry_base",
+                    input_value=profile.nev_industry_base,
+                    coefficient=25,
+                    contribution=25 * profile.nev_industry_base,
+                ),
+                MechanismTerm(
+                    name="fixed_cost_support",
+                    input_value=action.overall_support_intensity * action.subsidy_mix.fixed_cost,
+                    coefficient=25,
+                    contribution=25
+                    * action.overall_support_intensity
+                    * action.subsidy_mix.fixed_cost,
+                ),
+                MechanismTerm(
+                    name="variable_cost_support",
+                    input_value=action.overall_support_intensity * action.subsidy_mix.variable_cost,
+                    coefficient=20,
+                    contribution=20
+                    * action.overall_support_intensity
+                    * action.subsidy_mix.variable_cost,
+                ),
+                MechanismTerm(
+                    name="battery_proximity",
+                    input_value=1 - profile.battery_supply_distance_index,
+                    coefficient=15,
+                    contribution=15 * (1 - profile.battery_supply_distance_index),
+                ),
+                MechanismTerm(
+                    name="facility_activity",
+                    input_value=min(1, facility),
+                    coefficient=15,
+                    contribution=15 * min(1, facility),
+                ),
+            ]
+            demand_contribution = self._contribution(
+                code, "demand_index", demand_terms, [f"action:{action.action_id}"]
+            )
+            industry_contribution = self._contribution(
+                code, "industry_activity_index", industry_terms, [f"action:{action.action_id}"]
+            )
+            demand = demand_contribution.final_value
+            industry = industry_contribution.final_value
+            if previous_province_states and code in previous_province_states:
+                demand = _clamp(0.35 * previous_province_states[code].demand_index + 0.65 * demand)
+                industry = _clamp(
+                    0.40 * previous_province_states[code].industry_activity_index + 0.60 * industry
+                )
+            fiscal_pressure = _clamp(
+                100
+                * (
+                    0.35 * profile.fiscal_rigidity
+                    + 0.35 * offer.local_matching_index / offer.program_index
+                    + 0.30 * action.overall_support_intensity * (1 - offer.fiscal_space_index / 100)
+                )
+            )
+            states[code] = ProvinceState(
+                province_code=code,
                 phase=phase,
-                participation_score=participation,
-                renewal_willingness=renewal,
-                financing_accessibility=financing,
-                upgrade_progress=upgrade,
+                local_matching_burden_index=_clamp(offer.local_matching_index),
+                fiscal_space_index=offer.fiscal_space_index,
+                local_support_index=_clamp(local_support),
+                demand_index=demand,
+                industry_activity_index=industry,
+                development_index=province_development_index(demand, industry),
+                fiscal_pressure_index=fiscal_pressure,
                 last_action_id=action.action_id,
             )
-            contribution_terms = [
-                MechanismTerm(
-                    name=field,
-                    input_value=float(getattr(contribution, field)),
-                    coefficient=1,
-                    contribution=float(getattr(contribution, field)),
-                    source_ref=f"mechanism:{enterprise_id}:{field}:{phase.value}",
-                )
-                for field in (
-                    "policy_match",
-                    "direct_subsidy",
-                    "interest_subsidy",
-                    "financing_guarantee",
-                    "sme_preference",
-                    "regional_support",
-                    "financing_constraint",
-                    "fiscal_cost",
-                )
-            ]
-            metric_specs = [
-                (
-                    "renewal_willingness",
-                    "enterprise.transition.renewal",
-                    contribution_terms,
-                    previous.renewal_willingness + contribution.net_effect,
-                    renewal,
-                    previous.renewal_willingness,
-                ),
-                (
-                    "participation_score",
-                    "enterprise.transition.participation",
-                    [
-                        MechanismTerm(
-                            name="previous",
-                            input_value=previous.participation_score,
-                            coefficient=0.55,
-                            contribution=0.55 * previous.participation_score,
-                        ),
-                        MechanismTerm(
-                            name="participation_target",
-                            input_value=self._participation_target(action),
-                            coefficient=0.45,
-                            contribution=0.45 * self._participation_target(action),
-                        ),
-                        MechanismTerm(
-                            name="mechanism_net",
-                            input_value=contribution.net_effect,
-                            coefficient=0.6,
-                            contribution=0.6 * contribution.net_effect,
-                        ),
-                    ],
-                    0.55 * previous.participation_score
-                    + 0.45 * self._participation_target(action)
-                    + 0.6 * contribution.net_effect,
-                    participation,
-                    previous.participation_score,
-                ),
-                (
-                    "financing_accessibility",
-                    "enterprise.transition.financing",
-                    [
-                        MechanismTerm(
-                            name="previous",
-                            input_value=previous.financing_accessibility,
-                            coefficient=1,
-                            contribution=previous.financing_accessibility,
-                        ),
-                        MechanismTerm(
-                            name="selected_financing_tools",
-                            input_value=direct + interest + guarantee,
-                            coefficient=12,
-                            contribution=12 * (direct + interest + guarantee),
-                        ),
-                        MechanismTerm(
-                            name="financing_constraint",
-                            input_value=profile.financing_constraint,
-                            coefficient=-7,
-                            contribution=-7 * profile.financing_constraint,
-                        ),
-                    ],
-                    previous.financing_accessibility + financing_gain,
-                    financing,
-                    previous.financing_accessibility,
-                ),
-                (
-                    "upgrade_progress",
-                    "enterprise.transition.upgrade",
-                    [
-                        MechanismTerm(
-                            name="previous",
-                            input_value=previous.upgrade_progress,
-                            coefficient=1,
-                            contribution=previous.upgrade_progress,
-                        ),
-                        MechanismTerm(
-                            name="investment_intensity",
-                            input_value=action.investment_intensity,
-                            coefficient=7,
-                            contribution=action.investment_intensity * 7,
-                        ),
-                        MechanismTerm(
-                            name="positive_policy_match",
-                            input_value=max(0, contribution.policy_match),
-                            coefficient=1,
-                            contribution=max(0, contribution.policy_match),
-                        ),
-                    ],
-                    previous.upgrade_progress
-                    + action.investment_intensity * 7
-                    + max(0, contribution.policy_match),
-                    upgrade,
-                    previous.upgrade_progress,
-                ),
-            ]
-            for metric, formula_id, terms, raw, final, prior in metric_specs:
-                self.explanations.append(
-                    _explanation(
-                        scope="enterprise",
-                        subject_id=enterprise_id,
-                        metric=metric,
-                        phase=phase,
-                        formula_id=formula_id,
-                        formula_version=str(self.config["mechanism_version"]),
-                        terms=terms,
-                        raw_value=raw,
-                        final_value=final,
-                        previous_value=prior,
-                        source_refs=[action.action_id, province_action.action_id],
-                    )
-                )
-            contributions[enterprise_id] = contribution
-
-        aggregates: dict[str, EnterpriseAggregate] = {}
-        next_provinces: dict[str, ProvinceState] = {}
-        for code, province_profile in self.profiles.items():
-            items = [
-                (profile, next_enterprise[enterprise_id], enterprise_actions[enterprise_id])
-                for enterprise_id, profile in self.enterprise_profiles.items()
-                if profile.province_code == code
-            ]
-            sme_items = [
-                (profile, state)
-                for profile, state, _ in items
-                if profile.archetype
-                in {EnterpriseArchetype.TECHNOLOGY_SME, EnterpriseArchetype.TRADITIONAL_SME}
-            ]
-            sme_weight = sum(profile.weight for profile, _ in sme_items)
-            sme_financing = (
-                sum(profile.weight * state.financing_accessibility for profile, state in sme_items)
-                / sme_weight
+            contributions[f"{code}:demand"] = demand_contribution
+            contributions[f"{code}:industry"] = industry_contribution
+            thresholds[code] = fixed_variable_cost_threshold(
+                code,
+                action.overall_support_intensity * action.subsidy_mix.fixed_cost,
+                action.overall_support_intensity * action.subsidy_mix.variable_cost,
             )
-            counts = {participation: 0 for participation in Participation}
-            for _, _, action in items:
-                counts[action.participation] += 1
-            aggregate = EnterpriseAggregate(
-                province_code=code,
-                participation_index=_clamp(_weighted_state(items, "participation_score")),
-                renewal_willingness_index=_clamp(_weighted_state(items, "renewal_willingness")),
-                sme_financing_accessibility_index=_clamp(sme_financing),
-                industrial_upgrade_index=_clamp(_weighted_state(items, "upgrade_progress")),
-                participation_counts=counts,
+        automaker_states: dict[str, AutomakerState] = {}
+        for automaker_id, action in automaker_actions.items():
+            profile = self.automaker_profiles[automaker_id]
+            mean_sales = fmean(
+                item.sales_investment_intensity for item in action.province_market_actions
             )
-            aggregates[code] = aggregate
-            province_action = province_actions[code]
-            fiscal = self.config["fiscal_pressure"]
-            if not isinstance(fiscal, dict):
-                raise ValueError("fiscal pressure configuration is invalid")
-            policy_cost = 100 * (
-                float(fiscal["support_intensity"]) * self.policy.support_intensity / 100
-                + float(fiscal["direct_subsidy"]) * province_action.instrument_mix.direct_subsidy
-                + float(fiscal["interest_subsidy"])
-                * province_action.instrument_mix.interest_subsidy
-                + float(fiscal["financing_guarantee"])
-                * province_action.instrument_mix.financing_guarantee
-                + float(fiscal["local_match"]) * province_action.local_match_ratio
-                + float(fiscal["sme_preference"]) * self.policy.sme_preference
-                + float(fiscal["regional_support"]) * max(0.0, self.policy.regional_support_bias)
+            facility = sum(
+                item.investment_intensity
+                for item in action.facility_actions
+                if item.action is not FacilityActionKind.DELAY
             )
-            fiscal_pressure = _clamp(
-                0.52 * self.province_states[code].fiscal_pressure_index
-                + 0.48 * policy_cost * (1.12 - 0.45 * province_profile.fiscal_capacity)
+            operating = 100 * fmean(
+                0.25 * self.profiles[item.province_code].land_cost_index
+                + 0.25 * self.profiles[item.province_code].talent_cost_index
+                + 0.25 * self.profiles[item.province_code].energy_cost_index
+                + 0.25 * self.profiles[item.province_code].logistics_cost_index
+                for item in action.province_market_actions
             )
-            next_provinces[code] = ProvinceState(
-                province_code=code,
+            automaker_states[automaker_id] = AutomakerState(
+                automaker_id=automaker_id,
                 phase=phase,
-                enterprise_participation_index=aggregate.participation_index,
-                equipment_renewal_willingness_index=aggregate.renewal_willingness_index,
-                sme_financing_accessibility_index=aggregate.sme_financing_accessibility_index,
-                industrial_upgrade_index=aggregate.industrial_upgrade_index,
-                fiscal_pressure_index=fiscal_pressure,
-                last_action_id=province_action.action_id,
-            )
-            weighted_metrics = {
-                "enterprise_participation_index": "participation_score",
-                "equipment_renewal_willingness_index": "renewal_willingness",
-                "industrial_upgrade_index": "upgrade_progress",
-            }
-            total_weight = sum(profile.weight for profile, _, _ in items)
-            for province_metric, enterprise_metric in weighted_metrics.items():
-                terms = [
-                    MechanismTerm(
-                        name=profile.enterprise_id,
-                        input_value=float(getattr(state, enterprise_metric)),
-                        coefficient=profile.weight / total_weight,
-                        contribution=profile.weight
-                        * float(getattr(state, enterprise_metric))
-                        / total_weight,
-                        source_ref=f"mechanism:{profile.enterprise_id}:{enterprise_metric}:{phase.value}",
+                simulated_roi_index=_clamp(
+                    100
+                    * (
+                        0.45 * mean_sales
+                        + 0.30 * profile.profitability_index
+                        + 0.25 * (1 - operating / 100)
                     )
-                    for profile, state, _ in items
-                ]
-                final = float(getattr(next_provinces[code], province_metric))
-                self.explanations.append(
-                    _explanation(
-                        scope="province",
-                        subject_id=code,
-                        metric=province_metric,
-                        phase=phase,
-                        formula_id=f"province.aggregate.{province_metric}",
-                        formula_version=str(self.config["mechanism_version"]),
-                        terms=terms,
-                        raw_value=sum(item.contribution for item in terms),
-                        final_value=final,
-                        source_refs=[item.source_ref for item in terms if item.source_ref],
-                    )
-                )
-            sme_terms = [
-                MechanismTerm(
-                    name=profile.enterprise_id,
-                    input_value=state.financing_accessibility,
-                    coefficient=profile.weight / sme_weight,
-                    contribution=profile.weight * state.financing_accessibility / sme_weight,
-                    source_ref=f"mechanism:{profile.enterprise_id}:financing_accessibility:{phase.value}",
-                )
-                for profile, state in sme_items
-            ]
-            self.explanations.append(
-                _explanation(
-                    scope="province",
-                    subject_id=code,
-                    metric="sme_financing_accessibility_index",
-                    phase=phase,
-                    formula_id="province.aggregate.sme_financing_accessibility",
-                    formula_version=str(self.config["mechanism_version"]),
-                    terms=sme_terms,
-                    raw_value=sum(item.contribution for item in sme_terms),
-                    final_value=aggregate.sme_financing_accessibility_index,
-                    source_refs=[item.source_ref for item in sme_terms if item.source_ref],
-                )
-            )
-            fiscal_terms = [
-                MechanismTerm(
-                    name="previous_fiscal_pressure",
-                    input_value=self.province_states[code].fiscal_pressure_index,
-                    coefficient=0.52,
-                    contribution=0.52 * self.province_states[code].fiscal_pressure_index,
                 ),
-                MechanismTerm(
-                    name="capacity_adjusted_policy_cost",
-                    input_value=policy_cost * (1.12 - 0.45 * province_profile.fiscal_capacity),
-                    coefficient=0.48,
-                    contribution=0.48
-                    * policy_cost
-                    * (1.12 - 0.45 * province_profile.fiscal_capacity),
-                ),
-            ]
-            self.explanations.append(
-                _explanation(
-                    scope="province",
-                    subject_id=code,
-                    metric="fiscal_pressure_index",
-                    phase=phase,
-                    formula_id="province.fiscal_pressure",
-                    formula_version=str(self.config["mechanism_version"]),
-                    terms=fiscal_terms,
-                    raw_value=sum(item.contribution for item in fiscal_terms),
-                    final_value=fiscal_pressure,
-                    previous_value=self.province_states[code].fiscal_pressure_index,
-                    source_refs=[province_action.action_id],
-                )
+                sales_activity_index=_clamp(mean_sales * 100),
+                facility_activity_index=_clamp(facility / 3 * 100),
+                operating_cost_index=_clamp(operating),
+                last_action_id=action.action_id,
             )
-        self.enterprise_states = next_enterprise
-        self.enterprise_aggregates = aggregates
-        self.province_states = next_provinces
-        self.contributions = contributions
-        return (
-            deepcopy(next_provinces),
-            deepcopy(next_enterprise),
-            deepcopy(aggregates),
-            deepcopy(contributions),
+        development = [state.development_index for state in states.values()]
+        industry = [state.industry_activity_index for state in states.values()]
+        market_total = sum(profile.market_scale for profile in self.profiles.values())
+        metrics = NationalMetrics(
+            regional_development_gap=normalized_gini(development),
+            central_fiscal_burden=_clamp(central_total / program_total * 100),
+            local_fiscal_pressure=_round(
+                fmean(state.fiscal_pressure_index for state in states.values())
+            ),
+            nev_demand=_round(
+                sum(states[code].demand_index * self.profiles[code].market_scale for code in states)
+                / market_total
+            ),
+            new_investment_concentration=normalized_hhi(facility_values),
+            industrial_agglomeration=normalized_hhi(industry),
         )
-
-    def calculate_national_metrics(self) -> NationalMetrics:
-        states = list(self.province_states.values())
-        if not states:
-            return NationalMetrics()
-        participation = fmean(item.enterprise_participation_index for item in states)
-        renewal = fmean(item.equipment_renewal_willingness_index for item in states)
-        financing = fmean(item.sme_financing_accessibility_index for item in states)
-        upgrade = fmean(item.industrial_upgrade_index for item in states)
-        fiscal = fmean(item.fiscal_pressure_index for item in states)
-        gap = min(100.0, 2.2 * pstdev(item.enterprise_participation_index for item in states))
-        result = NationalMetrics(
-            enterprise_participation_index=_clamp(participation),
-            equipment_renewal_willingness_index=_clamp(renewal),
-            sme_financing_accessibility_index=_clamp(financing),
-            industrial_upgrade_index=_clamp(upgrade),
-            local_fiscal_pressure_index=_clamp(fiscal),
-            regional_gap_index=_clamp(gap),
-        )
-        phase = states[0].phase
-        metric_fields = (
-            "enterprise_participation_index",
-            "equipment_renewal_willingness_index",
-            "sme_financing_accessibility_index",
-            "industrial_upgrade_index",
-            "fiscal_pressure_index",
-        )
-        national_fields = (
-            "enterprise_participation_index",
-            "equipment_renewal_willingness_index",
-            "sme_financing_accessibility_index",
-            "industrial_upgrade_index",
-            "local_fiscal_pressure_index",
-        )
-        for source_field, target_field in zip(metric_fields, national_fields, strict=True):
-            terms = [
-                MechanismTerm(
-                    name=state.province_code,
-                    input_value=float(getattr(state, source_field)),
-                    coefficient=1 / len(states),
-                    contribution=float(getattr(state, source_field)) / len(states),
-                    source_ref=f"mechanism:{state.province_code}:{source_field}:{phase.value}",
-                )
-                for state in states
-            ]
-            self.explanations.append(
-                _explanation(
-                    scope="national",
-                    subject_id="national",
-                    metric=target_field,
-                    phase=phase,
-                    formula_id=f"national.mean.{target_field}",
-                    formula_version=str(self.config["mechanism_version"]),
-                    terms=terms,
-                    raw_value=sum(item.contribution for item in terms),
-                    final_value=float(getattr(result, target_field)),
-                    source_refs=[item.source_ref for item in terms if item.source_ref],
-                )
-            )
-        stddev = pstdev(item.enterprise_participation_index for item in states)
-        self.explanations.append(
-            _explanation(
-                scope="national",
-                subject_id="national",
-                metric="regional_gap_index",
-                phase=phase,
-                formula_id="national.regional_gap",
-                formula_version=str(self.config["mechanism_version"]),
-                terms=[
-                    MechanismTerm(
-                        name="province_participation_pstdev",
-                        input_value=stddev,
-                        coefficient=2.2,
-                        contribution=2.2 * stddev,
-                    )
-                ],
-                raw_value=2.2 * stddev,
-                final_value=result.regional_gap_index,
-                source_refs=[
-                    f"mechanism:{state.province_code}:enterprise_participation_index:{phase.value}"
-                    for state in states
-                ],
-            )
-        )
-        return result
-
-    def snapshot(self) -> dict[str, object]:
-        return {
-            "policy": self.policy.model_dump(mode="json"),
-            "province_states": {
-                code: state.model_dump(mode="json") for code, state in self.province_states.items()
-            },
-            "enterprise_states": {
-                key: state.model_dump(mode="json") for key, state in self.enterprise_states.items()
-            },
-        }
-
-    @classmethod
-    def restore(
-        cls,
-        snapshot: dict[str, object],
-        *,
-        profiles: dict[str, ProvinceProfile] | None = None,
-        network: dict[str, list[NetworkEdge]] | None = None,
-        enterprise_profiles: dict[str, EnterpriseGroupProfile] | None = None,
-    ) -> ChinaPolicyEnv:
-        raw_provinces = snapshot["province_states"]
-        raw_enterprises = snapshot["enterprise_states"]
-        if not isinstance(raw_provinces, dict) or not isinstance(raw_enterprises, dict):
-            raise ValueError("snapshot states are invalid")
-        return cls(
-            profiles=profiles,
-            network=network,
-            enterprise_profiles=enterprise_profiles,
-            policy=PolicySchema.model_validate(snapshot["policy"]),
-            province_states={
-                code: ProvinceState.model_validate(state) for code, state in raw_provinces.items()
-            },
-            enterprise_states={
-                key: EnterpriseGroupState.model_validate(state)
-                for key, state in raw_enterprises.items()
-            },
+        return YearSettlement(
+            phase=phase,
+            province_states=states,
+            automaker_states=automaker_states,
+            national_metrics=metrics,
+            mechanism_contributions=contributions,
+            fixed_variable_thresholds=thresholds,
         )

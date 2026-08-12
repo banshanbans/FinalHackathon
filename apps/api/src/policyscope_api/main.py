@@ -21,11 +21,10 @@ from policyscope_api.schemas import (
 )
 from policyscope_api.settings import Settings, get_settings
 from simulation.adapters.asyncio_adapter import AsyncioSimulationAdapter
-from simulation.data import load_enterprise_archetypes
+from simulation.catalog import automaker_catalog, policy_region_catalog
 from simulation.models.audit import AuditRecordType
-from simulation.models.common import Phase
+from simulation.models.common import Phase, PolicyRegion, ProvincePersonaType
 from simulation.models.experiment import ExperimentConfig
-from simulation.services.persona import AXIS_TYPES, TYPE_GOALS, TYPE_LABELS
 
 ResponseT = TypeVar("ResponseT")
 
@@ -94,8 +93,8 @@ def create_app(
 
     application = FastAPI(
         title="PolicyScope API",
-        version="0.3.0",
-        description="PolicyScope V2.1 auditable province-agent policy simulation API",
+        version="0.4.0",
+        description="PolicyScope V3 auditable NEV subsidy and industrial-layout simulation API",
         lifespan=lifespan,
     )
     application.add_middleware(
@@ -139,7 +138,7 @@ def create_app(
             "status": "ok",
             "runtime": "asyncio",
             "run_mode": app_settings.run_mode.value,
-            "version": "0.3.0",
+            "version": "0.4.0",
         }
 
     @application.get("/api/meta/provinces")
@@ -150,27 +149,53 @@ def create_app(
             profile.model_dump(mode="json") for _, profile in sorted(simulation.profiles.items())
         ]
 
-    @application.get("/api/meta/enterprise-archetypes")
-    async def enterprise_archetypes() -> list[dict[str, object]]:
+    @application.get("/api/meta/automakers")
+    async def automakers(
+        simulation: AsyncioSimulationAdapter = Depends(get_adapter),
+    ) -> list[dict[str, object]]:
+        catalog = automaker_catalog()
         return [
-            item.model_dump(mode="json")
-            for _, item in sorted(
-                load_enterprise_archetypes().items(), key=lambda pair: pair[0].value
-            )
+            {
+                "automaker_id": automaker_id,
+                "display_name": catalog[automaker_id].display_name,
+                "schema_version": profile.schema_version,
+                "baseline_year": profile.baseline_year,
+                "data_quality": profile.data_quality.value,
+                "representative_set_disclaimer": catalog[
+                    automaker_id
+                ].representative_set_disclaimer,
+            }
+            for automaker_id, profile in simulation.automaker_profiles.items()
+        ]
+
+    @application.get("/api/meta/policy-regions")
+    async def policy_regions(
+        simulation: AsyncioSimulationAdapter = Depends(get_adapter),
+    ) -> list[dict[str, object]]:
+        catalog = policy_region_catalog()
+        return [
+            {
+                "policy_region": region.value,
+                "central_share": simulation.default_policy.central_share_for_region(region),
+                "province_codes": [
+                    code for code, item in catalog.items() if item.policy_region is region
+                ],
+                "province_names": [
+                    item.name for item in catalog.values() if item.policy_region is region
+                ],
+            }
+            for region in (PolicyRegion.WEST, PolicyRegion.CENTRAL, PolicyRegion.EAST)
         ]
 
     @application.get("/api/meta/province-persona-types")
     async def province_persona_types() -> list[dict[str, object]]:
-        axis_by_type = {persona_type: axis for axis, persona_type in AXIS_TYPES.items()}
         return [
             {
                 "type": persona_type.value,
-                "display_name": TYPE_LABELS[persona_type],
-                "axis": axis_by_type[persona_type],
-                "priority_goal": TYPE_GOALS[persona_type].value,
+                "display_name": persona_type.value,
                 "visible_label": "本次实验决策画像",
             }
-            for persona_type in TYPE_LABELS
+            for persona_type in ProvincePersonaType
         ]
 
     @application.get("/api/meta/default-policy")
@@ -295,6 +320,19 @@ def create_app(
         except Exception as error:
             raise _http_error(error) from error
 
+    @application.get("/api/experiments/{experiment_id}/automakers/{automaker_id}")
+    async def automaker_detail(
+        experiment_id: str,
+        automaker_id: str,
+        simulation: AsyncioSimulationAdapter = Depends(get_adapter),
+    ) -> dict[str, object]:
+        try:
+            return (await simulation.get_automaker_detail(experiment_id, automaker_id)).model_dump(
+                mode="json"
+            )
+        except Exception as error:
+            raise _http_error(error) from error
+
     @application.get("/api/experiments/{experiment_id}/stream")
     async def stream_events(
         request: Request,
@@ -373,6 +411,19 @@ def create_app(
             )
         except HTTPException:
             raise
+        except Exception as error:
+            raise _http_error(error) from error
+
+    @application.get("/api/experiments/{experiment_id}/branches")
+    async def list_branches(
+        experiment_id: str,
+        simulation: AsyncioSimulationAdapter = Depends(get_adapter),
+    ) -> list[dict[str, object]]:
+        try:
+            return [
+                branch.model_dump(mode="json")
+                for branch in await simulation.list_branches(experiment_id)
+            ]
         except Exception as error:
             raise _http_error(error) from error
 

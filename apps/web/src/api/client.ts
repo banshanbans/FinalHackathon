@@ -1,196 +1,42 @@
-import type {
-  AuditListResponse,
-  AuditRecord,
-  AuditRecordType,
-  Branch,
-  CentralIntervention,
-  ComparisonResult,
-  EnterpriseArchetypeDefinition,
-  EvidenceRecord,
-  SimulationEvent,
-  Policy,
-  ProvinceAgentDetail,
-  ProvincePersonaTypeDefinition,
-  ProvinceProfile,
-  RunMode,
-  WorldState,
-} from "../types";
+import type { AuditListResponse, AuditRecord, AuditRecordType, AutomakerDetail, AutomakerMeta, Branch, CentralIntervention, ComparisonResult, EvidenceRecord, Policy, ProvinceAgentDetail, ProvinceProfile, RunMode, SimulationEvent, WorldState } from "../types";
 
-const configuredBase = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(
-  /\/$/,
-  "",
-);
+const configuredBase = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, "");
 const API_ROOT = configuredBase ? `${configuredBase}/api` : "/api";
 
-export class ApiError extends Error {
-  status: number;
-  errorCode: string;
-
-  constructor(status: number, errorCode: string, message: string) {
-    super(message);
-    this.name = "ApiError";
-    this.status = status;
-    this.errorCode = errorCode;
-  }
-}
-
-function idempotencyKey(operation: string) {
-  return `${operation}:${crypto.randomUUID()}`;
-}
-
+export class ApiError extends Error { constructor(public status: number, public errorCode: string, message: string) { super(message); } }
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_ROOT}${path}`, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...init?.headers,
-    },
-  });
+  const response = await fetch(`${API_ROOT}${path}`, { ...init, headers: { "Content-Type": "application/json", ...init?.headers } });
   if (!response.ok) {
-    const payload = (await response.json().catch(() => null)) as {
-      detail?: { error_code?: string; message?: string } | string;
-    } | null;
+    const payload = await response.json().catch(() => null) as { detail?: { error_code?: string; message?: string } | string } | null;
     const detail = payload?.detail;
-    const message =
-      typeof detail === "string"
-        ? detail
-        : detail?.message ?? `请求失败（${response.status}）`;
-    const code = typeof detail === "object" ? detail?.error_code ?? "REQUEST_FAILED" : "REQUEST_FAILED";
-    throw new ApiError(response.status, code, message);
+    throw new ApiError(response.status, typeof detail === "object" ? detail?.error_code ?? "REQUEST_FAILED" : "REQUEST_FAILED", typeof detail === "string" ? detail : detail?.message ?? `请求失败（${response.status}）`);
   }
   return response.json() as Promise<T>;
 }
-
-const keyed = (operation: string): HeadersInit => ({
-  "Idempotency-Key": idempotencyKey(operation),
-});
+const keyed = (name: string) => ({ "Idempotency-Key": `${name}:${crypto.randomUUID()}` });
 
 export const policyScopeApi = {
-  health: () =>
-    request<{ status: string; runtime: string; run_mode: RunMode; version: string }>(
-      "/health",
-    ),
-
+  health: () => request<{ status: string; run_mode: RunMode; version: string }>("/health"),
   listProvinces: () => request<ProvinceProfile[]>("/meta/provinces"),
-
-  listEnterpriseArchetypes: () =>
-    request<EnterpriseArchetypeDefinition[]>("/meta/enterprise-archetypes"),
-
-  listProvincePersonaTypes: () =>
-    request<ProvincePersonaTypeDefinition[]>("/meta/province-persona-types"),
-
+  listAutomakers: () => request<AutomakerMeta[]>("/meta/automakers"),
   defaultPolicy: () => request<Policy>("/meta/default-policy"),
-
-  createExperiment: (objective: string, runMode: RunMode) =>
-    request<WorldState>("/experiments", {
-      method: "POST",
-      headers: keyed("create-experiment"),
-      body: JSON.stringify({ objective, run_mode: runMode }),
-    }),
-
-  getState: (experimentId: string, branchId = "control") =>
-    request<WorldState>(
-      `/experiments/${experimentId}/state?branch_id=${encodeURIComponent(branchId)}`,
-    ),
-
-  getProvinceDetail: (experimentId: string, provinceCode: string) =>
-    request<ProvinceAgentDetail>(
-      `/experiments/${experimentId}/provinces/${encodeURIComponent(provinceCode)}`,
-    ),
-
-  approveDirective: (experimentId: string, policy: Policy) =>
-    request<WorldState>(`/experiments/${experimentId}/directive/approve`, {
-      method: "POST",
-      headers: keyed("approve-directive"),
-      body: JSON.stringify({ policy }),
-    }),
-
-  runExperiment: (experimentId: string, phase: "T3" | "T5", branchId = "control") =>
-    request<WorldState>(`/experiments/${experimentId}/run`, {
-      method: "POST",
-      headers: keyed(`run-${branchId}-${phase}`),
-      body: JSON.stringify({ until_phase: phase, branch_id: branchId }),
-    }),
-
-  approveIntervention: (experimentId: string, proposalId: string, policy: Policy) =>
-    request<CentralIntervention>(
-      `/experiments/${experimentId}/interventions/${proposalId}/approve`,
-      {
-        method: "POST",
-        headers: keyed("approve-intervention"),
-        body: JSON.stringify({ policy }),
-      },
-    ),
-
-  rejectIntervention: (experimentId: string, proposalId: string, reason: string) =>
-    request<WorldState>(
-      `/experiments/${experimentId}/interventions/${proposalId}/reject`,
-      {
-        method: "POST",
-        headers: keyed("reject-intervention"),
-        body: JSON.stringify({ reason }),
-      },
-    ),
-
-  createBranch: (experimentId: string, interventionId: string) =>
-    request<Branch>(`/experiments/${experimentId}/branches`, {
-      method: "POST",
-      headers: keyed("create-branch"),
-      body: JSON.stringify({ intervention_id: interventionId }),
-    }),
-
-  runBranch: (branchId: string) =>
-    request<WorldState>(`/branches/${branchId}/run`, {
-      method: "POST",
-      headers: keyed(`run-${branchId}-T5`),
-      body: JSON.stringify({ until_phase: "T5" }),
-    }),
-
-  compare: (experimentId: string) =>
-    request<ComparisonResult>(`/experiments/${experimentId}/compare`),
-
-  evidence: (experimentId: string, evidenceId: string) =>
-    request<EvidenceRecord>(
-      `/experiments/${experimentId}/evidence/${encodeURIComponent(evidenceId)}`,
-    ),
-
-  audit: (
-    experimentId: string,
-    filters: {
-      branchId?: string;
-      phase?: string;
-      actorKind?: string;
-      actorId?: string;
-      recordType?: AuditRecordType;
-      status?: string;
-      outcome?: string;
-      afterSequence?: number;
-      limit?: number;
-    } = {},
-  ) => {
-    const query = new URLSearchParams();
-    if (filters.branchId) query.set("branch_id", filters.branchId);
-    if (filters.phase) query.set("phase", filters.phase);
-    if (filters.actorKind) query.set("actor_kind", filters.actorKind);
-    if (filters.actorId) query.set("actor_id", filters.actorId);
-    if (filters.recordType) query.set("record_type", filters.recordType);
-    if (filters.status) query.set("status", filters.status);
-    if (filters.outcome) query.set("outcome", filters.outcome);
-    if (filters.afterSequence !== undefined) {
-      query.set("after_sequence", String(filters.afterSequence));
-    }
-    if (filters.limit !== undefined) query.set("limit", String(filters.limit));
-    const suffix = query.size > 0 ? `?${query.toString()}` : "";
-    return request<AuditListResponse>(`/experiments/${experimentId}/audit${suffix}`);
-  },
-
-  auditRecord: (experimentId: string, recordId: string) =>
-    request<AuditRecord>(
-      `/experiments/${experimentId}/audit/${encodeURIComponent(recordId)}`,
-    ),
-
-  replay: (experimentId: string) =>
-    request<SimulationEvent[]>(`/experiments/${experimentId}/replay`),
-
-  streamUrl: (experimentId: string) => `${API_ROOT}/experiments/${experimentId}/stream`,
+  createExperiment: (objective: string, runMode: RunMode) => request<WorldState>("/experiments", { method: "POST", headers: keyed("create"), body: JSON.stringify({ objective, run_mode: runMode }) }),
+  getState: (id: string, branch = "control") => request<WorldState>(`/experiments/${id}/state?branch_id=${branch}`),
+  approveDirective: (id: string, policy: Policy) => request<WorldState>(`/experiments/${id}/directive/approve`, { method: "POST", headers: keyed("approve-directive"), body: JSON.stringify({ policy }) }),
+  runExperiment: (id: string, phase: Phase, branch = "control") => request<WorldState>(`/experiments/${id}/run`, { method: "POST", headers: keyed(`run-${branch}-${phase}`), body: JSON.stringify({ until_phase: phase, branch_id: branch }) }),
+  approveIntervention: (id: string, proposalId: string, policy: Policy) => request<CentralIntervention>(`/experiments/${id}/interventions/${proposalId}/approve`, { method: "POST", headers: keyed("approve-intervention"), body: JSON.stringify({ policy }) }),
+  rejectIntervention: (id: string, proposalId: string, reason: string) => request<WorldState>(`/experiments/${id}/interventions/${proposalId}/reject`, { method: "POST", headers: keyed("reject-intervention"), body: JSON.stringify({ reason }) }),
+  listBranches: (id: string) => request<Branch[]>(`/experiments/${id}/branches`),
+  createBranch: (id: string, interventionId: string) => request<Branch>(`/experiments/${id}/branches`, { method: "POST", headers: keyed("branch"), body: JSON.stringify({ intervention_id: interventionId }) }),
+  runBranch: (branch: string) => request<WorldState>(`/branches/${branch}/run`, { method: "POST", headers: keyed(`run-${branch}`), body: JSON.stringify({ until_phase: "Y2_Q4" }) }),
+  compare: (id: string) => request<ComparisonResult>(`/experiments/${id}/compare`),
+  getProvinceDetail: (id: string, code: string) => request<ProvinceAgentDetail>(`/experiments/${id}/provinces/${code}`),
+  getAutomakerDetail: (id: string, automakerId: string) => request<AutomakerDetail>(`/experiments/${id}/automakers/${automakerId}`),
+  evidence: (id: string, evidenceId: string) => request<EvidenceRecord>(`/experiments/${id}/evidence/${encodeURIComponent(evidenceId)}`),
+  audit: (id: string, filters: { recordType?: AuditRecordType; limit?: number } = {}) => { const query = new URLSearchParams(); if (filters.recordType) query.set("record_type", filters.recordType); if (filters.limit) query.set("limit", String(filters.limit)); return request<AuditListResponse>(`/experiments/${id}/audit?${query}`); },
+  auditRecord: (id: string, recordId: string) => request<AuditRecord>(`/experiments/${id}/audit/${recordId}`),
+  replay: (id: string) => request<SimulationEvent[]>(`/experiments/${id}/replay`),
+  streamUrl: (id: string) => `${API_ROOT}/experiments/${id}/stream`,
 };
+
+type Phase = import("../types").Phase;

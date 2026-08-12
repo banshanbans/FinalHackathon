@@ -10,7 +10,7 @@ def test_deepseek_role_defaults_and_secret_redaction() -> None:
     assert settings.llm_base_url == "https://api.deepseek.com"
     assert settings.central_model == "deepseek-v4-flash"
     assert settings.province_model == "deepseek-v4-flash"
-    assert settings.enterprise_model == "deepseek-v4-flash"
+    assert settings.automaker_model == "deepseek-v4-flash"
     assert settings.llm_timeout_seconds == 60
     assert settings.llm_max_concurrency == 8
     assert "sensitive-test-key" not in repr(settings)
@@ -19,5 +19,5 @@ def test_deepseek_role_defaults_and_secret_redaction() -> None:
     assert isinstance(adapter.provider, LiveLLMProvider)
     assert adapter.provider.central_model == "deepseek-v4-flash"
     assert adapter.provider.province_model == "deepseek-v4-flash"
-    assert adapter.provider.enterprise_model == "deepseek-v4-flash"
+    assert adapter.provider.automaker_model == "deepseek-v4-flash"
     assert adapter.provider.thinking_enabled is False

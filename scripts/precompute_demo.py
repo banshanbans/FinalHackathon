@@ -17,27 +17,33 @@ async def main() -> None:
     adapter = AsyncioSimulationAdapter(provider, runtime_dir=Path("runtime"))
     config = ExperimentConfig(
         objective=(
-            "在有限财政支持下推动制造业设备升级，提高中小企业参与度，"
-            "并兼顾绿色转型、就业稳定和区域可达性。"
+            "比较三档中央承担比例变化对地方财政空间、新能源汽车需求与真实头部车企模拟布局的影响。"
         ),
         run_mode=RunMode.CACHE,
-        model_version="cache-v3",
+        model_version="cache-nev-v1",
     )
-    await adapter.run_full_demo(config)
+    result = await adapter.run_full_demo(config)
     manifest = {
-        "schema_version": "demo-cache-manifest-v1",
-        "product_version": "PolicyScope V2.1",
+        "schema_version": "demo-cache-manifest-v3",
+        "product_version": "PolicyScope V3.0",
         "scenario_id": config.scenario_id,
         "seed": config.seed,
+        "data_version": config.data_version,
+        "mechanism_version": config.mechanism_version,
         "model_version": config.model_version,
         "prompt_version": config.prompt_version,
+        "comparison_schema": result.schema_version,
+        "delta_gap": result.delta_gap,
         "artifacts": sorted(path.name for path in provider.accessed_cache_files),
     }
-    (provider.cache_dir / "v21_manifest.json").write_text(
+    (provider.cache_dir / "v3_manifest.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
-    print("Default PolicyScope V2.1 cache precomputed.")
+    print(
+        f"Default PolicyScope V3.0 cache precomputed: "
+        f"{len(provider.accessed_cache_files)} artifacts, ΔGap={result.delta_gap:+.3f}."
+    )
 
 
 if __name__ == "__main__":

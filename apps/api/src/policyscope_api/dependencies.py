@@ -18,7 +18,7 @@ def build_adapter(settings: Settings) -> AsyncioSimulationAdapter:
             base_url=settings.llm_base_url,
             central_model=settings.central_model,
             province_model=settings.province_model,
-            enterprise_model=settings.enterprise_model,
+            automaker_model=settings.automaker_model,
             fallback=fallback,
             timeout_seconds=settings.llm_timeout_seconds,
             max_concurrency=settings.llm_max_concurrency,

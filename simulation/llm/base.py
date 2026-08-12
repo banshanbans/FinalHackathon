@@ -1,23 +1,17 @@
 from typing import Protocol
 
 from simulation.data import NetworkEdge
-from simulation.models.action import ProvinceAction
+from simulation.models.automaker import AutomakerAction, AutomakerProfile, AutomakerState
 from simulation.models.central import (
     CentralInterventionProposal,
-    CentralPolicyDirective,
     CentralReview,
+    CentralSubsidyDirective,
 )
 from simulation.models.common import Phase
-from simulation.models.enterprise import (
-    EnterpriseAction,
-    EnterpriseActionBatch,
-    EnterpriseAggregate,
-    EnterpriseGroupProfile,
-    EnterpriseGroupState,
-)
 from simulation.models.experiment import ExperimentConfig
 from simulation.models.policy import PolicySchema
 from simulation.models.province import (
+    ProvinceAction,
     ProvinceDecisionPersona,
     ProvinceFeedback,
     ProvinceProfile,
@@ -27,9 +21,11 @@ from simulation.models.world import ComparisonResult, NationalMetrics, WorldStat
 
 
 class LLMProvider(Protocol):
+    run_mode: str
+
     async def generate_central_directive(
         self, config: ExperimentConfig, default_policy: PolicySchema
-    ) -> CentralPolicyDirective: ...
+    ) -> CentralSubsidyDirective: ...
 
     async def generate_province_action(
         self,
@@ -48,19 +44,20 @@ class LLMProvider(Protocol):
         model_version: str,
     ) -> ProvinceAction: ...
 
-    async def generate_enterprise_actions_batch(
+    async def generate_automaker_action(
         self,
         *,
-        province_profile: ProvinceProfile,
-        province_action: ProvinceAction,
-        enterprise_profiles: list[EnterpriseGroupProfile],
-        enterprise_states: dict[str, EnterpriseGroupState],
+        profile: AutomakerProfile,
+        state: AutomakerState,
+        province_profiles: dict[str, ProvinceProfile],
+        province_actions: dict[str, ProvinceAction],
         policy: PolicySchema,
         phase: Phase,
+        previous_action: AutomakerAction | None,
         seed: int,
         prompt_version: str,
         model_version: str,
-    ) -> EnterpriseActionBatch: ...
+    ) -> AutomakerAction: ...
 
     async def generate_province_feedback(
         self,
@@ -69,8 +66,7 @@ class LLMProvider(Protocol):
         persona: ProvinceDecisionPersona,
         state: ProvinceState,
         current_action: ProvinceAction,
-        aggregate: EnterpriseAggregate,
-        enterprise_actions: list[EnterpriseAction],
+        automaker_actions: dict[str, AutomakerAction],
         policy: PolicySchema,
         seed: int,
         prompt_version: str,
@@ -84,7 +80,7 @@ class LLMProvider(Protocol):
         metrics: NationalMetrics,
         states: dict[str, ProvinceState],
         feedback: dict[str, ProvinceFeedback],
-        enterprise_actions: dict[str, EnterpriseAction],
+        automaker_actions: dict[str, AutomakerAction],
     ) -> list[CentralInterventionProposal]: ...
 
     async def generate_central_review(

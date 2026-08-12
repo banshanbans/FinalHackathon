@@ -1,0 +1,14 @@
+schema_version: nev-policy-mechanism-v1
+formula_version: nev-policy-env-v1
+development_index:
+  demand_weight: 0.50
+  industry_activity_weight: 0.50
+gap:
+  method: equal_weight_normalized_gini
+concentration:
+  method: normalized_hhi
+policy_levers:
+  - west_central_share
+  - central_central_share
+  - east_central_share
+disclaimer: 所有输出为模拟指数和指数点，不生成现实销量、利润、成本、投资或财政金额预测。

@@ -21,7 +21,13 @@ class Settings(BaseSettings):
     llm_api_key: SecretStr = SecretStr("")
     central_model: str = Field(default="deepseek-v4-flash", alias="POLICYSCOPE_CENTRAL_MODEL")
     province_model: str = Field(default="deepseek-v4-flash", alias="POLICYSCOPE_PROVINCE_MODEL")
-    enterprise_model: str = Field(default="deepseek-v4-flash", alias="POLICYSCOPE_ENTERPRISE_MODEL")
+    automaker_model: str = Field(default="deepseek-v4-flash", alias="POLICYSCOPE_AUTOMAKER_MODEL")
+
+    @property
+    def enterprise_model(self) -> str:
+        """Backward-compatible environment alias used by older deployments."""
+        return self.automaker_model
+
     llm_timeout_seconds: float = 60
     llm_max_concurrency: int = 8
     llm_max_tokens: int = 4096

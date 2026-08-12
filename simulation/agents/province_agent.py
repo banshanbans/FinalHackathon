@@ -1,10 +1,10 @@
 from simulation.data import NetworkEdge
 from simulation.llm.base import LLMProvider
-from simulation.models.action import ProvinceAction
+from simulation.models.automaker import AutomakerAction
 from simulation.models.common import Phase
-from simulation.models.enterprise import EnterpriseAction, EnterpriseAggregate
 from simulation.models.policy import PolicySchema
 from simulation.models.province import (
+    ProvinceAction,
     ProvinceDecisionPersona,
     ProvinceFeedback,
     ProvinceProfile,
@@ -13,8 +13,6 @@ from simulation.models.province import (
 
 
 class ProvinceAgent:
-    """Province policy response and T3 feedback proxy."""
-
     def __init__(self, profile: ProvinceProfile, provider: LLMProvider):
         self.profile = profile
         self.provider = provider
@@ -58,8 +56,7 @@ class ProvinceAgent:
         persona: ProvinceDecisionPersona,
         state: ProvinceState,
         current_action: ProvinceAction,
-        aggregate: EnterpriseAggregate,
-        enterprise_actions: list[EnterpriseAction],
+        automaker_actions: dict[str, AutomakerAction],
         policy: PolicySchema,
         seed: int,
         prompt_version: str,
@@ -70,8 +67,7 @@ class ProvinceAgent:
             persona=persona,
             state=state,
             current_action=current_action,
-            aggregate=aggregate,
-            enterprise_actions=enterprise_actions,
+            automaker_actions=automaker_actions,
             policy=policy,
             seed=seed,
             prompt_version=prompt_version,

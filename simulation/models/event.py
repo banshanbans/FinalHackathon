@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from typing import Literal
 
 from pydantic import Field, JsonValue
 
@@ -7,7 +8,7 @@ from simulation.models.common import Phase
 
 
 class EventEnvelope(DomainModel):
-    schema_version: str = "event-v3"
+    schema_version: Literal["event-v4"] = "event-v4"
     event_id: str
     type: str
     experiment_id: str

@@ -10,7 +10,7 @@ from time import perf_counter
 from simulation.adapters.asyncio_adapter import AsyncioSimulationAdapter
 from simulation.llm.cached_provider import CachedLLMProvider
 from simulation.llm.fake_provider import FakeLLMProvider
-from simulation.models.common import RunMode
+from simulation.models.common import Phase, RunMode
 from simulation.models.experiment import ExperimentConfig
 
 
@@ -18,58 +18,69 @@ async def run(assert_complete: bool) -> None:
     started_at = perf_counter()
     requested_mode = RunMode(os.getenv("POLICYSCOPE_RUN_MODE", "fake"))
     fallback = FakeLLMProvider()
-    if requested_mode == RunMode.CACHE:
-        provider = CachedLLMProvider(Path("runtime/cache/default"), fallback)
-    else:
-        provider = fallback
+    provider = (
+        CachedLLMProvider(Path("runtime/cache/default"), fallback, write_through=True)
+        if requested_mode is RunMode.CACHE
+        else fallback
+    )
     adapter = AsyncioSimulationAdapter(provider, runtime_dir=Path("runtime"))
     result = await adapter.run_full_demo(
         ExperimentConfig(
             objective=(
-                "在有限财政支持下推动制造业设备升级，提高中小企业参与度，"
-                "并兼顾绿色转型、就业稳定和区域可达性。"
+                "比较三档中央承担比例变化对地方财政空间、新能源汽车需求"
+                "与真实头部车企模拟布局的影响。"
             ),
             run_mode=requested_mode,
-            model_version=f"{requested_mode.value}-v3",
+            model_version=f"{requested_mode.value}-nev-v1",
         )
     )
     control = await adapter.get_state(result.experiment_id, result.control_branch_id)
     treatment = await adapter.get_state(result.experiment_id, result.treatment_branch_id)
     action_modes = Counter(
-        action.run_mode
+        action.run_mode.value
         for world in (control, treatment)
-        for action in world.province_actions.values()
+        for action in [*world.province_actions.values(), *world.automaker_actions.values()]
     )
+    audit = await adapter.get_audit(result.experiment_id, limit=500)
     summary = {
+        "schema_version": result.schema_version,
         "experiment_id": result.experiment_id,
         "province_count": len(result.province_deltas),
-        "persona_count": len(control.province_personas),
-        "province_strategy_transition_count": len(result.province_strategy_transitions),
+        "automaker_count": len(result.automaker_strategy_transitions),
         "control_branch": result.control_branch_id,
         "treatment_branch": result.treatment_branch_id,
+        "control_phase": control.phase.value,
+        "treatment_phase": treatment.phase.value,
         "policy_diff": [item.model_dump(mode="json") for item in result.policy_diff],
-        "national_deltas": {key: metric.delta for key, metric in result.national_metrics.items()},
-        "enterprise_count": len(control.enterprise_states),
-        "action_migration_count": sum(item.count for item in result.action_migrations),
-        "control_fallback_provinces": control.fallback_provinces,
-        "treatment_fallback_provinces": treatment.fallback_provinces,
-        "review_id": result.central_review.review_id if result.central_review else None,
+        "delta_gap": result.delta_gap,
+        "six_metric_count": len(result.national_metrics),
+        "province_strategy_transition_count": len(result.province_strategy_transitions),
+        "automaker_strategy_transition_count": len(result.automaker_strategy_transitions),
+        "audit_record_count": len(audit.records),
+        "audit_chain_valid": adapter.replay.verify_audit_chain(result.experiment_id),
         "final_action_modes": dict(sorted(action_modes.items())),
+        "cache_hits": getattr(provider, "cache_hits", None),
+        "cache_misses": getattr(provider, "cache_misses", None),
         "elapsed_seconds": round(perf_counter() - started_at, 4),
     }
     print(json.dumps(summary, ensure_ascii=False, indent=2))
     if assert_complete:
+        assert summary["schema_version"] == "comparison-v4"
         assert summary["province_count"] == 31
-        assert summary["persona_count"] == 31
+        assert summary["automaker_count"] == 10
+        assert summary["control_phase"] == Phase.Y2_Q4.value
+        assert summary["treatment_phase"] == Phase.Y2_Q4.value
         assert summary["province_strategy_transition_count"] == 31
-        assert summary["enterprise_count"] == 186
-        assert summary["action_migration_count"] == 186
-        assert summary["review_id"]
-        assert len(summary["policy_diff"]) >= 2
+        assert summary["automaker_strategy_transition_count"] == 10
+        assert summary["six_metric_count"] == 6
+        assert summary["audit_record_count"] > 0
+        assert summary["audit_chain_valid"] is True
+        assert len(summary["policy_diff"]) >= 1
         assert summary["elapsed_seconds"] < 20
-        if requested_mode == RunMode.CACHE:
-            assert summary["control_fallback_provinces"] == []
-            assert summary["treatment_fallback_provinces"] == []
+        if requested_mode is RunMode.CACHE:
+            assert summary["final_action_modes"].get("fallback", 0) == 0
+            assert summary["cache_hits"] == 157
+            assert summary["cache_misses"] == 0
 
 
 def main() -> None:

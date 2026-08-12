@@ -1,105 +1,134 @@
-# PolicyScope V2 / V2.1 Stitch Design QA
+# PolicyScope Design QA
 
-## V2.1 status
+## V3.0 final result
 
-> Contract: “省级 Agent 主决策、企业 Agent 作市场反馈”
-> Status: **high-density redesign implemented; verification paused**
+> Contract: 新能源汽车补贴与产业布局地图推演
+> QA date: 2026-08-12
+> Runtime: React Router + V3 REST/SSE + 本地标准地图资源
+> Data / mechanism / seed: `nev-baseline-2025-v1` / `nev-policy-env-v1` / `20260812`
+> V3.0 final result: **passed**
+
+契约快照：默认政策为西部 95%、中部 90%、东部 85%；阶段为 `SETUP → Y1_Q1 → Y1_Q2 → Y1_Q3 → Y1_Q4 → YEAR1_REVIEW → Y2_Q1 → Y2_Q2 → Y2_Q3 → Y2_Q4 → COMPLETE`；十家车企为比亚迪、吉利、长安、上汽通用五菱、蔚来、奇瑞、零跑、赛力斯、小米汽车、理想汽车；六项指标为区域发展差距、中央财政负担、地方财政压力、新能源汽车需求、新增投资集中度、产业集聚度。
+
+版本矩阵：`policy-v3`、`province-profile-v4`、`province-persona-v2`、`province-action-v4`、`province-feedback-v4`、`automaker-profile-v1`、`automaker-action-v1`、`world-state-v4`、`comparison-v4`、`event-v4`。正式路由为 `/experiments/new`、`/experiments/:id/live`、`/experiments/:id/provinces/:provinceCode`、`/experiments/:id/intervention`、`/experiments/:id/compare`。
+
+### 1. 方法与证据
+
+- 使用真实 Chrome 和 Playwright 运行正式 React/FastAPI 路径，不发布 Stitch 静态 HTML 或 iframe。
+- 主流程使用确定性 Fake Provider 完成三画布同源 A/B；拒绝干预单线在 1440×900 单独验证。
+- 使用全新空缓存运行时真实触发 Cache miss，验证 31 省 fallback 范围；通过中断 SSE 验证 Reconnecting 状态。
+- 截图目录为 `output/playwright/v3/`，当前验收矩阵共 30 张：三画布各 9 张主流程截图，另含 1440 宽的非单调警告、Reconnecting 和 Fallback。
+- 地图数据为本地自然资源部标准地图衍生 SVG；自动校验原始校验和、31 个省级区域和几何签名。
+
+### 2. 截图矩阵
+
+| 页面/状态 | 1536×1024 | 1440×900 | 1280 |
+|---|---:|---:|---:|
+| New draft | Passed | Passed | Passed |
+| New 非单调警告 | — | Passed | — |
+| Live Y1_Q1 | Passed | Passed | Passed |
+| Live Y1_Q2 + 车企覆盖层 | Passed | Passed | Passed |
+| YEAR1_REVIEW | Passed | Passed | Passed |
+| 省级详情 | Passed | Passed | Passed |
+| 车企侧栏 | Passed | Passed | Passed |
+| Evidence | Passed | Passed | Passed |
+| 年末干预审批 | Passed | Passed | Passed |
+| Compare completed | Passed | Passed | Passed |
+| Fallback / Reconnecting | — | Passed | — |
+
+主流程文件名固定为 `01-policy-draft.png` 至 `09-compare-complete.png`；可靠性截图为 `00-non-monotonic-warning.png`、`10-reconnecting.png` 和 `11-fallback.png`。Failed 使用与 API 稳定错误码相连的全局错误条，不隐藏失败或伪装为 Live 结果。
+
+### 3. 验收结论
+
+- 中国地图保持主视觉面积；1536、1440 和 1280 均无页面级水平滚动或核心遮挡。
+- Live 的补贴、WTP、产业/电池与车企销售投入图层真实切换，不触发额外 Agent 调用。
+- 河南省级页按“财政空间 → 三类补贴 → Peer → 车企反馈 → 机制结果”组织。
+- 比亚迪侧栏验证了冻结经营画像、31 省投入组合、最多 3 个设施行动和模拟免责声明；十家主体均使用中性文本，无未经许可 Logo。
+- Intervention 保持“证据 → 中央建议 → 人工审批”；拒绝路径只展示原始方案单线复盘。
+- Compare 首先显示同源说明、三档比例 Diff 和 `ΔGap`，两张地图共享指标、范围与色阶；完成页刷新后可从分支目录和 API 恢复。
+- 页面结果只用指数、等级和相对变化，没有现实销量、利润、投资金额、财政金额、企业承诺、官方身份暗示或“最优政策”结论。
+
+### 4. 闭环问题
+
+| Priority | Issue | Resolution |
+|---|---|---|
+| P0 | 多实验共用固定 Treatment ID，可能串接错误实验 | Treatment 改用每实验唯一不透明 ID，并加入分支隔离测试 |
+| P1 | Compare 刷新后仅有 WorldState，无法恢复 Treatment | 新增分支目录接口，恢复 Control/Treatment 后自动加载 Comparison |
+| P1 | 中央草案生成期间仍可编辑比例，异步返回可能覆盖输入 | 生成期间锁定输入，完成后再允许修改；非单调警告仍不阻断审批 |
+| P1 | Cache miss 与 SSE 中断缺少独立视觉证据 | 增加显式 Fallback 范围和 Reconnecting 提示，并用真实运行状态截图 |
+
+所有 P0/P1/P2 已闭环。V2/V2.1 结论未被用作 V3 证据。
+
+---
+
+## V2.1 superseded verification status
+
+> Contract: 省级 Agent 主决策、六类合成企业群体作市场反馈
+> Status: **implemented, final verification incomplete, superseded by V3.0 target**
 > V2.1 final result: **pending redesign verification**
 
-V2.1 独立省级 Agent 详情路由以及 Live、Intervention 和 Compare 的省级优先信息层级已实现；全站已进一步按 `policyscope-dashboard-reference` 全国态势原型重构为高密度制度工作台。按用户要求，自动化测试、Playwright E2E 与截图比较当前暂停；本文件后续的 V2 `passed` 只证明历史基线，不代表 V2.1 新版视觉已通过。
+V2.1 独立省级 Agent 详情、五路由、高密度壳层和审计深链已实现，但按此前用户要求暂停了全量测试、两条 Playwright E2E、连续三次 Cache 与 1536×1024/1440×900/1280 截图比较。
 
-V2.1 视觉门禁至少包括：
+V3.0 已成为新的目标产品主线，因此 V2.1 M12 不再是当前唯一下一步。除非用户明确要求恢复 V2.1 验证，否则：
 
-- Live 默认地图为地方执行强度，省级决策事件优先。
-- 全局 244px/216px 壳层、双层顶栏、真实最近访问、五路由阶段门禁和生产级中文文案。
-- Live 四层驾驶舱：六指标、地图+政策、三组真实派生图表+关键事件、T0–T5 时间线。
-- Replay 趋势仅消费 `environment.updated`，SSE 增量按 `event_id` 去重；缺少节点时不插值。
-- 页面使用 `province-persona-v1`、`province-profile-v3`、`province-action-v3`、`province-feedback-v3`、`world-state-v3`、`comparison-v3` 和 `event-v3`，不以 V2 前端静态推导替代。
-- 五个正式路由覆盖中央政策、Live、省级详情、干预审批和 Compare；完整 A/B 预算仍为中央 3 次、省级约 124 次、企业约 93 次，Persona 不增加模型调用。
-- 河南、广东、山西的实验决策画像、目标约束和省际策略页面。
-- T3 先展示省级目标、支持请求与调整意向。
-- A/B 先展示省级策略迁移，再展示企业行为迁移。
-- 五路由在 1536 × 1024、1440 × 900 与 1280 宽的截图、可访问性、禁止文案和真实 API 状态检查。
+- 保留现有 V2.1 代码和未完成状态。
+- 不把 V2 历史通过结论套用于 V2.1。
+- 不把 V2.1 页面解释为 V3 新能源汽车页面。
+- 不因主线切换而把 V2.1 未完成项标为通过或失败。
 
-只有 V2.1 实现完成、P0/P1/P2 全部关闭后，才能把上述结果改为 `passed`。
+`V2.1 final result: pending redesign verification`
 
 ---
 
 ## V2 historical result
 
 > QA date: 2026-08-12
-> Reference: `stitch_policyscope/**/screen.png` + `stitch_policyscope/policyscope/DESIGN.md`
+> Reference: `stitch_policyscope/**/screen.png` + `stitch_policyscope/policyscope/DESIGN.md` 的历史版本
 > Runtime: React Router + real API/SSE + local assets
-> Final result: **passed**
+> V2 final result: **passed**
 
-## 1. Scope and method
+### 1. Historical scope and method
 
-The five Stitch reference screens were compared side-by-side with the final runtime states in the in-app browser:
+V2 的五张 Stitch 参考图曾与最终运行时状态并排检查：
 
-| Reference | Runtime state | Result |
+| Reference | V2 runtime state | Historical result |
 |---|---|---|
-| `_1/screen.png` | T0 generated policy draft awaiting approval | Passed |
-| `_2/screen.png` | T3 national live simulation | Passed |
-| `_3/screen.png` | `?province=41` Henan enterprise drawer | Passed |
-| `_4/screen.png` | T3 evidence → AI recommendation → human decision | Passed |
-| `a_b/screen.png` | T5 source-identical A/B comparison | Passed |
+| `_1/screen.png` | T0 生成政策草案、等待审批 | Passed |
+| `_2/screen.png` | T3 全国实时仿真 | Passed |
+| `_3/screen.png` | 河南六类合成企业详情 | Passed |
+| `_4/screen.png` | T3 证据、AI 建议和人类决策 | Passed |
+| `a_b/screen.png` | T5 同源 A/B | Passed |
 
-The selected browser exposed a 1280 × 720 viewport. The entire flow passed on this stricter width and height without horizontal overflow (`scrollWidth = innerWidth = 1280`). The 1440 × 900 acceptance canvas uses the same grid with additional space; responsive breakpoint, component bounds and full-page captures were also checked. P0 is desktop-only.
+历史 QA 使用运行时浏览器截图、DOM 可访问性快照和真实 API 状态。静态 Stitch HTML 未通过 iframe 发布。
 
-QA used runtime browser screenshots, DOM accessibility snapshots and real API state. Static Stitch HTML was not iframe-embedded or published as product code.
+### 2. Historical visual and interaction result
 
-## 2. Visual fidelity
+- 浅色制度工作台、固定导航、蓝/青/靛语义色和紧凑证据排版符合 V2 批准方向。
+- 创建、审批、阶段运行、河南详情、干预批准/拒绝、分支运行、Compare 和 Evidence 使用真实 API。
+- 全国和 A/B 共享本地 ECharts SVG 地图。
+- 原始方案/干预方案使用中性命名。
+- 指数与指数点表达替代了现实预测。
+- Loading、Empty、Running、Awaiting Approval、Completed、Fallback、Failure 和 Reconnecting 有明确状态。
 
-- Light institutional workbench, fixed left navigation, restrained blue/teal/indigo semantics, white cards and compact evidence typography match the approved direction.
-- Information hierarchy is consistent across four routes: task eyebrow, single H1, status gate, result cards and audit detail.
-- Inter and Noto Sans SC are bundled locally; Material Symbols are also local. No runtime Google CDN is required.
-- T3 preserves the required three-column evidence/recommendation/decision structure.
-- A/B keeps neutral labels “原始方案 / 干预方案” and does not call the Treatment an “optimized” result.
-- The official standard-map-derived SVG is denser than the Stitch illustrative map. This is an intentional compliance and product-truthfulness difference, not a fidelity defect.
-
-## 3. Product truthfulness and interaction
-
-- All four routes are deep-linkable and protected by experiment phase.
-- Creation, approval, T1–T3 run, Henan drawer, intervention approval/rejection, branch run, compare and evidence actions call real APIs.
-- Evidence and province drawers preserve the current route and other query parameters when opened/closed.
-- 31 province regions are keyboard-addressable and use a single shared geometry and scale in national and A/B views.
-- Henan shows all six enterprise groups, local tools, participation, upgrade type, financing choice and mechanism contribution.
-- The approval path creates Treatment only after server-side approval; the rejection path creates no fake branch and completes a single-branch T5 review.
-- Empty, loading, running, awaiting approval, approved, completed, fallback, failure and reconnecting states have explicit treatments.
-
-## 4. Content and accessibility
-
-- Chinese is primary; only T0–T5, Agent, Control/Treatment and audit machine identifiers remain where useful.
-- Simulation outputs use `/100` and “指数点变化”. Percentage formatting is limited to real policy parameters.
-- “待验证” distinguishes model hypotheses from environment results.
-- Model strategy and deterministic environment calculations use separate visual labels.
-- The scenario disclaimer is visible on every route.
-- Interactive controls have semantic names; province regions have buttons and a keyboard list; status is expressed with text as well as color.
-- Forbidden-copy scan found no real-world GDP, employment, investment amount or guaranteed-effect claim.
-
-## 5. Closed issues
+### 3. Historical closed issues
 
 | Priority | Issue | Resolution |
 |---|---|---|
-| P0 | Static/fake map and blank A/B map | Replaced with one local, source-recorded ECharts SVG used by both views |
-| P0 | Province regions were shifted by one source path and labels duplicated | Skipped the national fill path, bound every province code to an individual geometry signature, and retained only the source label layer |
-| P0 | Core Stitch links and approvals were static | Rebuilt as React Router + API/SSE actions |
-| P1 | Result route refresh could lose branch completion state | Completed comparison and single-branch states now restore from API state |
-| P1 | Global evidence action changed Compare to Live | Drawer now opens on the current route and preserves query state |
-| P1 | Completed experiments could reopen SSE | SSE stops after terminal completion and retains replay state |
-| P1 | New experiment did not clear active state | Reset action now clears context and returns to T0 |
-| P2 | Page transitions retained the previous scroll position | Route-level scroll restoration added |
-| P2 | Initial ECharts bundle produced a monolithic build warning | Routes and ECharts are lazy-loaded into separate chunks |
+| P0 | 静态/假地图和 A/B 空白地图 | 使用同一来源记录的本地 ECharts SVG |
+| P0 | 省域标注偏移和重复 | 修正全国底色路径，加入代码—几何签名校验 |
+| P0 | 核心链接和审批静态 | 重建为 React Router + API/SSE |
+| P1 | 刷新丢失分支完成状态 | 从 API 恢复 Comparison/单线状态 |
+| P1 | Evidence 动作改变路由 | 保持当前路由和 query |
+| P1 | 终态仍重开 SSE | 终态停止连接并保留 Replay |
+| P2 | 路由切换保留滚动位置 | 增加路由级滚动恢复 |
+| P2 | ECharts 单包过大 | 路由和 ECharts 懒加载拆包 |
 
-## 6. Release status
+### 4. Historical map result
 
-No P0, P1 or P2 product/design issue remains open.
+V2 地图来自自然资源部标准地图 GS(2016)1609，已记录原始校验和、转换脚本、31 省完整性和省域几何签名。根据当时确认的比赛规则，V2 比赛版可使用该资产。
 
-- The map is derived from the Natural Resources Ministry standard map GS(2016)1609 and passes the source checksum, aggregate geometry checksum, 31-province completeness check, and per-province code-to-geometry signature validation.
-- Based on the competition release rule confirmed by the user, the competition build has no additional map-compliance release gate and may publish this asset directly. See `apps/web/src/assets/maps/README.md`.
+### 5. Historical final decision
 
-## 7. Final decision
+`V2 final result: passed`
 
-`final result: passed`
-
-The implementation is visually aligned with Stitch, materially improves the original static references by making the flow truthful and operable, and satisfies the 1280 desktop constraint. The 1440 × 900 layout has more available space under the same grid and has no unresolved blocker.
+该结论只证明 V2 历史基线，不证明 V2.1 或 V3.0。

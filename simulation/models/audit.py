@@ -19,7 +19,7 @@ class AuditRecordType(StrEnum):
 class AuditActorKind(StrEnum):
     CENTRAL_AGENT = "central_agent"
     PROVINCE_AGENT = "province_agent"
-    ENTERPRISE_AGENT = "enterprise_agent"
+    AUTOMAKER_AGENT = "automaker_agent"
     PERSONA_RULE = "persona_rule"
     ENVIRONMENT = "environment"
     USER = "user"

@@ -10,12 +10,17 @@ export default defineConfig({
   reporter: [["list"], ["html", { outputFolder: "../../output/playwright/report", open: "never" }]],
   use: {
     baseURL: "http://127.0.0.1:5173",
+    channel: "chrome",
     colorScheme: "light",
     locale: "zh-CN",
     screenshot: "only-on-failure",
     trace: "retain-on-failure",
   },
   projects: [
+    {
+      name: "chromium-1536",
+      use: { ...devices["Desktop Chrome"], viewport: { width: 1536, height: 1024 } },
+    },
     {
       name: "chromium-1440",
       use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } },
@@ -27,7 +32,8 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: "POLICYSCOPE_RUN_MODE=fake make dev-api",
+      command:
+        "POLICYSCOPE_RUN_MODE=fake PYTHONPATH=.:apps/api/src .venv/bin/uvicorn policyscope_api.main:app --app-dir apps/api/src --port 8000",
       cwd: "../..",
       url: "http://127.0.0.1:8000/api/health",
       reuseExistingServer: true,

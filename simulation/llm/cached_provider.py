@@ -8,24 +8,17 @@ from pydantic import BaseModel
 
 from simulation.data import NetworkEdge
 from simulation.llm.base import LLMProvider
-from simulation.llm.trace import set_cache_trace, set_provider_fallback
-from simulation.models.action import ProvinceAction
+from simulation.models.automaker import AutomakerAction, AutomakerProfile, AutomakerState
 from simulation.models.central import (
     CentralInterventionProposal,
-    CentralPolicyDirective,
     CentralReview,
+    CentralSubsidyDirective,
 )
-from simulation.models.common import Phase
-from simulation.models.enterprise import (
-    EnterpriseAction,
-    EnterpriseActionBatch,
-    EnterpriseAggregate,
-    EnterpriseGroupProfile,
-    EnterpriseGroupState,
-)
+from simulation.models.common import Phase, RunMode
 from simulation.models.experiment import ExperimentConfig
 from simulation.models.policy import PolicySchema
 from simulation.models.province import (
+    ProvinceAction,
     ProvinceDecisionPersona,
     ProvinceFeedback,
     ProvinceProfile,
@@ -36,20 +29,69 @@ from simulation.models.world import ComparisonResult, NationalMetrics, WorldStat
 ModelT = TypeVar("ModelT", bound=BaseModel)
 
 
+class ProposalList(BaseModel):
+    proposals: list[CentralInterventionProposal]
+
+
 class CachedLLMProvider:
-    """Version-complete replay cache with explicit deterministic miss fallback."""
+    """Version-complete cache. Misses use an explicit deterministic fallback and write through."""
+
+    run_mode = "cache"
 
     def __init__(self, cache_dir: Path, fallback: LLMProvider, *, write_through: bool = True):
         self.cache_dir = cache_dir
         self.fallback = fallback
         self.write_through = write_through
         self.accessed_cache_files: set[Path] = set()
+        self.cache_hits = 0
+        self.cache_misses = 0
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
     @staticmethod
+    def _semantic_payload(payload: object) -> object:
+        """Remove delivery metadata that cannot affect a strategy decision."""
+        if isinstance(payload, BaseModel):
+            return CachedLLMProvider._semantic_payload(payload.model_dump(mode="json"))
+        if isinstance(payload, dict):
+            return {
+                str(key): CachedLLMProvider._semantic_payload(value)
+                for key, value in payload.items()
+                if key not in {"run_mode", "fallback_used", "fallback_reason"}
+            }
+        if isinstance(payload, (list, tuple)):
+            return [CachedLLMProvider._semantic_payload(item) for item in payload]
+        return payload
+
+    @staticmethod
     def _key(kind: str, payload: object) -> str:
-        raw = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        raw = json.dumps(
+            CachedLLMProvider._semantic_payload(payload),
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            default=str,
+        )
         return f"{kind}_{hashlib.sha256(raw.encode()).hexdigest()}"
+
+    @staticmethod
+    def _with_mode(value: ModelT, *, hit: bool) -> ModelT:
+        if isinstance(value, (ProvinceAction, ProvinceFeedback, AutomakerAction)):
+            if hit:
+                return value.model_copy(
+                    update={
+                        "run_mode": RunMode.CACHE,
+                        "fallback_used": False,
+                        "fallback_reason": None,
+                    }
+                )
+            return value.model_copy(
+                update={
+                    "run_mode": RunMode.FALLBACK,
+                    "fallback_used": True,
+                    "fallback_reason": "cache_miss",
+                }
+            )
+        return value
 
     async def _get_or_create(
         self,
@@ -59,51 +101,30 @@ class CachedLLMProvider:
         model_type: type[ModelT],
         generate: Callable[[], Awaitable[ModelT]],
     ) -> ModelT:
-        cache_key = self._key(kind, payload)
-        path = self.cache_dir / f"{cache_key}.json"
+        path = self.cache_dir / f"{self._key(kind, payload)}.json"
         self.accessed_cache_files.add(path)
         if path.exists():
-            set_cache_trace(cache_key_hash=cache_key.rsplit("_", 1)[-1], hit=True)
-            cached = model_type.model_validate_json(path.read_text(encoding="utf-8"))
-            if isinstance(cached, (ProvinceAction, ProvinceFeedback)):
-                cached = cached.model_copy(update={"run_mode": "cache", "fallback_used": False})
-            if isinstance(cached, EnterpriseActionBatch):
-                cached = cached.model_copy(
-                    update={
-                        "run_mode": "cache",
-                        "fallback_used": False,
-                        "fallback_reason": None,
-                    }
-                )
-            return cached
-        set_cache_trace(cache_key_hash=cache_key.rsplit("_", 1)[-1], hit=False)
-        set_provider_fallback("cache_miss")
-        result = await generate()
-        if isinstance(result, (ProvinceAction, ProvinceFeedback)):
-            result = result.model_copy(update={"run_mode": "fallback", "fallback_used": True})
-        if isinstance(result, EnterpriseActionBatch):
-            result = result.model_copy(
-                update={
-                    "run_mode": "fallback",
-                    "fallback_used": True,
-                    "fallback_reason": "cache_miss",
-                }
+            self.cache_hits += 1
+            return self._with_mode(
+                model_type.model_validate_json(path.read_text(encoding="utf-8")), hit=True
             )
+        self.cache_misses += 1
+        result = self._with_mode(await generate(), hit=False)
         if self.write_through:
             path.write_text(result.model_dump_json(indent=2), encoding="utf-8")
         return result
 
     async def generate_central_directive(
         self, config: ExperimentConfig, default_policy: PolicySchema
-    ) -> CentralPolicyDirective:
+    ) -> CentralSubsidyDirective:
         payload = {
             "config": config.model_dump(mode="json"),
             "policy": default_policy.model_dump(mode="json"),
         }
         return await self._get_or_create(
-            kind="central_directive_v2",
+            kind="central_directive_v3",
             payload=payload,
-            model_type=CentralPolicyDirective,
+            model_type=CentralSubsidyDirective,
             generate=lambda: self.fallback.generate_central_directive(config, default_policy),
         )
 
@@ -129,27 +150,18 @@ class CachedLLMProvider:
             "state": state.model_dump(mode="json"),
             "policy": policy.model_dump(mode="json"),
             "phase": phase.value,
-            "related": [edge.model_dump(mode="json") for edge in related],
-            "neighbor_actions": {
-                code: action.model_dump(mode="json", exclude={"run_mode", "fallback_used"})
-                for code, action in sorted(neighbor_actions.items())
+            "related": [x.model_dump(mode="json") for x in related],
+            "neighbors": {
+                k: v.model_dump(mode="json") for k, v in sorted(neighbor_actions.items())
             },
-            "previous_action": (
-                previous_action.model_dump(mode="json", exclude={"run_mode", "fallback_used"})
-                if previous_action
-                else None
-            ),
-            "feedback": (
-                feedback.model_dump(mode="json", exclude={"run_mode", "fallback_used"})
-                if feedback
-                else None
-            ),
+            "previous": previous_action.model_dump(mode="json") if previous_action else None,
+            "feedback": feedback.model_dump(mode="json") if feedback else None,
             "seed": seed,
             "prompt_version": prompt_version,
             "model_version": model_version,
         }
         return await self._get_or_create(
-            kind="province_action_v3",
+            kind="province_action_v4",
             payload=payload,
             model_type=ProvinceAction,
             generate=lambda: self.fallback.generate_province_action(
@@ -168,46 +180,48 @@ class CachedLLMProvider:
             ),
         )
 
-    async def generate_enterprise_actions_batch(
+    async def generate_automaker_action(
         self,
         *,
-        province_profile: ProvinceProfile,
-        province_action: ProvinceAction,
-        enterprise_profiles: list[EnterpriseGroupProfile],
-        enterprise_states: dict[str, EnterpriseGroupState],
+        profile: AutomakerProfile,
+        state: AutomakerState,
+        province_profiles: dict[str, ProvinceProfile],
+        province_actions: dict[str, ProvinceAction],
         policy: PolicySchema,
         phase: Phase,
+        previous_action: AutomakerAction | None,
         seed: int,
         prompt_version: str,
         model_version: str,
-    ) -> EnterpriseActionBatch:
+    ) -> AutomakerAction:
         payload = {
-            "province_profile": province_profile.model_dump(mode="json"),
-            "province_action": province_action.model_dump(
-                mode="json", exclude={"run_mode", "fallback_used"}
-            ),
-            "enterprise_profiles": [item.model_dump(mode="json") for item in enterprise_profiles],
-            "enterprise_states": {
-                key: enterprise_states[key].model_dump(mode="json")
-                for key in sorted(enterprise_states)
+            "profile": profile.model_dump(mode="json"),
+            "state": state.model_dump(mode="json"),
+            "province_profiles": {
+                k: v.model_dump(mode="json") for k, v in sorted(province_profiles.items())
+            },
+            "province_actions": {
+                k: v.model_dump(mode="json") for k, v in sorted(province_actions.items())
             },
             "policy": policy.model_dump(mode="json"),
             "phase": phase.value,
+            "previous": previous_action.model_dump(mode="json") if previous_action else None,
             "seed": seed,
             "prompt_version": prompt_version,
             "model_version": model_version,
         }
         return await self._get_or_create(
-            kind="enterprise_batch_v2",
+            kind="automaker_action_v1",
             payload=payload,
-            model_type=EnterpriseActionBatch,
-            generate=lambda: self.fallback.generate_enterprise_actions_batch(
-                province_profile=province_profile,
-                province_action=province_action,
-                enterprise_profiles=enterprise_profiles,
-                enterprise_states=enterprise_states,
+            model_type=AutomakerAction,
+            generate=lambda: self.fallback.generate_automaker_action(
+                profile=profile,
+                state=state,
+                province_profiles=province_profiles,
+                province_actions=province_actions,
                 policy=policy,
                 phase=phase,
+                previous_action=previous_action,
                 seed=seed,
                 prompt_version=prompt_version,
                 model_version=model_version,
@@ -221,8 +235,7 @@ class CachedLLMProvider:
         persona: ProvinceDecisionPersona,
         state: ProvinceState,
         current_action: ProvinceAction,
-        aggregate: EnterpriseAggregate,
-        enterprise_actions: list[EnterpriseAction],
+        automaker_actions: dict[str, AutomakerAction],
         policy: PolicySchema,
         seed: int,
         prompt_version: str,
@@ -232,18 +245,17 @@ class CachedLLMProvider:
             "profile": profile.model_dump(mode="json"),
             "persona": persona.model_dump(mode="json"),
             "state": state.model_dump(mode="json"),
-            "current_action": current_action.model_dump(
-                mode="json", exclude={"run_mode", "fallback_used"}
-            ),
-            "aggregate": aggregate.model_dump(mode="json"),
-            "enterprise_actions": [item.model_dump(mode="json") for item in enterprise_actions],
+            "action": current_action.model_dump(mode="json"),
+            "automaker_actions": {
+                k: v.model_dump(mode="json") for k, v in sorted(automaker_actions.items())
+            },
             "policy": policy.model_dump(mode="json"),
             "seed": seed,
             "prompt_version": prompt_version,
             "model_version": model_version,
         }
         return await self._get_or_create(
-            kind="province_feedback_v3",
+            kind="province_feedback_v4",
             payload=payload,
             model_type=ProvinceFeedback,
             generate=lambda: self.fallback.generate_province_feedback(
@@ -251,8 +263,7 @@ class CachedLLMProvider:
                 persona=persona,
                 state=state,
                 current_action=current_action,
-                aggregate=aggregate,
-                enterprise_actions=enterprise_actions,
+                automaker_actions=automaker_actions,
                 policy=policy,
                 seed=seed,
                 prompt_version=prompt_version,
@@ -267,76 +278,65 @@ class CachedLLMProvider:
         metrics: NationalMetrics,
         states: dict[str, ProvinceState],
         feedback: dict[str, ProvinceFeedback],
-        enterprise_actions: dict[str, EnterpriseAction],
+        automaker_actions: dict[str, AutomakerAction],
     ) -> list[CentralInterventionProposal]:
         payload = {
             "policy": policy.model_dump(mode="json"),
             "metrics": metrics.model_dump(mode="json"),
-            "states": {code: state.model_dump(mode="json") for code, state in states.items()},
-            "feedback": {
-                code: item.model_dump(mode="json", exclude={"run_mode", "fallback_used"})
-                for code, item in feedback.items()
-            },
-            "enterprise_actions": {
-                key: item.model_dump(mode="json") for key, item in enterprise_actions.items()
+            "states": {k: v.model_dump(mode="json") for k, v in sorted(states.items())},
+            "feedback": {k: v.model_dump(mode="json") for k, v in sorted(feedback.items())},
+            "automakers": {
+                k: v.model_dump(mode="json") for k, v in sorted(automaker_actions.items())
             },
         }
-        key = self._key("central_intervention_v2", payload)
-        path = self.cache_dir / f"{key}.json"
-        self.accessed_cache_files.add(path)
-        if path.exists():
-            set_cache_trace(cache_key_hash=key.rsplit("_", 1)[-1], hit=True)
-            raw = json.loads(path.read_text(encoding="utf-8"))
-            return [CentralInterventionProposal.model_validate(item) for item in raw]
-        set_cache_trace(cache_key_hash=key.rsplit("_", 1)[-1], hit=False)
-        set_provider_fallback("cache_miss")
-        result = await self.fallback.generate_intervention_proposals(
-            policy=policy,
-            metrics=metrics,
-            states=states,
-            feedback=feedback,
-            enterprise_actions=enterprise_actions,
+        wrapper = await self._get_or_create(
+            kind="central_proposals_v3",
+            payload=payload,
+            model_type=ProposalList,
+            generate=lambda: self._proposal_wrapper(
+                policy, metrics, states, feedback, automaker_actions
+            ),
         )
-        if self.write_through:
-            path.write_text(
-                json.dumps(
-                    [item.model_dump(mode="json") for item in result],
-                    ensure_ascii=False,
-                    indent=2,
-                ),
-                encoding="utf-8",
+        return wrapper.proposals
+
+    async def _proposal_wrapper(
+        self, policy, metrics, states, feedback, automaker_actions
+    ) -> ProposalList:
+        return ProposalList(
+            proposals=await self.fallback.generate_intervention_proposals(
+                policy=policy,
+                metrics=metrics,
+                states=states,
+                feedback=feedback,
+                automaker_actions=automaker_actions,
             )
-        return result
+        )
 
     async def generate_central_review(self, result: ComparisonResult | WorldState) -> CentralReview:
         if isinstance(result, ComparisonResult):
-            volatile_fields = {
-                "central_review",
-                "experiment_id",
-                "checkpoint_id",
-                "control_branch_id",
-                "treatment_branch_id",
+            payload = {
+                "schema_version": result.schema_version,
+                "policy_diff": [item.model_dump(mode="json") for item in result.policy_diff],
+                "delta_gap": result.delta_gap,
+                "national_metrics": {
+                    key: value.model_dump(mode="json")
+                    for key, value in sorted(result.national_metrics.items())
+                },
+                "mechanism_totals": result.mechanism_totals,
+                "top_improved": result.top_improved,
+                "top_pressured": result.top_pressured,
             }
         else:
-            volatile_fields = {
-                "central_review",
-                "experiment_id",
-                "branch_id",
-                "parent_checkpoint_id",
+            payload = {
+                "schema_version": result.schema_version,
+                "review_mode": "single_branch",
+                "policy": result.policy.model_dump(mode="json"),
+                "national_metrics": result.national_metrics.model_dump(mode="json"),
+                "intervention_decision": result.intervention_decision,
             }
-        semantic_payload = result.model_dump(mode="json", exclude=volatile_fields)
-        identity_payload = result.model_dump(mode="json", exclude={"central_review"})
-        review = await self._get_or_create(
-            kind="central_review_v2",
-            payload=semantic_payload,
+        return await self._get_or_create(
+            kind="central_review_v3",
+            payload=payload,
             model_type=CentralReview,
             generate=lambda: self.fallback.generate_central_review(result),
         )
-        identity_raw = json.dumps(
-            identity_payload,
-            ensure_ascii=False,
-            sort_keys=True,
-            separators=(",", ":"),
-        )
-        review_id = f"review_{hashlib.sha256(identity_raw.encode()).hexdigest()[:12]}"
-        return review.model_copy(update={"review_id": review_id})

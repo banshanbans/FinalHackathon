@@ -7,14 +7,11 @@ from simulation.models.policy import PolicySchema
 
 class CreateExperimentRequest(DomainModel):
     objective: str = Field(
-        default=(
-            "在有限财政支持下推动制造业设备升级，提高中小企业参与度，"
-            "并兼顾绿色转型、就业稳定和区域可达性。"
-        ),
+        default="比较西部、中部、东部中央承担比例变化对新能源汽车需求、地方财政空间和产业布局的模拟影响。",
         min_length=3,
         max_length=500,
     )
-    scenario_id: str = "equipment_renewal_default"
+    scenario_id: str = "nev_subsidy_default"
     seed: int = 20260812
     run_mode: RunMode | None = None
 
@@ -41,4 +38,4 @@ class CreateBranchRequest(DomainModel):
 
 
 class RunBranchRequest(DomainModel):
-    until_phase: Phase = Phase.T5
+    until_phase: Phase = Phase.Y2_Q4

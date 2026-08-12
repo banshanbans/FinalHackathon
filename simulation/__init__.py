@@ -1,5 +1,3 @@
-"""PolicyScope simulation domain package."""
+"""PolicyScope V3 simulation domain package."""
 
-from simulation.adapters.asyncio_adapter import AsyncioSimulationAdapter
-
-__all__ = ["AsyncioSimulationAdapter"]
+__all__: list[str] = []
