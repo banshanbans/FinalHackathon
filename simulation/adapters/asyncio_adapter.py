@@ -14,6 +14,7 @@ from simulation.data import (
     load_enterprise_profiles,
     load_network,
     load_profiles,
+    load_province_personas,
     load_scenario_policy,
 )
 from simulation.envs.china_policy_env import ChinaPolicyEnv
@@ -26,10 +27,23 @@ from simulation.models.enterprise import EnterpriseAction, EnterpriseActionBatch
 from simulation.models.event import EventEnvelope
 from simulation.models.experiment import Branch, Checkpoint, ExperimentConfig, ExperimentRecord
 from simulation.models.policy import PolicySchema
-from simulation.models.province import ProvinceFeedback, ProvinceProfile
-from simulation.models.world import ComparisonResult, VersionInfo, WorldState
+from simulation.models.province import (
+    ProvinceDecisionPersona,
+    ProvinceFeedback,
+    ProvinceProfile,
+)
+from simulation.models.world import (
+    ComparisonResult,
+    ProvinceAgentBranchSnapshot,
+    ProvinceAgentDetail,
+    ProvinceEnterpriseEvidence,
+    ProvinceNeighbor,
+    VersionInfo,
+    WorldState,
+)
 from simulation.services.checkpoint import CheckpointService
 from simulation.services.comparison import ComparisonService
+from simulation.services.persona import validate_interprovincial_targets
 from simulation.services.replay import ReplayService
 
 
@@ -49,7 +63,7 @@ class ExperimentRuntime:
 
 
 class AsyncioSimulationAdapter:
-    """In-process V2 runtime with atomic phases, explicit approvals and branch isolation."""
+    """In-process V2.1 runtime with atomic phases, approvals and branch isolation."""
 
     def __init__(
         self,
@@ -57,6 +71,7 @@ class AsyncioSimulationAdapter:
         *,
         runtime_dir: Path | str = Path("runtime"),
         profiles: dict[str, ProvinceProfile] | None = None,
+        personas: dict[str, ProvinceDecisionPersona] | None = None,
         network: dict[str, list[NetworkEdge]] | None = None,
         agent_timeout_seconds: float = 12,
     ):
@@ -64,6 +79,13 @@ class AsyncioSimulationAdapter:
         self.fallback_provider = FakeLLMProvider()
         self.profiles = profiles or load_profiles()
         self.network = network or load_network()
+        self.personas = personas or (
+            load_province_personas() if profiles is None and network is None else None
+        )
+        if self.personas is None:
+            from simulation.data import build_province_personas
+
+            self.personas = build_province_personas(self.profiles, self.network)
         self.enterprise_profiles = load_enterprise_profiles()
         self.enterprise_by_province = enterprise_profiles_by_province(self.enterprise_profiles)
         self.agent_timeout_seconds = agent_timeout_seconds
@@ -130,6 +152,7 @@ class AsyncioSimulationAdapter:
             directive=directive,
             national_metrics=env.calculate_national_metrics(),
             province_profiles=deepcopy(self.profiles),
+            province_personas=deepcopy(self.personas),
             province_states=deepcopy(env.province_states),
             enterprise_profiles=deepcopy(self.enterprise_profiles),
             enterprise_states=deepcopy(env.enterprise_states),
@@ -158,6 +181,21 @@ class AsyncioSimulationAdapter:
             phase=Phase.T0,
             payload={"directive_id": directive.directive_id},
         )
+        for code, persona in sorted(self.personas.items()):
+            await self._emit(
+                runtime,
+                event_type="province.persona.ready",
+                branch_id="control",
+                phase=Phase.T0,
+                payload={
+                    "province_code": code,
+                    "primary_type": persona.primary_type.value,
+                    "secondary_type": (
+                        persona.secondary_type.value if persona.secondary_type else None
+                    ),
+                    "method_version": persona.method_version,
+                },
+            )
         self.replay.write_state(world)
         return world.model_copy(deep=True)
 
@@ -228,14 +266,19 @@ class AsyncioSimulationAdapter:
             neighbors = {
                 edge.target: previous[edge.target] for edge in related if edge.target in previous
             }
+            previous_action = previous.get(code)
+            feedback = world.province_feedback.get(code) if phase == Phase.T4 else None
             try:
                 action = await asyncio.wait_for(
                     self.province_agents[code].decide(
                         state=world.province_states[code],
+                        persona=world.province_personas[code],
                         policy=world.policy,
                         phase=phase,
                         related=related,
                         neighbor_actions=neighbors,
+                        previous_action=previous_action,
+                        feedback=feedback,
                         **self._call_context(world),
                     ),
                     timeout=self.agent_timeout_seconds,
@@ -243,11 +286,30 @@ class AsyncioSimulationAdapter:
             except Exception:
                 action = await self.fallback_provider.generate_province_action(
                     profile=self.profiles[code],
+                    persona=world.province_personas[code],
                     state=world.province_states[code],
                     policy=world.policy,
                     phase=phase,
                     related=related,
                     neighbor_actions=neighbors,
+                    previous_action=previous_action,
+                    feedback=feedback,
+                    **self._call_context(world),
+                )
+                action = action.model_copy(update={"run_mode": "fallback", "fallback_used": True})
+            try:
+                validate_interprovincial_targets(action, {edge.target for edge in related})
+            except ValueError:
+                action = await self.fallback_provider.generate_province_action(
+                    profile=self.profiles[code],
+                    persona=world.province_personas[code],
+                    state=world.province_states[code],
+                    policy=world.policy,
+                    phase=phase,
+                    related=related,
+                    neighbor_actions=neighbors,
+                    previous_action=previous_action,
+                    feedback=feedback,
                     **self._call_context(world),
                 )
                 action = action.model_copy(update={"run_mode": "fallback", "fallback_used": True})
@@ -266,6 +328,9 @@ class AsyncioSimulationAdapter:
                     "summary": action.public_summary,
                     "run_mode": action.run_mode,
                     "fallback_used": action.fallback_used,
+                    "primary_goal": action.primary_goal.value,
+                    "decision_posture": action.decision_posture.value,
+                    "interprovincial_strategy": action.interprovincial_strategy.value,
                 },
             )
             return code, action
@@ -361,7 +426,9 @@ class AsyncioSimulationAdapter:
             try:
                 feedback = await asyncio.wait_for(
                     self.province_agents[code].feedback(
+                        persona=world.province_personas[code],
                         state=world.province_states[code],
+                        current_action=world.province_actions[code],
                         aggregate=world.enterprise_aggregates[code],
                         enterprise_actions=actions,
                         policy=world.policy,
@@ -372,7 +439,9 @@ class AsyncioSimulationAdapter:
             except Exception:
                 feedback = await self.fallback_provider.generate_province_feedback(
                     profile=self.profiles[code],
+                    persona=world.province_personas[code],
                     state=world.province_states[code],
+                    current_action=world.province_actions[code],
                     aggregate=world.enterprise_aggregates[code],
                     enterprise_actions=actions,
                     policy=world.policy,
@@ -383,7 +452,7 @@ class AsyncioSimulationAdapter:
                 )
             await self._emit(
                 runtime,
-                event_type="province.feedback.completed",
+                event_type="province.adjustment_intent.completed",
                 branch_id=world.branch_id,
                 phase=Phase.T3,
                 payload={
@@ -392,6 +461,18 @@ class AsyncioSimulationAdapter:
                     "summary": feedback.public_summary,
                     "run_mode": feedback.run_mode,
                     "fallback_used": feedback.fallback_used,
+                    "intent_count": len(feedback.adjustment_intents),
+                },
+            )
+            await self._emit(
+                runtime,
+                event_type="province.feedback.completed",
+                branch_id=world.branch_id,
+                phase=Phase.T3,
+                payload={
+                    "province_code": code,
+                    "feedback_id": feedback.feedback_id,
+                    "strategy_assessment": feedback.strategy_assessment.value,
                 },
             )
             return code, feedback
@@ -472,9 +553,9 @@ class AsyncioSimulationAdapter:
             pending_checkpoint: Checkpoint | None = None
             world.phase = phase
             if phase == Phase.T1:
-                world.province_actions = await self._generate_province_actions(
-                    runtime, world, phase
-                )
+                actions = await self._generate_province_actions(runtime, world, phase)
+                world.province_actions = actions
+                world.province_action_lineage = {code: [action] for code, action in actions.items()}
             elif phase == Phase.T2:
                 (
                     world.enterprise_actions,
@@ -497,9 +578,10 @@ class AsyncioSimulationAdapter:
                 world.parent_checkpoint_id = checkpoint_id
                 pending_checkpoint = self.checkpoints.create(world, checkpoint_id)
             elif phase == Phase.T4:
-                world.province_actions = await self._generate_province_actions(
-                    runtime, world, phase
-                )
+                actions = await self._generate_province_actions(runtime, world, phase)
+                for code, action in actions.items():
+                    world.province_action_lineage.setdefault(code, []).append(action)
+                world.province_actions = actions
                 (
                     world.enterprise_actions,
                     branch_fallbacks,
@@ -727,6 +809,8 @@ class AsyncioSimulationAdapter:
 
     async def compare(self, experiment_id: str) -> ComparisonResult:
         runtime = self._runtime(experiment_id)
+        if runtime.comparison is not None:
+            return runtime.comparison.model_copy(deep=True)
         treatment_branch = next(
             (branch for branch in runtime.branches.values() if branch.kind == BranchKind.TREATMENT),
             None,
@@ -751,6 +835,21 @@ class AsyncioSimulationAdapter:
         control.central_review = review
         treatment.central_review = review
         runtime.comparison = comparison
+        for transition in comparison.province_strategy_transitions:
+            if not transition.changed:
+                continue
+            await self._emit(
+                runtime,
+                event_type="province.strategy.changed",
+                branch_id=treatment.branch_id,
+                phase=Phase.T5,
+                payload={
+                    "province_code": transition.province_code,
+                    "control_action_id": transition.control_action_id,
+                    "treatment_action_id": transition.treatment_action_id,
+                    "changed_paths": [item.path for item in transition.changes],
+                },
+            )
         await self._emit(
             runtime,
             event_type="experiment.completed",
@@ -767,6 +866,79 @@ class AsyncioSimulationAdapter:
         if branch_id not in runtime.worlds:
             raise KeyError(f"branch not found: {branch_id}")
         return runtime.worlds[branch_id].model_copy(deep=True)
+
+    async def get_province_detail(
+        self, experiment_id: str, province_code: str
+    ) -> ProvinceAgentDetail:
+        runtime = self._runtime(experiment_id)
+        if province_code not in self.profiles:
+            raise KeyError(f"province not found: {province_code}")
+        contribution_fields = (
+            "policy_match",
+            "direct_subsidy",
+            "interest_subsidy",
+            "financing_guarantee",
+            "sme_preference",
+            "regional_support",
+            "financing_constraint",
+            "fiscal_cost",
+        )
+        branches: dict[BranchKind, ProvinceAgentBranchSnapshot] = {}
+        for branch_id, world in sorted(
+            runtime.worlds.items(), key=lambda item: (item[0] != "control", item[0])
+        ):
+            kind = BranchKind.CONTROL if branch_id == "control" else BranchKind.TREATMENT
+            enterprise_items = [
+                ProvinceEnterpriseEvidence(
+                    profile=profile,
+                    state=world.enterprise_states.get(profile.enterprise_id),
+                    action=world.enterprise_actions.get(profile.enterprise_id),
+                    contribution=world.contributions.get(profile.enterprise_id),
+                )
+                for profile in self.enterprise_by_province[province_code]
+            ]
+            mechanism_summary = {
+                field: round(
+                    sum(
+                        getattr(item.contribution, field)
+                        for item in enterprise_items
+                        if item.contribution is not None
+                    ),
+                    4,
+                )
+                for field in contribution_fields
+            }
+            feedback = world.province_feedback.get(province_code)
+            refs = [f"persona:{province_code}:province-persona-method-v1"]
+            if feedback:
+                refs.extend(feedback.evidence_refs)
+            branches[kind] = ProvinceAgentBranchSnapshot(
+                branch_id=branch_id,
+                branch_kind=kind,
+                phase=world.phase,
+                state=world.province_states[province_code],
+                current_action=world.province_actions.get(province_code),
+                action_lineage=world.province_action_lineage.get(province_code, []),
+                feedback=feedback,
+                enterprise_groups=enterprise_items,
+                mechanism_summary=mechanism_summary,
+                evidence_refs=list(dict.fromkeys(refs)),
+            )
+        return ProvinceAgentDetail(
+            experiment_id=experiment_id,
+            province_code=province_code,
+            profile=self.profiles[province_code],
+            persona=self.personas[province_code],
+            top_k_neighbors=[
+                ProvinceNeighbor(
+                    province_code=edge.target,
+                    province_name=self.profiles[edge.target].short_name,
+                    weight=edge.weight,
+                )
+                for edge in self.network[province_code]
+            ],
+            branches=branches,
+        )
 
     async def get_record(self, experiment_id: str) -> ExperimentRecord:
         return self._runtime(experiment_id).record.model_copy(deep=True)

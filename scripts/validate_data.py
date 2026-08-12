@@ -4,22 +4,40 @@ import json
 from simulation.data import (
     DATA_DIR,
     build_enterprise_profiles,
+    build_province_personas,
+    build_province_profiles,
     load_enterprise_archetypes,
     load_enterprise_profiles,
     load_network,
     load_profiles,
+    load_province_personas,
 )
 from simulation.models.common import DataQuality
 
 
 def validate() -> None:
     profiles = load_profiles()
+    personas = load_province_personas()
     network = load_network()
     archetypes = load_enterprise_archetypes()
     enterprises = build_enterprise_profiles(profiles, archetypes)
     frozen_enterprises = load_enterprise_profiles()
     if len(profiles) != 31:
         raise ValueError(f"expected 31 province profiles, found {len(profiles)}")
+    if profiles != build_province_profiles():
+        raise ValueError("V3 profile snapshot differs from deterministic projection")
+    if personas != build_province_personas(profiles, network):
+        raise ValueError("persona snapshot differs from deterministic generation")
+    if set(personas) != set(profiles):
+        raise ValueError("persona provinces must exactly match profile provinces")
+    expected_personas = {
+        "41": "inclusive_diffusion",
+        "44": "technology_leap",
+        "14": "green_transition",
+    }
+    for code, expected in expected_personas.items():
+        if personas[code].primary_type.value != expected:
+            raise ValueError(f"province {code} expected persona {expected}")
     if set(network) != set(profiles):
         raise ValueError("network sources must exactly match province profile codes")
     if len(archetypes) != 6 or len(enterprises) != 186:
@@ -58,9 +76,14 @@ def validate() -> None:
     provenance_v2 = json.loads((DATA_DIR / "provenance_v2.json").read_text(encoding="utf-8"))
     if provenance_v2["schema_version"] != "provenance-v2":
         raise ValueError("V2 provenance schema is missing")
+    provenance_v3 = json.loads(
+        (DATA_DIR / "provenance_province_v3.json").read_text(encoding="utf-8")
+    )
+    if provenance_v3["schema_version"] != "province-provenance-v3":
+        raise ValueError("V3 province provenance schema is missing")
     print(
-        "Data validation passed: 31 profiles, 186 enterprise groups, "
-        "31 Top-5 networks, 3 verified province sources."
+        "Data validation passed: 31 V3 profiles, 31 personas, 186 enterprise groups, "
+        "31 Top-5 networks, 3 verified profile sources."
     )
 
 

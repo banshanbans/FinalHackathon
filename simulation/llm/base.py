@@ -17,7 +17,12 @@ from simulation.models.enterprise import (
 )
 from simulation.models.experiment import ExperimentConfig
 from simulation.models.policy import PolicySchema
-from simulation.models.province import ProvinceFeedback, ProvinceProfile, ProvinceState
+from simulation.models.province import (
+    ProvinceDecisionPersona,
+    ProvinceFeedback,
+    ProvinceProfile,
+    ProvinceState,
+)
 from simulation.models.world import ComparisonResult, NationalMetrics, WorldState
 
 
@@ -30,11 +35,14 @@ class LLMProvider(Protocol):
         self,
         *,
         profile: ProvinceProfile,
+        persona: ProvinceDecisionPersona,
         state: ProvinceState,
         policy: PolicySchema,
         phase: Phase,
         related: list[NetworkEdge],
         neighbor_actions: dict[str, ProvinceAction],
+        previous_action: ProvinceAction | None,
+        feedback: ProvinceFeedback | None,
         seed: int,
         prompt_version: str,
         model_version: str,
@@ -58,7 +66,9 @@ class LLMProvider(Protocol):
         self,
         *,
         profile: ProvinceProfile,
+        persona: ProvinceDecisionPersona,
         state: ProvinceState,
+        current_action: ProvinceAction,
         aggregate: EnterpriseAggregate,
         enterprise_actions: list[EnterpriseAction],
         policy: PolicySchema,

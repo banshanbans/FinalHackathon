@@ -6,6 +6,7 @@ from simulation.data import (
     enterprise_profiles_by_province,
     load_network,
     load_profiles,
+    load_province_personas,
     load_scenario_policy,
 )
 from simulation.envs.china_policy_env import ChinaPolicyEnv
@@ -15,18 +16,22 @@ from simulation.models.common import Phase
 
 async def _actions(env: ChinaPolicyEnv):
     provider = FakeLLMProvider()
+    personas = load_province_personas()
     province_actions = {}
     for code, profile in env.profiles.items():
         province_actions[code] = await provider.generate_province_action(
             profile=profile,
+            persona=personas[code],
             state=env.province_states[code],
             policy=env.policy,
             phase=Phase.T1,
             related=env.network[code],
             neighbor_actions={},
+            previous_action=None,
+            feedback=None,
             seed=20260812,
-            prompt_version="test-v2",
-            model_version="fake-v2",
+            prompt_version="test-v3",
+            model_version="fake-v3",
         )
     grouped = enterprise_profiles_by_province(env.enterprise_profiles)
     enterprise_actions = {}
@@ -41,8 +46,8 @@ async def _actions(env: ChinaPolicyEnv):
             policy=env.policy,
             phase=Phase.T2,
             seed=20260812,
-            prompt_version="test-v2",
-            model_version="fake-v2",
+            prompt_version="test-v3",
+            model_version="fake-v3",
         )
         enterprise_actions.update({item.enterprise_id: item for item in batch.actions})
     return province_actions, enterprise_actions

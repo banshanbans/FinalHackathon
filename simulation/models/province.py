@@ -1,11 +1,38 @@
-from pydantic import Field
+from pydantic import Field, field_validator, model_validator
 
 from simulation.models.base import DomainModel
-from simulation.models.common import DataQuality, Phase, ProvinceReasonCode, RegionGroup
+from simulation.models.common import (
+    AdjustmentDirection,
+    CentralSupportType,
+    DataQuality,
+    EnterpriseArchetype,
+    EnterpriseSignalType,
+    Phase,
+    ProvinceConstraint,
+    ProvincePersonaType,
+    ProvincePriorityGoal,
+    ProvinceReasonCode,
+    RegionGroup,
+    SignalSeverity,
+    StrategyAssessment,
+)
+
+ADJUSTMENT_PATHS = {
+    "implementation_intensity",
+    "local_match_ratio",
+    "instrument_mix.direct_subsidy",
+    "instrument_mix.interest_subsidy",
+    "instrument_mix.financing_guarantee",
+    "sme_preference",
+    "regional_delivery_focus",
+    "technology_mix.digital",
+    "technology_mix.green",
+    "technology_mix.general",
+}
 
 
 class ProvinceProfile(DomainModel):
-    schema_version: str = "province-profile-v2"
+    schema_version: str = "province-profile-v3"
     province_code: str = Field(pattern=r"^\d{2}$")
     name: str = Field(min_length=2, max_length=12)
     short_name: str = Field(min_length=1, max_length=6)
@@ -20,8 +47,49 @@ class ProvinceProfile(DomainModel):
     credit_access: float = Field(ge=0, le=1)
     transition_pressure: float = Field(ge=0, le=1)
     fiscal_conservatism: float = Field(ge=0, le=1)
+    rd_capacity: float = Field(ge=0, le=1)
+    employment_pressure: float = Field(ge=0, le=1)
+    cooperation_tendency: float = Field(ge=0, le=1)
     data_quality: DataQuality
     source_year: int = Field(ge=2000, le=2100)
+
+
+class ProvincePersonaAxes(DomainModel):
+    execution_drive: float = Field(ge=0, le=1)
+    fiscal_prudence: float = Field(ge=0, le=1)
+    sme_inclusiveness: float = Field(ge=0, le=1)
+    technology_ambition: float = Field(ge=0, le=1)
+    green_priority: float = Field(ge=0, le=1)
+    cooperation_orientation: float = Field(ge=0, le=1)
+
+
+class ProvinceDecisionPersona(DomainModel):
+    schema_version: str = "province-persona-v1"
+    province_code: str = Field(pattern=r"^\d{2}$")
+    axes: ProvincePersonaAxes
+    primary_type: ProvincePersonaType
+    secondary_type: ProvincePersonaType | None = None
+    priority_goals: list[ProvincePriorityGoal] = Field(min_length=1, max_length=2)
+    key_constraints: list[ProvinceConstraint] = Field(min_length=2, max_length=2)
+    profile_version: str = "province-profile-v3"
+    network_version: str = "province-network-v1"
+    method_version: str = "province-persona-method-v1"
+    data_quality: DataQuality
+    public_summary: str = Field(min_length=1, max_length=80)
+
+    @field_validator("data_quality")
+    @classmethod
+    def persona_quality_is_not_verified(cls, value: DataQuality) -> DataQuality:
+        if value == DataQuality.VERIFIED:
+            raise ValueError("province persona quality must be proxy or demo")
+        return value
+
+    @field_validator("priority_goals", "key_constraints")
+    @classmethod
+    def persona_lists_are_unique(cls, value: list[object]) -> list[object]:
+        if len(value) != len(set(value)):
+            raise ValueError("province persona lists must not contain duplicates")
+        return value
 
 
 class ProvinceState(DomainModel):
@@ -36,16 +104,61 @@ class ProvinceState(DomainModel):
     last_action_id: str | None = None
 
 
+class EnterpriseSignal(DomainModel):
+    cohort_type: EnterpriseArchetype
+    signal_type: EnterpriseSignalType
+    severity: SignalSeverity
+    evidence_refs: list[str] = Field(min_length=1, max_length=4)
+
+
+class AdjustmentIntent(DomainModel):
+    path: str
+    direction: AdjustmentDirection
+    reason_code: ProvinceReasonCode
+
+    @field_validator("path")
+    @classmethod
+    def path_is_frozen(cls, value: str) -> str:
+        if value not in ADJUSTMENT_PATHS:
+            raise ValueError(f"unsupported province adjustment path: {value}")
+        return value
+
+
 class ProvinceFeedback(DomainModel):
-    schema_version: str = "province-feedback-v2"
+    schema_version: str = "province-feedback-v3"
     feedback_id: str
     province_code: str = Field(pattern=r"^\d{2}$")
     phase: Phase = Phase.T3
-    implementation_assessment: str = Field(min_length=1, max_length=40)
-    priority_enterprise_groups: list[str] = Field(min_length=1, max_length=3)
+    strategy_assessment: StrategyAssessment
+    enterprise_signals: list[EnterpriseSignal] = Field(default_factory=list, max_length=6)
+    priority_enterprise_groups: list[EnterpriseArchetype] = Field(min_length=1, max_length=3)
+    key_constraints: list[ProvinceConstraint] = Field(min_length=1, max_length=3)
+    adjustment_intents: list[AdjustmentIntent] = Field(default_factory=list, max_length=3)
+    requested_support_type: CentralSupportType
     requested_central_support: float = Field(ge=0, le=1)
     reason_codes: list[ProvinceReasonCode] = Field(min_length=1, max_length=5)
     evidence_refs: list[str] = Field(min_length=1, max_length=8)
     public_summary: str = Field(min_length=1, max_length=80)
     run_mode: str = "fake"
     fallback_used: bool = False
+
+    @field_validator("priority_enterprise_groups", "key_constraints")
+    @classmethod
+    def feedback_lists_are_unique(cls, value: list[object]) -> list[object]:
+        if len(value) != len(set(value)):
+            raise ValueError("province feedback lists must not contain duplicates")
+        return value
+
+    @model_validator(mode="after")
+    def support_type_matches_intensity(self) -> "ProvinceFeedback":
+        if (
+            self.requested_central_support == 0
+            and self.requested_support_type != CentralSupportType.NONE
+        ):
+            raise ValueError("zero support intensity requires support type none")
+        if (
+            self.requested_central_support > 0
+            and self.requested_support_type == CentralSupportType.NONE
+        ):
+            raise ValueError("positive support intensity requires a support type")
+        return self

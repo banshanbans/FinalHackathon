@@ -23,12 +23,18 @@ from policyscope_api.settings import Settings, get_settings
 from simulation.adapters.asyncio_adapter import AsyncioSimulationAdapter
 from simulation.data import load_enterprise_archetypes
 from simulation.models.experiment import ExperimentConfig
+from simulation.services.persona import AXIS_TYPES, TYPE_GOALS, TYPE_LABELS
 
 ResponseT = TypeVar("ResponseT")
 
 
 def _http_error(error: Exception) -> HTTPException:
     message = str(error)
+    if isinstance(error, KeyError) and "province not found" in message:
+        return HTTPException(
+            status_code=404,
+            detail={"error_code": "PROVINCE_NOT_FOUND", "message": message.strip("'\"")},
+        )
     if message == "directive is not awaiting approval":
         return HTTPException(
             status_code=409,
@@ -86,8 +92,8 @@ def create_app(
 
     application = FastAPI(
         title="PolicyScope API",
-        version="0.2.0",
-        description="PolicyScope V2 auditable government-enterprise policy simulation API",
+        version="0.3.0",
+        description="PolicyScope V2.1 auditable province-agent policy simulation API",
         lifespan=lifespan,
     )
     application.add_middleware(
@@ -131,7 +137,7 @@ def create_app(
             "status": "ok",
             "runtime": "asyncio",
             "run_mode": app_settings.run_mode.value,
-            "version": "0.2.0",
+            "version": "0.3.0",
         }
 
     @application.get("/api/meta/provinces")
@@ -149,6 +155,20 @@ def create_app(
             for _, item in sorted(
                 load_enterprise_archetypes().items(), key=lambda pair: pair[0].value
             )
+        ]
+
+    @application.get("/api/meta/province-persona-types")
+    async def province_persona_types() -> list[dict[str, object]]:
+        axis_by_type = {persona_type: axis for axis, persona_type in AXIS_TYPES.items()}
+        return [
+            {
+                "type": persona_type.value,
+                "display_name": TYPE_LABELS[persona_type],
+                "axis": axis_by_type[persona_type],
+                "priority_goal": TYPE_GOALS[persona_type].value,
+                "visible_label": "本次实验决策画像",
+            }
+            for persona_type in TYPE_LABELS
         ]
 
     @application.get("/api/meta/default-policy")
@@ -175,7 +195,7 @@ def create_app(
                 model_version=(
                     app_settings.central_model
                     if selected_mode.value == "live"
-                    else f"{selected_mode.value}-v2"
+                    else f"{selected_mode.value}-v3"
                 ),
             )
             state = await simulation.initialize(config)
@@ -257,6 +277,19 @@ def create_app(
     ) -> dict[str, object]:
         try:
             return (await simulation.get_state(experiment_id, branch_id)).model_dump(mode="json")
+        except Exception as error:
+            raise _http_error(error) from error
+
+    @application.get("/api/experiments/{experiment_id}/provinces/{province_code}")
+    async def province_detail(
+        experiment_id: str,
+        province_code: str,
+        simulation: AsyncioSimulationAdapter = Depends(get_adapter),
+    ) -> dict[str, object]:
+        try:
+            return (await simulation.get_province_detail(experiment_id, province_code)).model_dump(
+                mode="json"
+            )
         except Exception as error:
             raise _http_error(error) from error
 

@@ -3,6 +3,7 @@ from simulation.data import (
     enterprise_profiles_by_province,
     load_network,
     load_profiles,
+    load_province_personas,
     load_scenario_policy,
 )
 from simulation.envs.china_policy_env import ChinaPolicyEnv
@@ -16,18 +17,22 @@ async def test_cache_miss_and_hit_are_explicit_and_version_complete(tmp_path) ->
     profiles = load_profiles()
     network = load_network()
     policy = load_scenario_policy()
+    personas = load_province_personas()
     env = ChinaPolicyEnv(profiles=profiles, network=network, policy=policy)
     provider = CachedLLMProvider(tmp_path, FakeLLMProvider())
     arguments = {
         "profile": profiles["44"],
+        "persona": personas["44"],
         "state": env.province_states["44"],
         "policy": policy,
         "phase": Phase.T1,
         "related": network["44"],
         "neighbor_actions": {},
+        "previous_action": None,
+        "feedback": None,
         "seed": 20260812,
-        "prompt_version": "prompt-v2",
-        "model_version": "model-v2",
+        "prompt_version": "prompt-v3",
+        "model_version": "model-v3",
     }
     fallback = await provider.generate_province_action(**arguments)
     cached = await provider.generate_province_action(**arguments)
@@ -36,25 +41,29 @@ async def test_cache_miss_and_hit_are_explicit_and_version_complete(tmp_path) ->
     assert cached.run_mode == "cache"
     assert cached.fallback_used is False
     changed = await provider.generate_province_action(
-        **{**arguments, "prompt_version": "prompt-v2.1"}
+        **{**arguments, "prompt_version": "prompt-v3.1"}
     )
     assert changed.run_mode == "fallback"
 
 
 async def test_enterprise_batch_cache_contains_all_six_groups(tmp_path) -> None:
     env = ChinaPolicyEnv(policy=load_scenario_policy())
+    personas = load_province_personas()
     provider = CachedLLMProvider(tmp_path, FakeLLMProvider())
     fake = FakeLLMProvider()
     province_action = await fake.generate_province_action(
         profile=env.profiles["41"],
+        persona=personas["41"],
         state=env.province_states["41"],
         policy=env.policy,
         phase=Phase.T1,
         related=env.network["41"],
         neighbor_actions={},
+        previous_action=None,
+        feedback=None,
         seed=1,
-        prompt_version="prompt-v2",
-        model_version="model-v2",
+        prompt_version="prompt-v3",
+        model_version="model-v3",
     )
     enterprise_profiles = enterprise_profiles_by_province(env.enterprise_profiles)["41"]
     arguments = {
@@ -68,8 +77,8 @@ async def test_enterprise_batch_cache_contains_all_six_groups(tmp_path) -> None:
         "policy": env.policy,
         "phase": Phase.T2,
         "seed": 1,
-        "prompt_version": "prompt-v2",
-        "model_version": "model-v2",
+        "prompt_version": "prompt-v3",
+        "model_version": "model-v3",
     }
     first = await provider.generate_enterprise_actions_batch(**arguments)
     second = await provider.generate_enterprise_actions_batch(**arguments)

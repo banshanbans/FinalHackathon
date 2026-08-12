@@ -96,6 +96,80 @@ class ProvinceReasonCode(StrEnum):
     CENTRAL_SUPPORT_REQUEST = "CENTRAL_SUPPORT_REQUEST"
 
 
+class ProvincePersonaType(StrEnum):
+    EXECUTION_DRIVEN = "execution_driven"
+    FISCALLY_PRUDENT = "fiscally_prudent"
+    INCLUSIVE_DIFFUSION = "inclusive_diffusion"
+    TECHNOLOGY_LEAP = "technology_leap"
+    GREEN_TRANSITION = "green_transition"
+    REGIONAL_COLLABORATION = "regional_collaboration"
+
+
+class ProvincePriorityGoal(StrEnum):
+    EQUIPMENT_RENEWAL = "equipment_renewal"
+    FISCAL_SUSTAINABILITY = "fiscal_sustainability"
+    SME_FINANCING_ACCESS = "sme_financing_access"
+    DIGITAL_UPGRADE = "digital_upgrade"
+    GREEN_EQUIPMENT_RENEWAL = "green_equipment_renewal"
+    CROSS_REGIONAL_COORDINATION = "cross_regional_coordination"
+
+
+class ProvinceConstraint(StrEnum):
+    FISCAL_GAP = "fiscal_gap"
+    FINANCING_GAP = "financing_gap"
+    TRANSITION_PRESSURE = "transition_pressure"
+    WEAK_DIGITAL_BASE = "weak_digital_base"
+    EMPLOYMENT_PRESSURE = "employment_pressure"
+    INDUSTRIAL_CONCENTRATION = "industrial_concentration"
+
+
+class DecisionPosture(StrEnum):
+    PROACTIVE = "proactive"
+    BALANCED = "balanced"
+    CAUTIOUS = "cautious"
+
+
+class InterprovincialStrategy(StrEnum):
+    COLLABORATE = "collaborate"
+    BENCHMARK = "benchmark"
+    COMPETE = "compete"
+    INDEPENDENT = "independent"
+
+
+class StrategyAssessment(StrEnum):
+    EFFECTIVE = "effective"
+    MIXED = "mixed"
+    CONSTRAINED = "constrained"
+
+
+class EnterpriseSignalType(StrEnum):
+    PARTICIPATION_BARRIER = "participation_barrier"
+    FINANCING_CONSTRAINT = "financing_constraint"
+    UPGRADE_MISMATCH = "upgrade_mismatch"
+    SUPPORT_DEMAND = "support_demand"
+
+
+class SignalSeverity(StrEnum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+
+
+class CentralSupportType(StrEnum):
+    NONE = "none"
+    FISCAL_SPACE = "fiscal_space"
+    CREDIT_SUPPORT = "credit_support"
+    GUARANTEE_CAPACITY = "guarantee_capacity"
+    TECHNICAL_SERVICE = "technical_service"
+    REGIONAL_COORDINATION = "regional_coordination"
+
+
+class AdjustmentDirection(StrEnum):
+    INCREASE = "increase"
+    DECREASE = "decrease"
+    HOLD = "hold"
+
+
 class EnterpriseReasonCode(StrEnum):
     POLICY_MATCH = "POLICY_MATCH"
     SUBSIDY_ATTRACTIVE = "SUBSIDY_ATTRACTIVE"

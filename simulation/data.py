@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 from simulation.models.common import DataQuality, EnterpriseArchetype
 from simulation.models.enterprise import EnterpriseArchetypeDefinition, EnterpriseGroupProfile
 from simulation.models.policy import PolicySchema
-from simulation.models.province import ProvinceProfile
+from simulation.models.province import ProvinceDecisionPersona, ProvinceProfile
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = PROJECT_ROOT / "data"
@@ -26,8 +26,8 @@ def _clamp(value: float) -> float:
     return round(max(0.0, min(1.0, value)), 4)
 
 
-def load_profiles(path: Path | None = None) -> dict[str, ProvinceProfile]:
-    """Load the frozen province source and project it into the V2 equipment profile."""
+def build_province_profiles(path: Path | None = None) -> dict[str, ProvinceProfile]:
+    """Project the immutable V1 source into the V3 equipment profile."""
 
     raw = _read_json(path or DATA_DIR / "province_profiles_v1.json")
     if not isinstance(raw, list):
@@ -59,6 +59,9 @@ def load_profiles(path: Path | None = None) -> dict[str, ProvinceProfile]:
                 ),
                 transition_pressure=float(item["transition_pressure"]),
                 fiscal_conservatism=float(item["fiscal_conservatism"]),
+                rd_capacity=float(item["rd_capacity"]),
+                employment_pressure=float(item["employment_pressure"]),
+                cooperation_tendency=float(item["cooperation_tendency"]),
                 data_quality=DataQuality(str(item["data_quality"])),
                 source_year=int(item["source_year"]),
             )
@@ -66,6 +69,19 @@ def load_profiles(path: Path | None = None) -> dict[str, ProvinceProfile]:
     result = {profile.province_code: profile for profile in profiles}
     if len(result) != len(profiles):
         raise ValueError("province codes must be unique")
+    return result
+
+
+def load_profiles(path: Path | None = None) -> dict[str, ProvinceProfile]:
+    raw = _read_json(path or DATA_DIR / "province_profiles_v3.json")
+    if not isinstance(raw, list):
+        raise ValueError("province profile snapshot must be a JSON array")
+    profiles = [ProvinceProfile.model_validate(item) for item in raw]
+    result = {profile.province_code: profile for profile in profiles}
+    if len(profiles) != 31 or len(result) != 31:
+        raise ValueError("province profile snapshot must contain 31 unique provinces")
+    if path is None and result != build_province_profiles():
+        raise ValueError("province profile snapshot differs from deterministic V3 generation")
     return result
 
 
@@ -77,6 +93,30 @@ def load_network(path: Path | None = None) -> dict[str, list[NetworkEdge]]:
         source: [NetworkEdge.model_validate(edge) for edge in edges]
         for source, edges in raw["edges"].items()
     }
+
+
+def build_province_personas(
+    profiles: dict[str, ProvinceProfile] | None = None,
+    network: dict[str, list[NetworkEdge]] | None = None,
+) -> dict[str, ProvinceDecisionPersona]:
+    from simulation.services.persona import build_province_personas as build
+
+    return build(profiles or load_profiles(), network or load_network())
+
+
+def load_province_personas(
+    path: Path | None = None,
+) -> dict[str, ProvinceDecisionPersona]:
+    raw = _read_json(path or DATA_DIR / "province_personas_v1.json")
+    if not isinstance(raw, list):
+        raise ValueError("province persona snapshot must be a JSON array")
+    personas = [ProvinceDecisionPersona.model_validate(item) for item in raw]
+    result = {persona.province_code: persona for persona in personas}
+    if len(personas) != 31 or len(result) != 31:
+        raise ValueError("province persona snapshot must contain 31 unique provinces")
+    if path is None and result != build_province_personas():
+        raise ValueError("province persona snapshot differs from deterministic generation")
+    return result
 
 
 def load_enterprise_archetypes(

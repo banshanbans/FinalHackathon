@@ -11,12 +11,42 @@ from simulation.models.world import (
     EnterpriseGroupChange,
     MetricDelta,
     ProvinceDelta,
+    ProvinceStrategyFieldChange,
+    ProvinceStrategyTransition,
     WorldState,
 )
 
+PROVINCE_STRATEGY_PATHS = (
+    "primary_goal",
+    "decision_posture",
+    "target_enterprise_groups",
+    "interprovincial_strategy",
+    "target_province_codes",
+    "implementation_intensity",
+    "local_match_ratio",
+    "instrument_mix.direct_subsidy",
+    "instrument_mix.interest_subsidy",
+    "instrument_mix.financing_guarantee",
+    "sme_preference",
+    "regional_delivery_focus",
+    "technology_mix.digital",
+    "technology_mix.green",
+    "technology_mix.general",
+    "requested_central_support",
+)
+
+
+def _path_value(payload: dict[str, object], path: str) -> object:
+    current: object = payload
+    for segment in path.split("."):
+        if not isinstance(current, dict):
+            raise ValueError(f"cannot resolve province strategy path: {path}")
+        current = current[segment]
+    return current
+
 
 class ComparisonService:
-    """Creates a traceable V2 comparison from two descendants of the same checkpoint."""
+    """Creates a traceable V2.1 comparison from checkpoint sibling branches."""
 
     def compare(
         self,
@@ -35,6 +65,35 @@ class ComparisonService:
                 raise ValueError(f"branches use different {field} versions")
         if control.seed != treatment.seed:
             raise ValueError("branches use different seeds")
+        if control.province_personas != treatment.province_personas:
+            raise ValueError("branches use different province personas")
+
+        strategy_transitions: list[ProvinceStrategyTransition] = []
+        for code in sorted(profiles):
+            before = control.province_actions[code]
+            after = treatment.province_actions[code]
+            before_json = before.model_dump(mode="json")
+            after_json = after.model_dump(mode="json")
+            changes = [
+                ProvinceStrategyFieldChange(
+                    path=path,
+                    from_value=_path_value(before_json, path),
+                    to_value=_path_value(after_json, path),
+                )
+                for path in PROVINCE_STRATEGY_PATHS
+                if _path_value(before_json, path) != _path_value(after_json, path)
+            ]
+            strategy_transitions.append(
+                ProvinceStrategyTransition(
+                    province_code=code,
+                    province_name=profiles[code].short_name,
+                    persona_primary_type=control.province_personas[code].primary_type,
+                    control_action_id=before.action_id,
+                    treatment_action_id=after.action_id,
+                    changed=bool(changes),
+                    changes=changes,
+                )
+            )
 
         metrics: dict[str, MetricDelta] = {}
         for field in type(control.national_metrics).model_fields:
@@ -159,6 +218,7 @@ class ComparisonService:
             treatment_branch_id=treatment.branch_id,
             policy_diff=policy_diff(control.policy, treatment.policy),
             national_metrics=metrics,
+            province_strategy_transitions=strategy_transitions,
             province_deltas=province_deltas,
             action_migrations=migrations,
             enterprise_group_changes=group_changes,
@@ -174,6 +234,10 @@ class ComparisonService:
         }
         allowed.update(
             f"comparison:province:{item.province_code}" for item in comparison.province_deltas
+        )
+        allowed.update(
+            f"comparison:province_strategy:{item.province_code}"
+            for item in comparison.province_strategy_transitions
         )
         for finding in review.findings:
             invalid = [ref for ref in finding.evidence_refs if ref not in allowed]

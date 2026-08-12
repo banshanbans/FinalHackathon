@@ -1,0 +1,19 @@
+{
+  "schema_version": "province-provenance-v3",
+  "profile_source": "province_profiles_v1.json",
+  "profile_schema": "province-profile-v3",
+  "profile_transformation": "Existing normalized V1 fields are projected into the V3 equipment-renewal profile; SME density and credit access remain deterministic proxy formulas.",
+  "persona_schema": "province-persona-v1",
+  "persona_method_version": "province-persona-method-v1",
+  "persona_transformation": "Six documented axes are converted to inclusive 0-1 percentile ranks using average ranks for ties; type and constraints follow the frozen PRD priority rules.",
+  "network_source": "province_network_v1.json",
+  "network_version": "province-network-v1",
+  "source_year": 2024,
+  "unit": "normalized index 0-1",
+  "missing_value_handling": "Generation fails when a required profile field, province, or network source is missing.",
+  "quality_policy": "Persona quality is proxy unless its source profile is demo; personas are never marked verified.",
+  "generated_files": [
+    "province_profiles_v3.json",
+    "province_personas_v1.json"
+  ]
+}

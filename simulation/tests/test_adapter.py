@@ -60,12 +60,13 @@ async def test_directive_approval_is_required(tmp_path) -> None:
 
 
 @pytest.mark.asyncio
-async def test_full_demo_has_v2_enterprises_isolated_branches_and_review(tmp_path) -> None:
+async def test_full_demo_has_v21_province_lineage_and_isolated_branches(tmp_path) -> None:
     adapter = AsyncioSimulationAdapter(FakeLLMProvider(), runtime_dir=tmp_path)
     comparison = await adapter.run_full_demo(
         ExperimentConfig(objective="推动制造业设备更新并改善中小企业融资")
     )
-    assert comparison.schema_version == "comparison-v2"
+    assert comparison.schema_version == "comparison-v3"
+    assert len(comparison.province_strategy_transitions) == 31
     assert len(comparison.province_deltas) == 31
     assert sum(item.count for item in comparison.action_migrations) == 186
     assert len(comparison.enterprise_group_changes) == 6
@@ -87,6 +88,13 @@ async def test_full_demo_has_v2_enterprises_isolated_branches_and_review(tmp_pat
     assert treatment.policy.regional_support_bias > 0
     assert control.phase == treatment.phase == Phase.T5
     assert len(control.enterprise_states) == len(treatment.enterprise_states) == 186
+    assert control.province_personas == treatment.province_personas
+    assert all(len(items) == 2 for items in control.province_action_lineage.values())
+    assert all(len(items) == 2 for items in treatment.province_action_lineage.values())
+    assert all(
+        item[-1].previous_action_id == item[0].action_id
+        for item in treatment.province_action_lineage.values()
+    )
     assert comparison.national_metrics["sme_financing_accessibility_index"].delta > 0
     assert comparison.national_metrics["local_fiscal_pressure_index"].delta > 0
 
@@ -120,11 +128,42 @@ async def test_call_budget_is_3_central_124_province_and_93_enterprise(tmp_path)
 
 
 @pytest.mark.asyncio
+async def test_t3_feedback_does_not_change_policy_or_t1_action_lineage(tmp_path) -> None:
+    adapter = AsyncioSimulationAdapter(FakeLLMProvider(), runtime_dir=tmp_path)
+    world = await adapter.initialize(ExperimentConfig(objective="测试T3非变更意向"))
+    await adapter.approve_directive(world.experiment_id, world.policy)
+    t2 = await adapter.run_to_phase(world.experiment_id, Phase.T2)
+    policy_before = t2.policy.model_copy(deep=True)
+    actions_before = t2.province_actions.copy()
+    lineage_before = t2.province_action_lineage.copy()
+    t3 = await adapter.run_phase(world.experiment_id, Phase.T3)
+    assert t3.policy == policy_before
+    assert t3.province_actions == actions_before
+    assert t3.province_action_lineage == lineage_before
+    assert all(len(item.adjustment_intents) <= 3 for item in t3.province_feedback.values())
+
+
+@pytest.mark.asyncio
+async def test_repeated_comparison_does_not_repeat_review_or_events(tmp_path) -> None:
+    provider = CountingProvider()
+    adapter = AsyncioSimulationAdapter(provider, runtime_dir=tmp_path)
+    first = await adapter.run_full_demo(ExperimentConfig(objective="测试Comparison幂等读取"))
+    events_before = await adapter.get_events(first.experiment_id)
+    central_before = provider.central
+    second = await adapter.get_comparison(first.experiment_id)
+    events_after = await adapter.get_events(first.experiment_id)
+    assert second == first
+    assert provider.central == central_before == 3
+    assert events_after == events_before
+
+
+@pytest.mark.asyncio
 async def test_replay_cursor_returns_only_new_events(tmp_path) -> None:
     adapter = AsyncioSimulationAdapter(FakeLLMProvider(), runtime_dir=tmp_path)
     world = await adapter.initialize(ExperimentConfig(objective="测试Replay游标"))
     events = await adapter.get_events(world.experiment_id)
-    assert len(events) == 2
+    assert len(events) == 33
+    assert sum(item.type == "province.persona.ready" for item in events) == 31
     await adapter.approve_directive(world.experiment_id, world.policy)
     new_events = await adapter.get_events(world.experiment_id, events[-1].event_id)
     assert [event.type for event in new_events] == ["central.directive.approved"]

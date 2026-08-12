@@ -21,10 +21,10 @@ async def main() -> None:
                 "并兼顾绿色转型、就业稳定和区域可达性。"
             ),
             run_mode=RunMode.CACHE,
-            model_version="cache-v2",
+            model_version="cache-v3",
         )
     )
-    print("Default PolicyScope V2 cache precomputed.")
+    print("Default PolicyScope V2.1 cache precomputed.")
 
 
 if __name__ == "__main__":

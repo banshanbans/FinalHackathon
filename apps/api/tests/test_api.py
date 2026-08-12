@@ -12,9 +12,10 @@ def _client(tmp_path):
     return TestClient(create_app(adapter=adapter, settings=settings))
 
 
-def test_complete_v2_api_flow_and_idempotency(tmp_path) -> None:
+def test_complete_v21_api_flow_and_idempotency(tmp_path) -> None:
     with _client(tmp_path) as client:
-        assert client.get("/api/health").json()["version"] == "0.2.0"
+        assert client.get("/api/health").json()["version"] == "0.3.0"
+        assert len(client.get("/api/meta/province-persona-types").json()) == 6
         assert len(client.get("/api/meta/enterprise-archetypes").json()) == 6
         policy = client.get("/api/meta/default-policy").json()
         create_headers = {"Idempotency-Key": "create-demo"}
@@ -32,7 +33,8 @@ def test_complete_v2_api_flow_and_idempotency(tmp_path) -> None:
         assert conflict.json()["detail"]["error_code"] == "IDEMPOTENCY_CONFLICT"
         world = create.json()
         experiment_id = world["experiment_id"]
-        assert world["schema_version"] == "world-state-v2"
+        assert world["schema_version"] == "world-state-v3"
+        assert len(world["province_personas"]) == 31
         assert len(world["enterprise_profiles"]) == 186
 
         forbidden = client.post(f"/api/experiments/{experiment_id}/run", json={"until_phase": "T1"})
@@ -61,6 +63,13 @@ def test_complete_v2_api_flow_and_idempotency(tmp_path) -> None:
         assert len(t3.json()["province_feedback"]) == 31
         assert len(t3.json()["enterprise_actions"]) == 186
         proposal = t3.json()["intervention_proposals"][0]
+        province_detail = client.get(f"/api/experiments/{experiment_id}/provinces/41")
+        assert province_detail.status_code == 200
+        assert province_detail.json()["persona"]["primary_type"] == "inclusive_diffusion"
+        assert len(province_detail.json()["branches"]["control"]["enterprise_groups"]) == 6
+        missing_province = client.get(f"/api/experiments/{experiment_id}/provinces/99")
+        assert missing_province.status_code == 404
+        assert missing_province.json()["detail"]["error_code"] == "PROVINCE_NOT_FOUND"
 
         unapproved_branch = client.post(
             f"/api/experiments/{experiment_id}/branches",
@@ -96,7 +105,8 @@ def test_complete_v2_api_flow_and_idempotency(tmp_path) -> None:
         assert treatment_run.status_code == 200
         comparison = client.get(f"/api/experiments/{experiment_id}/compare")
         assert comparison.status_code == 200
-        assert comparison.json()["schema_version"] == "comparison-v2"
+        assert comparison.json()["schema_version"] == "comparison-v3"
+        assert len(comparison.json()["province_strategy_transitions"]) == 31
         assert sum(item["count"] for item in comparison.json()["action_migrations"]) == 186
         assert comparison.json()["central_review"]["review_mode"] == "comparison"
         evidence = client.get(f"/api/experiments/{experiment_id}/evidence/metric:national:T5")

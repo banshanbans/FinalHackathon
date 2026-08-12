@@ -12,14 +12,22 @@ from simulation.models.central import (
     ReviewFinding,
 )
 from simulation.models.common import (
+    AdjustmentDirection,
     ApprovalStatus,
+    CentralSupportType,
+    DecisionPosture,
     EnterpriseArchetype,
     EnterpriseReasonCode,
+    EnterpriseSignalType,
     FinancingChoice,
+    InterprovincialStrategy,
     Participation,
     Phase,
+    ProvincePersonaType,
     ProvinceReasonCode,
     ReviewMode,
+    SignalSeverity,
+    StrategyAssessment,
     UpgradeType,
 )
 from simulation.models.enterprise import (
@@ -31,7 +39,14 @@ from simulation.models.enterprise import (
 )
 from simulation.models.experiment import ExperimentConfig
 from simulation.models.policy import InstrumentMix, PolicySchema, TechnologyMix
-from simulation.models.province import ProvinceFeedback, ProvinceProfile, ProvinceState
+from simulation.models.province import (
+    AdjustmentIntent,
+    EnterpriseSignal,
+    ProvinceDecisionPersona,
+    ProvinceFeedback,
+    ProvinceProfile,
+    ProvinceState,
+)
 from simulation.models.world import ComparisonResult, NationalMetrics, WorldState
 
 
@@ -72,7 +87,7 @@ def policy_diff(before: PolicySchema, after: PolicySchema) -> list[PolicyFieldCh
 
 
 class FakeLLMProvider:
-    """Deterministic V2 strategy provider for tests, fallback and offline demos."""
+    """Deterministic V2.1 strategy provider for tests, fallback and offline demos."""
 
     run_mode = "fake"
 
@@ -106,16 +121,19 @@ class FakeLLMProvider:
         self,
         *,
         profile: ProvinceProfile,
+        persona: ProvinceDecisionPersona,
         state: ProvinceState,
         policy: PolicySchema,
         phase: Phase,
         related: list[NetworkEdge],
         neighbor_actions: dict[str, ProvinceAction],
+        previous_action: ProvinceAction | None,
+        feedback: ProvinceFeedback | None,
         seed: int,
         prompt_version: str,
         model_version: str,
     ) -> ProvinceAction:
-        del seed, prompt_version, model_version
+        del seed, prompt_version, model_version, feedback
         observed = fmean(
             [item.implementation_intensity for item in neighbor_actions.values()] or [0.5]
         )
@@ -165,6 +183,35 @@ class FakeLLMProvider:
             reasons.append(ProvinceReasonCode.GREEN_TRANSITION)
         if requested > 0.55:
             reasons.append(ProvinceReasonCode.CENTRAL_SUPPORT_REQUEST)
+        if persona.primary_type == ProvincePersonaType.INCLUSIVE_DIFFUSION:
+            targets = [EnterpriseArchetype.TECHNOLOGY_SME, EnterpriseArchetype.TRADITIONAL_SME]
+        elif persona.primary_type == ProvincePersonaType.TECHNOLOGY_LEAP:
+            targets = [EnterpriseArchetype.TECHNOLOGY_SME, EnterpriseArchetype.EXPORT_MANUFACTURER]
+        elif persona.primary_type == ProvincePersonaType.GREEN_TRANSITION:
+            targets = [EnterpriseArchetype.HIGH_ENERGY_INDUSTRIAL]
+        elif persona.primary_type == ProvincePersonaType.FISCALLY_PRUDENT:
+            targets = [EnterpriseArchetype.LARGE_PRIVATE, EnterpriseArchetype.TRADITIONAL_SME]
+        else:
+            targets = [EnterpriseArchetype.LARGE_STATE_OWNED, EnterpriseArchetype.LARGE_PRIVATE]
+        if persona.axes.cooperation_orientation >= 0.67:
+            strategy = InterprovincialStrategy.COLLABORATE
+        elif persona.axes.technology_ambition >= 0.67:
+            strategy = InterprovincialStrategy.BENCHMARK
+        elif persona.axes.execution_drive >= 0.67:
+            strategy = InterprovincialStrategy.COMPETE
+        else:
+            strategy = InterprovincialStrategy.INDEPENDENT
+        target_provinces = (
+            [edge.target for edge in sorted(related, key=lambda item: -item.weight)[:2]]
+            if strategy != InterprovincialStrategy.INDEPENDENT
+            else []
+        )
+        if persona.axes.fiscal_prudence >= 0.78:
+            posture = DecisionPosture.CAUTIOUS
+        elif max(persona.axes.execution_drive, persona.axes.technology_ambition) >= 0.70:
+            posture = DecisionPosture.PROACTIVE
+        else:
+            posture = DecisionPosture.BALANCED
         return ProvinceAction(
             action_id=_stable_id(
                 f"province_{profile.province_code}_{phase.value}",
@@ -173,10 +220,18 @@ class FakeLLMProvider:
                     "state": state.model_dump(mode="json"),
                     "policy": policy.model_dump(mode="json"),
                     "neighbors": sorted(neighbor_actions),
+                    "persona": persona.model_dump(mode="json"),
+                    "previous_action_id": previous_action.action_id if previous_action else None,
                 },
             ),
+            previous_action_id=previous_action.action_id if previous_action else None,
             province_code=profile.province_code,
             phase=phase,
+            primary_goal=persona.priority_goals[0],
+            decision_posture=posture,
+            target_enterprise_groups=targets,
+            interprovincial_strategy=strategy,
+            target_province_codes=target_provinces,
             implementation_intensity=round(intensity, 4),
             local_match_ratio=round(local_match, 4),
             instrument_mix=instrument_mix,
@@ -314,7 +369,9 @@ class FakeLLMProvider:
         self,
         *,
         profile: ProvinceProfile,
+        persona: ProvinceDecisionPersona,
         state: ProvinceState,
+        current_action: ProvinceAction,
         aggregate: EnterpriseAggregate,
         enterprise_actions: list[EnterpriseAction],
         policy: PolicySchema,
@@ -333,24 +390,70 @@ class FakeLLMProvider:
             )
         if state.fiscal_pressure_index > 55:
             reasons.append(ProvinceReasonCode.FISCAL_CONSTRAINT)
+        support = round(fmean(item.requested_support for item in enterprise_actions), 4)
+        constrained_state = aggregate.sme_financing_accessibility_index < 55
+        signals = [
+            EnterpriseSignal(
+                cohort_type=item.archetype,
+                signal_type=(
+                    EnterpriseSignalType.FINANCING_CONSTRAINT
+                    if item.requested_support >= 0.5
+                    else EnterpriseSignalType.PARTICIPATION_BARRIER
+                ),
+                severity=(
+                    SignalSeverity.HIGH if item.requested_support >= 0.7 else SignalSeverity.MEDIUM
+                ),
+                evidence_refs=[f"enterprise:{item.enterprise_id}:action:T2"],
+            )
+            for item in constrained
+        ]
+        intents = []
+        if constrained_state:
+            intents.extend(
+                [
+                    AdjustmentIntent(
+                        path="instrument_mix.financing_guarantee",
+                        direction=AdjustmentDirection.INCREASE,
+                        reason_code=ProvinceReasonCode.FINANCING_GAP,
+                    ),
+                    AdjustmentIntent(
+                        path="sme_preference",
+                        direction=AdjustmentDirection.INCREASE,
+                        reason_code=ProvinceReasonCode.SME_ACCESS_PRIORITY,
+                    ),
+                ]
+            )
+        if state.fiscal_pressure_index > 55:
+            intents.append(
+                AdjustmentIntent(
+                    path="local_match_ratio",
+                    direction=AdjustmentDirection.DECREASE,
+                    reason_code=ProvinceReasonCode.FISCAL_CONSTRAINT,
+                )
+            )
         return ProvinceFeedback(
             feedback_id=_stable_id(
                 f"feedback_{profile.province_code}",
                 {
                     "state": state.model_dump(mode="json"),
                     "aggregate": aggregate.model_dump(mode="json"),
+                    "action": current_action.action_id,
                 },
             ),
             province_code=profile.province_code,
-            implementation_assessment=(
-                "融资可达性仍是主要约束"
-                if aggregate.sme_financing_accessibility_index < 55
-                else "设备更新参与度稳步形成"
+            strategy_assessment=(
+                StrategyAssessment.CONSTRAINED
+                if constrained_state
+                else StrategyAssessment.EFFECTIVE
             ),
-            priority_enterprise_groups=[item.archetype.value for item in constrained],
-            requested_central_support=round(
-                fmean(item.requested_support for item in enterprise_actions), 4
+            enterprise_signals=signals,
+            priority_enterprise_groups=[item.archetype for item in constrained],
+            key_constraints=persona.key_constraints[:3],
+            adjustment_intents=intents[:3],
+            requested_support_type=(
+                CentralSupportType.CREDIT_SUPPORT if support > 0 else CentralSupportType.NONE
             ),
+            requested_central_support=support,
             reason_codes=reasons[:5],
             evidence_refs=[
                 f"metric:{profile.province_code}:sme_financing_accessibility_index:T2",

@@ -30,7 +30,7 @@ async def run(assert_complete: bool) -> None:
                 "并兼顾绿色转型、就业稳定和区域可达性。"
             ),
             run_mode=requested_mode,
-            model_version=f"{requested_mode.value}-v2",
+            model_version=f"{requested_mode.value}-v3",
         )
     )
     control = await adapter.get_state(result.experiment_id, result.control_branch_id)
@@ -43,6 +43,8 @@ async def run(assert_complete: bool) -> None:
     summary = {
         "experiment_id": result.experiment_id,
         "province_count": len(result.province_deltas),
+        "persona_count": len(control.province_personas),
+        "province_strategy_transition_count": len(result.province_strategy_transitions),
         "control_branch": result.control_branch_id,
         "treatment_branch": result.treatment_branch_id,
         "policy_diff": [item.model_dump(mode="json") for item in result.policy_diff],
@@ -58,6 +60,8 @@ async def run(assert_complete: bool) -> None:
     print(json.dumps(summary, ensure_ascii=False, indent=2))
     if assert_complete:
         assert summary["province_count"] == 31
+        assert summary["persona_count"] == 31
+        assert summary["province_strategy_transition_count"] == 31
         assert summary["enterprise_count"] == 186
         assert summary["action_migration_count"] == 186
         assert summary["review_id"]

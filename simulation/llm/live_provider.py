@@ -24,7 +24,12 @@ from simulation.models.enterprise import (
 )
 from simulation.models.experiment import ExperimentConfig
 from simulation.models.policy import PolicySchema
-from simulation.models.province import ProvinceFeedback, ProvinceProfile, ProvinceState
+from simulation.models.province import (
+    ProvinceDecisionPersona,
+    ProvinceFeedback,
+    ProvinceProfile,
+    ProvinceState,
+)
 from simulation.models.world import ComparisonResult, NationalMetrics, WorldState
 
 ModelT = TypeVar("ModelT", bound=BaseModel)
@@ -35,7 +40,7 @@ class ProposalList(BaseModel):
 
 
 class LiveLLMProvider:
-    """OpenAI-compatible V2 provider with one schema repair and deterministic fallback."""
+    """OpenAI-compatible V2.1 provider with one repair and deterministic fallback."""
 
     def __init__(
         self,
@@ -134,11 +139,14 @@ class LiveLLMProvider:
         self,
         *,
         profile: ProvinceProfile,
+        persona: ProvinceDecisionPersona,
         state: ProvinceState,
         policy: PolicySchema,
         phase: Phase,
         related: list[NetworkEdge],
         neighbor_actions: dict[str, ProvinceAction],
+        previous_action: ProvinceAction | None,
+        feedback: ProvinceFeedback | None,
         seed: int,
         prompt_version: str,
         model_version: str,
@@ -146,11 +154,14 @@ class LiveLLMProvider:
         async def fallback_action() -> ProvinceAction:
             action = await self.fallback.generate_province_action(
                 profile=profile,
+                persona=persona,
                 state=state,
                 policy=policy,
                 phase=phase,
                 related=related,
                 neighbor_actions=neighbor_actions,
+                previous_action=previous_action,
+                feedback=feedback,
                 seed=seed,
                 prompt_version=prompt_version,
                 model_version=model_version,
@@ -159,9 +170,13 @@ class LiveLLMProvider:
 
         result = await self._structured(
             model=self.province_model,
-            instruction="选择本省设备更新的地方工具组合；不得输出结果指标。",
+            instruction=(
+                "依据本次实验决策画像、上一行动和Top-K关系选择地方目标、工具与省际策略；"
+                "目标省份只能来自related；不得输出结果指标。"
+            ),
             payload={
                 "profile": profile.model_dump(mode="json"),
+                "persona": persona.model_dump(mode="json"),
                 "state": state.model_dump(mode="json"),
                 "policy": policy.model_dump(mode="json"),
                 "phase": phase.value,
@@ -169,6 +184,10 @@ class LiveLLMProvider:
                 "neighbor_actions": {
                     code: item.model_dump(mode="json") for code, item in neighbor_actions.items()
                 },
+                "previous_action": (
+                    previous_action.model_dump(mode="json") if previous_action else None
+                ),
+                "feedback": feedback.model_dump(mode="json") if feedback else None,
                 "seed": seed,
                 "prompt_version": prompt_version,
                 "model_version": model_version,
@@ -244,7 +263,9 @@ class LiveLLMProvider:
         self,
         *,
         profile: ProvinceProfile,
+        persona: ProvinceDecisionPersona,
         state: ProvinceState,
+        current_action: ProvinceAction,
         aggregate: EnterpriseAggregate,
         enterprise_actions: list[EnterpriseAction],
         policy: PolicySchema,
@@ -255,7 +276,9 @@ class LiveLLMProvider:
         async def fallback_feedback() -> ProvinceFeedback:
             item = await self.fallback.generate_province_feedback(
                 profile=profile,
+                persona=persona,
                 state=state,
+                current_action=current_action,
                 aggregate=aggregate,
                 enterprise_actions=enterprise_actions,
                 policy=policy,
@@ -267,10 +290,15 @@ class LiveLLMProvider:
 
         result = await self._structured(
             model=self.province_model,
-            instruction="基于环境指标和六类企业行动生成地方实施反馈，不得自行计算结果。",
+            instruction=(
+                "基于当前地方行动、环境证据和六类企业行动生成结构化复盘与调整意向；"
+                "调整意向不得直接修改政策或结果。"
+            ),
             payload={
                 "profile": profile.model_dump(mode="json"),
+                "persona": persona.model_dump(mode="json"),
                 "state": state.model_dump(mode="json"),
+                "current_action": current_action.model_dump(mode="json"),
                 "aggregate": aggregate.model_dump(mode="json"),
                 "enterprise_actions": [item.model_dump(mode="json") for item in enterprise_actions],
                 "policy": policy.model_dump(mode="json"),

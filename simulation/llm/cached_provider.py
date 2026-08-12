@@ -24,7 +24,12 @@ from simulation.models.enterprise import (
 )
 from simulation.models.experiment import ExperimentConfig
 from simulation.models.policy import PolicySchema
-from simulation.models.province import ProvinceFeedback, ProvinceProfile, ProvinceState
+from simulation.models.province import (
+    ProvinceDecisionPersona,
+    ProvinceFeedback,
+    ProvinceProfile,
+    ProvinceState,
+)
 from simulation.models.world import ComparisonResult, NationalMetrics, WorldState
 
 ModelT = TypeVar("ModelT", bound=BaseModel)
@@ -99,17 +104,21 @@ class CachedLLMProvider:
         self,
         *,
         profile: ProvinceProfile,
+        persona: ProvinceDecisionPersona,
         state: ProvinceState,
         policy: PolicySchema,
         phase: Phase,
         related: list[NetworkEdge],
         neighbor_actions: dict[str, ProvinceAction],
+        previous_action: ProvinceAction | None,
+        feedback: ProvinceFeedback | None,
         seed: int,
         prompt_version: str,
         model_version: str,
     ) -> ProvinceAction:
         payload = {
             "profile": profile.model_dump(mode="json"),
+            "persona": persona.model_dump(mode="json"),
             "state": state.model_dump(mode="json"),
             "policy": policy.model_dump(mode="json"),
             "phase": phase.value,
@@ -118,21 +127,34 @@ class CachedLLMProvider:
                 code: action.model_dump(mode="json", exclude={"run_mode", "fallback_used"})
                 for code, action in sorted(neighbor_actions.items())
             },
+            "previous_action": (
+                previous_action.model_dump(mode="json", exclude={"run_mode", "fallback_used"})
+                if previous_action
+                else None
+            ),
+            "feedback": (
+                feedback.model_dump(mode="json", exclude={"run_mode", "fallback_used"})
+                if feedback
+                else None
+            ),
             "seed": seed,
             "prompt_version": prompt_version,
             "model_version": model_version,
         }
         return await self._get_or_create(
-            kind="province_action_v2",
+            kind="province_action_v3",
             payload=payload,
             model_type=ProvinceAction,
             generate=lambda: self.fallback.generate_province_action(
                 profile=profile,
+                persona=persona,
                 state=state,
                 policy=policy,
                 phase=phase,
                 related=related,
                 neighbor_actions=neighbor_actions,
+                previous_action=previous_action,
+                feedback=feedback,
                 seed=seed,
                 prompt_version=prompt_version,
                 model_version=model_version,
@@ -189,7 +211,9 @@ class CachedLLMProvider:
         self,
         *,
         profile: ProvinceProfile,
+        persona: ProvinceDecisionPersona,
         state: ProvinceState,
+        current_action: ProvinceAction,
         aggregate: EnterpriseAggregate,
         enterprise_actions: list[EnterpriseAction],
         policy: PolicySchema,
@@ -199,7 +223,11 @@ class CachedLLMProvider:
     ) -> ProvinceFeedback:
         payload = {
             "profile": profile.model_dump(mode="json"),
+            "persona": persona.model_dump(mode="json"),
             "state": state.model_dump(mode="json"),
+            "current_action": current_action.model_dump(
+                mode="json", exclude={"run_mode", "fallback_used"}
+            ),
             "aggregate": aggregate.model_dump(mode="json"),
             "enterprise_actions": [item.model_dump(mode="json") for item in enterprise_actions],
             "policy": policy.model_dump(mode="json"),
@@ -208,12 +236,14 @@ class CachedLLMProvider:
             "model_version": model_version,
         }
         return await self._get_or_create(
-            kind="province_feedback_v2",
+            kind="province_feedback_v3",
             payload=payload,
             model_type=ProvinceFeedback,
             generate=lambda: self.fallback.generate_province_feedback(
                 profile=profile,
+                persona=persona,
                 state=state,
+                current_action=current_action,
                 aggregate=aggregate,
                 enterprise_actions=enterprise_actions,
                 policy=policy,

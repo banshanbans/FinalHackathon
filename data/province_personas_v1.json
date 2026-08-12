@@ -1,0 +1,827 @@
+[
+  {
+    "schema_version": "province-persona-v1",
+    "province_code": "11",
+    "axes": {
+      "execution_drive": 0.8667,
+      "fiscal_prudence": 0.1,
+      "sme_inclusiveness": 0.0,
+      "technology_ambition": 0.8667,
+      "green_priority": 0.0,
+      "cooperation_orientation": 0.6667
+    },
+    "primary_type": "technology_leap",
+    "secondary_type": "execution_driven",
+    "priority_goals": [
+      "digital_upgrade",
+      "equipment_renewal"
+    ],
+    "key_constraints": [
+      "employment_pressure",
+      "transition_pressure"
+    ],
+    "profile_version": "province-profile-v3",
+    "network_version": "province-network-v1",
+    "method_version": "province-persona-method-v1",
+    "data_quality": "proxy",
+    "public_summary": "本次实验决策画像为技术跃迁型，兼顾执行攻坚型，用于约束地方策略选择。"
+  },
+  {
+    "schema_version": "province-persona-v1",
+    "province_code": "12",
+    "axes": {
+      "execution_drive": 0.6667,
+      "fiscal_prudence": 0.2333,
+      "sme_inclusiveness": 0.2333,
+      "technology_ambition": 0.7,
+      "green_priority": 0.1667,
+      "cooperation_orientation": 0.5
+    },
+    "primary_type": "technology_leap",
+    "secondary_type": "execution_driven",
+    "priority_goals": [
+      "digital_upgrade",
+      "equipment_renewal"
+    ],
+    "key_constraints": [
+      "transition_pressure",
+      "employment_pressure"
+    ],
+    "profile_version": "province-profile-v3",
+    "network_version": "province-network-v1",
+    "method_version": "province-persona-method-v1",
+    "data_quality": "proxy",
+    "public_summary": "本次实验决策画像为技术跃迁型，兼顾执行攻坚型，用于约束地方策略选择。"
+  },
+  {
+    "schema_version": "province-persona-v1",
+    "province_code": "13",
+    "axes": {
+      "execution_drive": 0.5333,
+      "fiscal_prudence": 0.4667,
+      "sme_inclusiveness": 0.4333,
+      "technology_ambition": 0.4667,
+      "green_priority": 0.6333,
+      "cooperation_orientation": 0.3333
+    },
+    "primary_type": "green_transition",
+    "secondary_type": "execution_driven",
+    "priority_goals": [
+      "green_equipment_renewal",
+      "equipment_renewal"
+    ],
+    "key_constraints": [
+      "transition_pressure",
+      "employment_pressure"
+    ],
+    "profile_version": "province-profile-v3",
+    "network_version": "province-network-v1",
+    "method_version": "province-persona-method-v1",
+    "data_quality": "proxy",
+    "public_summary": "本次实验决策画像为绿色转型型，兼顾执行攻坚型，用于约束地方策略选择。"
+  },
+  {
+    "schema_version": "province-persona-v1",
+    "province_code": "14",
+    "axes": {
+      "execution_drive": 0.3333,
+      "fiscal_prudence": 0.7,
+      "sme_inclusiveness": 0.5,
+      "technology_ambition": 0.2667,
+      "green_priority": 0.9667,
+      "cooperation_orientation": 0.1
+    },
+    "primary_type": "green_transition",
+    "secondary_type": null,
+    "priority_goals": [
+      "green_equipment_renewal"
+    ],
+    "key_constraints": [
+      "transition_pressure",
+      "employment_pressure"
+    ],
+    "profile_version": "province-profile-v3",
+    "network_version": "province-network-v1",
+    "method_version": "province-persona-method-v1",
+    "data_quality": "proxy",
+    "public_summary": "本次实验决策画像为绿色转型型，用于约束地方策略选择。"
+  },
+  {
+    "schema_version": "province-persona-v1",
+    "province_code": "15",
+    "axes": {
+      "execution_drive": 0.4,
+      "fiscal_prudence": 0.4333,
+      "sme_inclusiveness": 0.2,
+      "technology_ambition": 0.2,
+      "green_priority": 1.0,
+      "cooperation_orientation": 0.0
+    },
+    "primary_type": "green_transition",
+    "secondary_type": null,
+    "priority_goals": [
+      "green_equipment_renewal"
+    ],
+    "key_constraints": [
+      "transition_pressure",
+      "industrial_concentration"
+    ],
+    "profile_version": "province-profile-v3",
+    "network_version": "province-network-v1",
+    "method_version": "province-persona-method-v1",
+    "data_quality": "proxy",
+    "public_summary": "本次实验决策画像为绿色转型型，用于约束地方策略选择。"
+  },
+  {
+    "schema_version": "province-persona-v1",
+    "province_code": "21",
+    "axes": {
+      "execution_drive": 0.5,
+      "fiscal_prudence": 0.6333,
+      "sme_inclusiveness": 0.7333,
+      "technology_ambition": 0.5333,
+      "green_priority": 0.6667,
+      "cooperation_orientation": 0.1667
+    },
+    "primary_type": "inclusive_diffusion",
+    "secondary_type": "green_transition",
+    "priority_goals": [
+      "sme_financing_access",
+      "green_equipment_renewal"
+    ],
+    "key_constraints": [
+      "transition_pressure",
+      "employment_pressure"
+    ],
+    "profile_version": "province-profile-v3",
+    "network_version": "province-network-v1",
+    "method_version": "province-persona-method-v1",
+    "data_quality": "proxy",
+    "public_summary": "本次实验决策画像为普惠扩散型，兼顾绿色转型型，用于约束地方策略选择。"
+  },
+  {
+    "schema_version": "province-persona-v1",
+    "province_code": "22",
+    "axes": {
+      "execution_drive": 0.3667,
+      "fiscal_prudence": 0.7667,
+      "sme_inclusiveness": 0.9667,
+      "technology_ambition": 0.4,
+      "green_priority": 0.5667,
+      "cooperation_orientation": 0.2333
+    },
+    "primary_type": "inclusive_diffusion",
+    "secondary_type": null,
+    "priority_goals": [
+      "sme_financing_access"
+    ],
+    "key_constraints": [
+      "transition_pressure",
+      "employment_pressure"
+    ],
+    "profile_version": "province-profile-v3",
+    "network_version": "province-network-v1",
+    "method_version": "province-persona-method-v1",
+    "data_quality": "proxy",
+    "public_summary": "本次实验决策画像为普惠扩散型，用于约束地方策略选择。"
+  },
+  {
+    "schema_version": "province-persona-v1",
+    "province_code": "23",
+    "axes": {
+      "execution_drive": 0.2667,
+      "fiscal_prudence": 0.8333,
+      "sme_inclusiveness": 0.9333,
+      "technology_ambition": 0.3667,
+      "green_priority": 0.7667,
+      "cooperation_orientation": 0.0667
+    },
+    "primary_type": "inclusive_diffusion",
+    "secondary_type": "fiscally_prudent",
+    "priority_goals": [
+      "sme_financing_access",
+      "fiscal_sustainability"
+    ],
+    "key_constraints": [
+      "transition_pressure",
+      "employment_pressure"
+    ],
+    "profile_version": "province-profile-v3",
+    "network_version": "province-network-v1",
+    "method_version": "province-persona-method-v1",
+    "data_quality": "proxy",
+    "public_summary": "本次实验决策画像为普惠扩散型，兼顾财政审慎型，用于约束地方策略选择。"
+  },
+  {
+    "schema_version": "province-persona-v1",
+    "province_code": "31",
+    "axes": {
+      "execution_drive": 0.9,
+      "fiscal_prudence": 0.0333,
+      "sme_inclusiveness": 0.0333,
+      "technology_ambition": 0.9,
+      "green_priority": 0.0333,
+      "cooperation_orientation": 0.9
+    },
+    "primary_type": "technology_leap",
+    "secondary_type": "regional_collaboration",
+    "priority_goals": [
+      "digital_upgrade",
+      "cross_regional_coordination"
+    ],
+    "key_constraints": [
+      "employment_pressure",
+      "transition_pressure"
+    ],
+    "profile_version": "province-profile-v3",
+    "network_version": "province-network-v1",
+    "method_version": "province-persona-method-v1",
+    "data_quality": "proxy",
+    "public_summary": "本次实验决策画像为技术跃迁型，兼顾区域协同型，用于约束地方策略选择。"
+  },
+  {
+    "schema_version": "province-persona-v1",
+    "province_code": "32",
+    "axes": {
+      "execution_drive": 0.9667,
+      "fiscal_prudence": 0.0667,
+      "sme_inclusiveness": 0.0667,
+      "technology_ambition": 0.9667,
+      "green_priority": 0.1333,
+      "cooperation_orientation": 0.9667
+    },
+    "primary_type": "technology_leap",
+    "secondary_type": "regional_collaboration",
+    "priority_goals": [
+      "digital_upgrade",
+      "cross_regional_coordination"
+    ],
+    "key_constraints": [
+      "employment_pressure",
+      "transition_pressure"
+    ],
+    "profile_version": "province-profile-v3",
+    "network_version": "province-network-v1",
+    "method_version": "province-persona-method-v1",
+    "data_quality": "proxy",
+    "public_summary": "本次实验决策画像为技术跃迁型，兼顾区域协同型，用于约束地方策略选择。"
+  },
+  {
+    "schema_version": "province-persona-v1",
+    "province_code": "33",
+    "axes": {
+      "execution_drive": 0.9333,
+      "fiscal_prudence": 0.1333,
+      "sme_inclusiveness": 0.1333,
+      "technology_ambition": 0.9333,
+      "green_priority": 0.0667,
+      "cooperation_orientation": 1.0
+    },
+    "primary_type": "regional_collaboration",
+    "secondary_type": "technology_leap",
+    "priority_goals": [
+      "cross_regional_coordination",
+      "digital_upgrade"
+    ],
+    "key_constraints": [
+      "employment_pressure",
+      "transition_pressure"
+    ],
+    "profile_version": "province-profile-v3",
+    "network_version": "province-network-v1",
+    "method_version": "province-persona-method-v1",
+    "data_quality": "proxy",
+    "public_summary": "本次实验决策画像为区域协同型，兼顾技术跃迁型，用于约束地方策略选择。"
+  },
+  {
+    "schema_version": "province-persona-v1",
+    "province_code": "34",
+    "axes": {
+      "execution_drive": 0.7,
+      "fiscal_prudence": 0.3333,
+      "sme_inclusiveness": 0.4,
+      "technology_ambition": 0.7333,
+      "green_priority": 0.3,
+      "cooperation_orientation": 0.8333
+    },
+    "primary_type": "regional_collaboration",
+    "secondary_type": null,
+    "priority_goals": [
+      "cross_regional_coordination"
+    ],
+    "key_constraints": [
+      "employment_pressure",
+      "transition_pressure"
+    ],
+    "profile_version": "province-profile-v3",
+    "network_version": "province-network-v1",
+    "method_version": "province-persona-method-v1",
+    "data_quality": "proxy",
+    "public_summary": "本次实验决策画像为区域协同型，用于约束地方策略选择。"
+  },
+  {
+    "schema_version": "province-persona-v1",
+    "province_code": "35",
+    "axes": {
+      "execution_drive": 0.8,
+      "fiscal_prudence": 0.2,
+      "sme_inclusiveness": 0.2667,
+      "technology_ambition": 0.6333,
+      "green_priority": 0.2,
+      "cooperation_orientation": 0.6
+    },
+    "primary_type": "execution_driven",
+    "secondary_type": null,
+    "priority_goals": [
+      "equipment_renewal"
+    ],
+    "key_constraints": [
+      "employment_pressure",
+      "transition_pressure"
+    ],
+    "profile_version": "province-profile-v3",
+    "network_version": "province-network-v1",
+    "method_version": "province-persona-method-v1",
+    "data_quality": "proxy",
+    "public_summary": "本次实验决策画像为执行攻坚型，用于约束地方策略选择。"
+  },
+  {
+    "schema_version": "province-persona-v1",
+    "province_code": "36",
+    "axes": {
+      "execution_drive": 0.4333,
+      "fiscal_prudence": 0.6,
+      "sme_inclusiveness": 0.7,
+      "technology_ambition": 0.4333,
+      "green_priority": 0.45,
+      "cooperation_orientation": 0.5333
+    },
+    "primary_type": "inclusive_diffusion",
+    "secondary_type": "fiscally_prudent",
+    "priority_goals": [
+      "sme_financing_access",
+      "fiscal_sustainability"
+    ],
+    "key_constraints": [
+      "employment_pressure",
+      "fiscal_gap"
+    ],
+    "profile_version": "province-profile-v3",
+    "network_version": "province-network-v1",
+    "method_version": "province-persona-method-v1",
+    "data_quality": "proxy",
+    "public_summary": "本次实验决策画像为普惠扩散型，兼顾财政审慎型，用于约束地方策略选择。"
+  },
+  {
+    "schema_version": "province-persona-v1",
+    "province_code": "37",
+    "axes": {
+      "execution_drive": 0.8333,
+      "fiscal_prudence": 0.1667,
+      "sme_inclusiveness": 0.1667,
+      "technology_ambition": 0.8333,
+      "green_priority": 0.45,
+      "cooperation_orientation": 0.3667
+    },
+    "primary_type": "technology_leap",
+    "secondary_type": "execution_driven",
+    "priority_goals": [
+      "digital_upgrade",
+      "equipment_renewal"
+    ],
+    "key_constraints": [
+      "transition_pressure",
+      "employment_pressure"
+    ],
+    "profile_version": "province-profile-v3",
+    "network_version": "province-network-v1",
+    "method_version": "province-persona-method-v1",
+    "data_quality": "proxy",
+    "public_summary": "本次实验决策画像为技术跃迁型，兼顾执行攻坚型，用于约束地方策略选择。"
+  },
+  {
+    "schema_version": "province-persona-v1",
+    "province_code": "41",
+    "axes": {
+      "execution_drive": 0.5667,
+      "fiscal_prudence": 0.5667,
+      "sme_inclusiveness": 0.6667,
+      "technology_ambition": 0.5,
+      "green_priority": 0.4,
+      "cooperation_orientation": 0.4
+    },
+    "primary_type": "inclusive_diffusion",
+    "secondary_type": "fiscally_prudent",
+    "priority_goals": [
+      "sme_financing_access",
+      "fiscal_sustainability"
+    ],
+    "key_constraints": [
+      "employment_pressure",
+      "transition_pressure"
+    ],
+    "profile_version": "province-profile-v3",
+    "network_version": "province-network-v1",
+    "method_version": "province-persona-method-v1",
+    "data_quality": "proxy",
+    "public_summary": "本次实验决策画像为普惠扩散型，兼顾财政审慎型，用于约束地方策略选择。"
+  },
+  {
+    "schema_version": "province-persona-v1",
+    "province_code": "42",
+    "axes": {
+      "execution_drive": 0.7333,
+      "fiscal_prudence": 0.2667,
+      "sme_inclusiveness": 0.3,
+      "technology_ambition": 0.8,
+      "green_priority": 0.2333,
+      "cooperation_orientation": 0.8667
+    },
+    "primary_type": "regional_collaboration",
+    "secondary_type": "technology_leap",
+    "priority_goals": [
+      "cross_regional_coordination",
+      "digital_upgrade"
+    ],
+    "key_constraints": [
+      "employment_pressure",
+      "transition_pressure"
+    ],
+    "profile_version": "province-profile-v3",
+    "network_version": "province-network-v1",
+    "method_version": "province-persona-method-v1",
+    "data_quality": "proxy",
+    "public_summary": "本次实验决策画像为区域协同型，兼顾技术跃迁型，用于约束地方策略选择。"
+  },
+  {
+    "schema_version": "province-persona-v1",
+    "province_code": "43",
+    "axes": {
+      "execution_drive": 0.6,
+      "fiscal_prudence": 0.3833,
+      "sme_inclusiveness": 0.4667,
+      "technology_ambition": 0.5667,
+      "green_priority": 0.3333,
+      "cooperation_orientation": 0.7
+    },
+    "primary_type": "regional_collaboration",
+    "secondary_type": "execution_driven",
+    "priority_goals": [
+      "cross_regional_coordination",
+      "equipment_renewal"
+    ],
+    "key_constraints": [
+      "employment_pressure",
+      "transition_pressure"
+    ],
+    "profile_version": "province-profile-v3",
+    "network_version": "province-network-v1",
+    "method_version": "province-persona-method-v1",
+    "data_quality": "proxy",
+    "public_summary": "本次实验决策画像为区域协同型，兼顾执行攻坚型，用于约束地方策略选择。"
+  },
+  {
+    "schema_version": "province-persona-v1",
+    "province_code": "44",
+    "axes": {
+      "execution_drive": 1.0,
+      "fiscal_prudence": 0.0,
+      "sme_inclusiveness": 0.1,
+      "technology_ambition": 1.0,
+      "green_priority": 0.1,
+      "cooperation_orientation": 0.7667
+    },
+    "primary_type": "technology_leap",
+    "secondary_type": "execution_driven",
+    "priority_goals": [
+      "digital_upgrade",
+      "equipment_renewal"
+    ],
+    "key_constraints": [
+      "employment_pressure",
+      "transition_pressure"
+    ],
+    "profile_version": "province-profile-v3",
+    "network_version": "province-network-v1",
+    "method_version": "province-persona-method-v1",
+    "data_quality": "proxy",
+    "public_summary": "本次实验决策画像为技术跃迁型，兼顾执行攻坚型，用于约束地方策略选择。"
+  },
+  {
+    "schema_version": "province-persona-v1",
+    "province_code": "45",
+    "axes": {
+      "execution_drive": 0.3,
+      "fiscal_prudence": 0.6667,
+      "sme_inclusiveness": 0.8667,
+      "technology_ambition": 0.3333,
+      "green_priority": 0.5333,
+      "cooperation_orientation": 0.6333
+    },
+    "primary_type": "inclusive_diffusion",
+    "secondary_type": null,
+    "priority_goals": [
+      "sme_financing_access"
+    ],
+    "key_constraints": [
+      "employment_pressure",
+      "fiscal_gap"
+    ],
+    "profile_version": "province-profile-v3",
+    "network_version": "province-network-v1",
+    "method_version": "province-persona-method-v1",
+    "data_quality": "proxy",
+    "public_summary": "本次实验决策画像为普惠扩散型，用于约束地方策略选择。"
+  },
+  {
+    "schema_version": "province-persona-v1",
+    "province_code": "46",
+    "axes": {
+      "execution_drive": 0.1333,
+      "fiscal_prudence": 0.5,
+      "sme_inclusiveness": 0.6,
+      "technology_ambition": 0.1667,
+      "green_priority": 0.3667,
+      "cooperation_orientation": 0.4667
+    },
+    "primary_type": "inclusive_diffusion",
+    "secondary_type": "fiscally_prudent",
+    "priority_goals": [
+      "sme_financing_access",
+      "fiscal_sustainability"
+    ],
+    "key_constraints": [
+      "fiscal_gap",
+      "employment_pressure"
+    ],
+    "profile_version": "province-profile-v3",
+    "network_version": "province-network-v1",
+    "method_version": "province-persona-method-v1",
+    "data_quality": "proxy",
+    "public_summary": "本次实验决策画像为普惠扩散型，兼顾财政审慎型，用于约束地方策略选择。"
+  },
+  {
+    "schema_version": "province-persona-v1",
+    "province_code": "50",
+    "axes": {
+      "execution_drive": 0.6333,
+      "fiscal_prudence": 0.3833,
+      "sme_inclusiveness": 0.5667,
+      "technology_ambition": 0.6667,
+      "green_priority": 0.2667,
+      "cooperation_orientation": 0.8
+    },
+    "primary_type": "regional_collaboration",
+    "secondary_type": null,
+    "priority_goals": [
+      "cross_regional_coordination"
+    ],
+    "key_constraints": [
+      "employment_pressure",
+      "transition_pressure"
+    ],
+    "profile_version": "province-profile-v3",
+    "network_version": "province-network-v1",
+    "method_version": "province-persona-method-v1",
+    "data_quality": "proxy",
+    "public_summary": "本次实验决策画像为区域协同型，用于约束地方策略选择。"
+  },
+  {
+    "schema_version": "province-persona-v1",
+    "province_code": "51",
+    "axes": {
+      "execution_drive": 0.7667,
+      "fiscal_prudence": 0.3,
+      "sme_inclusiveness": 0.3333,
+      "technology_ambition": 0.7667,
+      "green_priority": 0.5,
+      "cooperation_orientation": 0.9333
+    },
+    "primary_type": "regional_collaboration",
+    "secondary_type": null,
+    "priority_goals": [
+      "cross_regional_coordination"
+    ],
+    "key_constraints": [
+      "employment_pressure",
+      "transition_pressure"
+    ],
+    "profile_version": "province-profile-v3",
+    "network_version": "province-network-v1",
+    "method_version": "province-persona-method-v1",
+    "data_quality": "proxy",
+    "public_summary": "本次实验决策画像为区域协同型，用于约束地方策略选择。"
+  },
+  {
+    "schema_version": "province-persona-v1",
+    "province_code": "52",
+    "axes": {
+      "execution_drive": 0.2,
+      "fiscal_prudence": 0.8667,
+      "sme_inclusiveness": 0.6333,
+      "technology_ambition": 0.3,
+      "green_priority": 0.7,
+      "cooperation_orientation": 0.7333
+    },
+    "primary_type": "fiscally_prudent",
+    "secondary_type": null,
+    "priority_goals": [
+      "fiscal_sustainability"
+    ],
+    "key_constraints": [
+      "fiscal_gap",
+      "transition_pressure"
+    ],
+    "profile_version": "province-profile-v3",
+    "network_version": "province-network-v1",
+    "method_version": "province-persona-method-v1",
+    "data_quality": "proxy",
+    "public_summary": "本次实验决策画像为财政审慎型，用于约束地方策略选择。"
+  },
+  {
+    "schema_version": "province-persona-v1",
+    "province_code": "53",
+    "axes": {
+      "execution_drive": 0.2333,
+      "fiscal_prudence": 0.8,
+      "sme_inclusiveness": 0.7667,
+      "technology_ambition": 0.2333,
+      "green_priority": 0.7333,
+      "cooperation_orientation": 0.4333
+    },
+    "primary_type": "fiscally_prudent",
+    "secondary_type": "inclusive_diffusion",
+    "priority_goals": [
+      "fiscal_sustainability",
+      "sme_financing_access"
+    ],
+    "key_constraints": [
+      "fiscal_gap",
+      "transition_pressure"
+    ],
+    "profile_version": "province-profile-v3",
+    "network_version": "province-network-v1",
+    "method_version": "province-persona-method-v1",
+    "data_quality": "proxy",
+    "public_summary": "本次实验决策画像为财政审慎型，兼顾普惠扩散型，用于约束地方策略选择。"
+  },
+  {
+    "schema_version": "province-persona-v1",
+    "province_code": "54",
+    "axes": {
+      "execution_drive": 0.0,
+      "fiscal_prudence": 1.0,
+      "sme_inclusiveness": 0.8333,
+      "technology_ambition": 0.0,
+      "green_priority": 0.8,
+      "cooperation_orientation": 0.1333
+    },
+    "primary_type": "fiscally_prudent",
+    "secondary_type": null,
+    "priority_goals": [
+      "fiscal_sustainability"
+    ],
+    "key_constraints": [
+      "fiscal_gap",
+      "industrial_concentration"
+    ],
+    "profile_version": "province-profile-v3",
+    "network_version": "province-network-v1",
+    "method_version": "province-persona-method-v1",
+    "data_quality": "demo",
+    "public_summary": "本次实验决策画像为财政审慎型，用于约束地方策略选择。"
+  },
+  {
+    "schema_version": "province-persona-v1",
+    "province_code": "61",
+    "axes": {
+      "execution_drive": 0.4667,
+      "fiscal_prudence": 0.5333,
+      "sme_inclusiveness": 0.5333,
+      "technology_ambition": 0.6,
+      "green_priority": 0.6,
+      "cooperation_orientation": 0.5667
+    },
+    "primary_type": "green_transition",
+    "secondary_type": "technology_leap",
+    "priority_goals": [
+      "green_equipment_renewal",
+      "digital_upgrade"
+    ],
+    "key_constraints": [
+      "transition_pressure",
+      "employment_pressure"
+    ],
+    "profile_version": "province-profile-v3",
+    "network_version": "province-network-v1",
+    "method_version": "province-persona-method-v1",
+    "data_quality": "proxy",
+    "public_summary": "本次实验决策画像为绿色转型型，兼顾技术跃迁型，用于约束地方策略选择。"
+  },
+  {
+    "schema_version": "province-persona-v1",
+    "province_code": "62",
+    "axes": {
+      "execution_drive": 0.1,
+      "fiscal_prudence": 0.9,
+      "sme_inclusiveness": 1.0,
+      "technology_ambition": 0.1333,
+      "green_priority": 0.8667,
+      "cooperation_orientation": 0.2
+    },
+    "primary_type": "inclusive_diffusion",
+    "secondary_type": "fiscally_prudent",
+    "priority_goals": [
+      "sme_financing_access",
+      "fiscal_sustainability"
+    ],
+    "key_constraints": [
+      "fiscal_gap",
+      "transition_pressure"
+    ],
+    "profile_version": "province-profile-v3",
+    "network_version": "province-network-v1",
+    "method_version": "province-persona-method-v1",
+    "data_quality": "proxy",
+    "public_summary": "本次实验决策画像为普惠扩散型，兼顾财政审慎型，用于约束地方策略选择。"
+  },
+  {
+    "schema_version": "province-persona-v1",
+    "province_code": "63",
+    "axes": {
+      "execution_drive": 0.0333,
+      "fiscal_prudence": 0.9667,
+      "sme_inclusiveness": 0.8,
+      "technology_ambition": 0.0333,
+      "green_priority": 0.8333,
+      "cooperation_orientation": 0.3
+    },
+    "primary_type": "fiscally_prudent",
+    "secondary_type": null,
+    "priority_goals": [
+      "fiscal_sustainability"
+    ],
+    "key_constraints": [
+      "fiscal_gap",
+      "industrial_concentration"
+    ],
+    "profile_version": "province-profile-v3",
+    "network_version": "province-network-v1",
+    "method_version": "province-persona-method-v1",
+    "data_quality": "demo",
+    "public_summary": "本次实验决策画像为财政审慎型，用于约束地方策略选择。"
+  },
+  {
+    "schema_version": "province-persona-v1",
+    "province_code": "64",
+    "axes": {
+      "execution_drive": 0.0667,
+      "fiscal_prudence": 0.9333,
+      "sme_inclusiveness": 0.9,
+      "technology_ambition": 0.0667,
+      "green_priority": 0.9,
+      "cooperation_orientation": 0.2667
+    },
+    "primary_type": "fiscally_prudent",
+    "secondary_type": "green_transition",
+    "priority_goals": [
+      "fiscal_sustainability",
+      "green_equipment_renewal"
+    ],
+    "key_constraints": [
+      "fiscal_gap",
+      "transition_pressure"
+    ],
+    "profile_version": "province-profile-v3",
+    "network_version": "province-network-v1",
+    "method_version": "province-persona-method-v1",
+    "data_quality": "demo",
+    "public_summary": "本次实验决策画像为财政审慎型，兼顾绿色转型型，用于约束地方策略选择。"
+  },
+  {
+    "schema_version": "province-persona-v1",
+    "province_code": "65",
+    "axes": {
+      "execution_drive": 0.1667,
+      "fiscal_prudence": 0.7333,
+      "sme_inclusiveness": 0.3667,
+      "technology_ambition": 0.1,
+      "green_priority": 0.9333,
+      "cooperation_orientation": 0.0333
+    },
+    "primary_type": "green_transition",
+    "secondary_type": null,
+    "priority_goals": [
+      "green_equipment_renewal"
+    ],
+    "key_constraints": [
+      "transition_pressure",
+      "industrial_concentration"
+    ],
+    "profile_version": "province-profile-v3",
+    "network_version": "province-network-v1",
+    "method_version": "province-persona-method-v1",
+    "data_quality": "proxy",
+    "public_summary": "本次实验决策画像为绿色转型型，用于约束地方策略选择。"
+  }
+]

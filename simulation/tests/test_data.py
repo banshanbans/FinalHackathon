@@ -2,9 +2,11 @@ from collections import Counter, defaultdict
 
 from simulation.data import (
     build_enterprise_profiles,
+    build_province_personas,
     load_enterprise_archetypes,
     load_network,
     load_profiles,
+    load_province_personas,
 )
 from simulation.models.common import DataQuality, EnterpriseArchetype
 
@@ -37,3 +39,18 @@ def test_enterprise_weights_and_provenance_categories() -> None:
     assert {
         code for code, profile in provinces.items() if profile.data_quality == DataQuality.VERIFIED
     } == {"14", "33", "44"}
+
+
+def test_province_personas_are_deterministic_and_match_demo_fixtures() -> None:
+    profiles = load_profiles()
+    network = load_network()
+    personas = load_province_personas()
+    assert personas == build_province_personas(profiles, network)
+    assert len(personas) == 31
+    assert personas["41"].primary_type.value == "inclusive_diffusion"
+    assert personas["44"].primary_type.value == "technology_leap"
+    assert personas["14"].primary_type.value == "green_transition"
+    assert all(
+        item.data_quality in {DataQuality.PROXY, DataQuality.DEMO} for item in personas.values()
+    )
+    assert all(len(item.key_constraints) == 2 for item in personas.values())
