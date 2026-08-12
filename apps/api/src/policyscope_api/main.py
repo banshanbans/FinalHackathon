@@ -22,6 +22,8 @@ from policyscope_api.schemas import (
 from policyscope_api.settings import Settings, get_settings
 from simulation.adapters.asyncio_adapter import AsyncioSimulationAdapter
 from simulation.data import load_enterprise_archetypes
+from simulation.models.audit import AuditRecordType
+from simulation.models.common import Phase
 from simulation.models.experiment import ExperimentConfig
 from simulation.services.persona import AXIS_TYPES, TYPE_GOALS, TYPE_LABELS
 
@@ -439,6 +441,48 @@ def create_app(
     ) -> dict[str, object]:
         try:
             return await simulation.get_evidence(experiment_id, evidence_id)
+        except Exception as error:
+            raise _http_error(error) from error
+
+    @application.get("/api/experiments/{experiment_id}/audit")
+    async def audit_records(
+        experiment_id: str,
+        branch_id: str | None = Query(default=None),
+        phase: Phase | None = Query(default=None),
+        actor_kind: str | None = Query(default=None),
+        actor_id: str | None = Query(default=None),
+        record_type: AuditRecordType | None = Query(default=None),
+        status: str | None = Query(default=None),
+        outcome: str | None = Query(default=None),
+        after_sequence: int = Query(default=0, ge=0),
+        limit: int = Query(default=100, ge=1, le=500),
+        simulation: AsyncioSimulationAdapter = Depends(get_adapter),
+    ) -> dict[str, object]:
+        try:
+            result = await simulation.get_audit(
+                experiment_id,
+                branch_id=branch_id,
+                phase=phase,
+                actor_kind=actor_kind,
+                actor_id=actor_id,
+                record_type=record_type,
+                outcome=status or outcome,
+                after_sequence=after_sequence,
+                limit=limit,
+            )
+            return result.model_dump(mode="json")
+        except Exception as error:
+            raise _http_error(error) from error
+
+    @application.get("/api/experiments/{experiment_id}/audit/{record_id}")
+    async def audit_record(
+        experiment_id: str,
+        record_id: str,
+        simulation: AsyncioSimulationAdapter = Depends(get_adapter),
+    ) -> dict[str, object]:
+        try:
+            result = await simulation.get_audit_record(experiment_id, record_id)
+            return result.model_dump(mode="json")
         except Exception as error:
             raise _http_error(error) from error
 

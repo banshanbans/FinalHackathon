@@ -43,6 +43,7 @@ export function ProvinceMap({
   selectedCode,
   onSelect,
   compact = false,
+  height,
   metricLabel = "企业参与指数",
   emptyMessage,
 }: {
@@ -51,6 +52,7 @@ export function ProvinceMap({
   selectedCode?: string;
   onSelect?: (provinceCode: string) => void;
   compact?: boolean;
+  height?: number;
   metricLabel?: string;
   emptyMessage?: string;
 }) {
@@ -72,16 +74,21 @@ export function ProvinceMap({
   const hasValues = Object.keys(values).length > 0;
   const data = useMemo(
     () => [
-      ...profiles.map((profile) => ({
-        name: profile.short_name,
-        value: values[profile.province_code] ?? 0,
-        itemStyle: {
-          areaColor: metricColor(values[profile.province_code] ?? 0),
-          color: metricColor(values[profile.province_code] ?? 0),
-          borderColor: "#ffffff",
-          borderWidth: 0.8,
-        },
-      })),
+      ...profiles.map((profile) => {
+        const value = values[profile.province_code];
+        const missing = value === undefined;
+        return {
+          name: profile.short_name,
+          value: missing ? "-" : value,
+          missing,
+          itemStyle: {
+            areaColor: missing ? "#edf0f5" : metricColor(value),
+            color: missing ? "#edf0f5" : metricColor(value),
+            borderColor: "#ffffff",
+            borderWidth: 0.8,
+          },
+        };
+      }),
       ...["台湾", "香港", "澳门", "南海诸岛"].map((name) => ({
         name,
         value: 0,
@@ -100,9 +107,10 @@ export function ProvinceMap({
         borderColor: "#dfe3ef",
         backgroundColor: "rgba(255,255,255,.98)",
         textStyle: { color: "#172033", fontFamily: "Inter, Noto Sans SC" },
-        formatter: (params: { name: string; value?: number }) => {
+        formatter: (params: { name: string; value?: number | string; data?: { missing?: boolean } }) => {
           if (EXCLUDED_NAMES.has(params.name)) return `${params.name}<br/>不进入本次 31 省计算`;
           if (!hasValues) return `<strong>${params.name}</strong><br/>等待省级决策`;
+          if (params.data?.missing) return `<strong>${params.name}</strong><br/>暂无当前指标值`;
           return `<strong>${params.name}</strong><br/>${metricLabel} ${Number(params.value ?? 0).toFixed(1)} / 100`;
         },
       },
@@ -169,7 +177,7 @@ export function ProvinceMap({
         option={option}
         notMerge
         opts={{ renderer: "svg" }}
-        style={{ height: compact ? 250 : 410, width: "100%" }}
+        style={{ height: height ?? (compact ? 250 : 410), width: "100%" }}
         onEvents={{
           click: (params: { name: string }) => {
             const profile = byName.get(params.name);

@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 from simulation.data import NetworkEdge
 from simulation.llm.base import LLMProvider
+from simulation.llm.trace import set_cache_trace, set_provider_fallback
 from simulation.models.action import ProvinceAction
 from simulation.models.central import (
     CentralInterventionProposal,
@@ -58,9 +59,11 @@ class CachedLLMProvider:
         model_type: type[ModelT],
         generate: Callable[[], Awaitable[ModelT]],
     ) -> ModelT:
-        path = self.cache_dir / f"{self._key(kind, payload)}.json"
+        cache_key = self._key(kind, payload)
+        path = self.cache_dir / f"{cache_key}.json"
         self.accessed_cache_files.add(path)
         if path.exists():
+            set_cache_trace(cache_key_hash=cache_key.rsplit("_", 1)[-1], hit=True)
             cached = model_type.model_validate_json(path.read_text(encoding="utf-8"))
             if isinstance(cached, (ProvinceAction, ProvinceFeedback)):
                 cached = cached.model_copy(update={"run_mode": "cache", "fallback_used": False})
@@ -73,6 +76,8 @@ class CachedLLMProvider:
                     }
                 )
             return cached
+        set_cache_trace(cache_key_hash=cache_key.rsplit("_", 1)[-1], hit=False)
+        set_provider_fallback("cache_miss")
         result = await generate()
         if isinstance(result, (ProvinceAction, ProvinceFeedback)):
             result = result.model_copy(update={"run_mode": "fallback", "fallback_used": True})
@@ -280,8 +285,11 @@ class CachedLLMProvider:
         path = self.cache_dir / f"{key}.json"
         self.accessed_cache_files.add(path)
         if path.exists():
+            set_cache_trace(cache_key_hash=key.rsplit("_", 1)[-1], hit=True)
             raw = json.loads(path.read_text(encoding="utf-8"))
             return [CentralInterventionProposal.model_validate(item) for item in raw]
+        set_cache_trace(cache_key_hash=key.rsplit("_", 1)[-1], hit=False)
+        set_provider_fallback("cache_miss")
         result = await self.fallback.generate_intervention_proposals(
             policy=policy,
             metrics=metrics,

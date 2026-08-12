@@ -1,6 +1,8 @@
 import asyncio
+import hashlib
 import json
 from collections.abc import Awaitable, Callable
+from time import perf_counter
 from typing import TypeVar
 
 from openai import AsyncOpenAI
@@ -8,7 +10,14 @@ from pydantic import BaseModel, ValidationError
 
 from simulation.data import NetworkEdge
 from simulation.llm.base import LLMProvider
+from simulation.llm.trace import (
+    add_provider_attempt,
+    set_provider_fallback,
+    set_provider_model,
+    set_provider_usage,
+)
 from simulation.models.action import ProvinceAction
+from simulation.models.audit import ProviderAttemptTrace, TokenUsageTrace
 from simulation.models.central import (
     CentralInterventionProposal,
     CentralPolicyDirective,
@@ -31,6 +40,7 @@ from simulation.models.province import (
     ProvinceState,
 )
 from simulation.models.world import ComparisonResult, NationalMetrics, WorldState
+from simulation.services.evidence import comparison_review_evidence_refs
 
 ModelT = TypeVar("ModelT", bound=BaseModel)
 
@@ -50,14 +60,20 @@ class LiveLLMProvider:
         central_model: str,
         province_model: str,
         fallback: LLMProvider,
+        enterprise_model: str | None = None,
         timeout_seconds: float = 12,
         max_concurrency: int = 16,
+        max_tokens: int = 4096,
+        thinking_enabled: bool = False,
     ):
         self.client = AsyncOpenAI(api_key=api_key, base_url=base_url, timeout=timeout_seconds)
         self.central_model = central_model
         self.province_model = province_model
+        self.enterprise_model = enterprise_model or province_model
         self.fallback = fallback
         self.semaphore = asyncio.Semaphore(max_concurrency)
+        self.max_tokens = max_tokens
+        self.thinking_enabled = thinking_enabled
 
     async def _structured(
         self,
@@ -105,6 +121,7 @@ class LiveLLMProvider:
                         ),
                     }
                 )
+            started = perf_counter()
             try:
                 async with self.semaphore:
                     response = await self.client.chat.completions.create(
@@ -112,13 +129,73 @@ class LiveLLMProvider:
                         messages=messages,
                         response_format={"type": "json_object"},
                         temperature=0.1,
+                        max_tokens=self.max_tokens,
+                        extra_body={
+                            "thinking": {"type": "enabled" if self.thinking_enabled else "disabled"}
+                        },
+                    )
+                set_provider_model(getattr(response, "model", None) or model)
+                usage = getattr(response, "usage", None)
+                if usage is not None:
+                    set_provider_usage(
+                        TokenUsageTrace(
+                            prompt_tokens=getattr(usage, "prompt_tokens", None),
+                            completion_tokens=getattr(usage, "completion_tokens", None),
+                            total_tokens=getattr(usage, "total_tokens", None),
+                        )
                     )
                 invalid_content = response.choices[0].message.content or "{}"
-                return response_type.model_validate_json(invalid_content)
-            except (ValidationError, json.JSONDecodeError, ValueError, RuntimeError) as error:
+                result = response_type.model_validate_json(invalid_content)
+                add_provider_attempt(
+                    ProviderAttemptTrace(
+                        attempt=attempt + 1,
+                        status="succeeded",
+                        latency_ms=round((perf_counter() - started) * 1000, 3),
+                    )
+                )
+                return result
+            except ValidationError as error:
                 invalid_error = str(error)
-            except Exception:
+                add_provider_attempt(
+                    ProviderAttemptTrace(
+                        attempt=attempt + 1,
+                        status="validation_error",
+                        latency_ms=round((perf_counter() - started) * 1000, 3),
+                        error_code="schema_validation_failed",
+                        validation_paths=[
+                            ".".join(str(item) for item in detail["loc"])
+                            for detail in error.errors()[:12]
+                        ],
+                        invalid_response_hash=hashlib.sha256(invalid_content.encode()).hexdigest(),
+                    )
+                )
+            except (json.JSONDecodeError, ValueError, RuntimeError) as error:
+                invalid_error = str(error)
+                add_provider_attempt(
+                    ProviderAttemptTrace(
+                        attempt=attempt + 1,
+                        status="validation_error",
+                        latency_ms=round((perf_counter() - started) * 1000, 3),
+                        error_code=type(error).__name__,
+                        invalid_response_hash=(
+                            hashlib.sha256(invalid_content.encode()).hexdigest()
+                            if invalid_content
+                            else None
+                        ),
+                    )
+                )
+            except Exception as error:
+                add_provider_attempt(
+                    ProviderAttemptTrace(
+                        attempt=attempt + 1,
+                        status="provider_error",
+                        latency_ms=round((perf_counter() - started) * 1000, 3),
+                        error_code=type(error).__name__,
+                    )
+                )
+                set_provider_fallback(type(error).__name__)
                 break
+        set_provider_fallback("schema_or_provider_failure_after_repair")
         return await fallback()
 
     async def generate_central_directive(
@@ -233,7 +310,7 @@ class LiveLLMProvider:
             )
 
         result = await self._structured(
-            model=self.province_model,
+            model=self.enterprise_model,
             instruction=(
                 "一次返回本省六类企业群体的独立行动。必须恰好六类；不得输出金额或最终指标。"
             ),
@@ -350,10 +427,23 @@ class LiveLLMProvider:
         return result.proposals[:3]
 
     async def generate_central_review(self, result: ComparisonResult | WorldState) -> CentralReview:
+        if isinstance(result, ComparisonResult):
+            payload: object = {
+                "comparison": result.model_dump(mode="json", exclude={"central_review"}),
+                "allowed_evidence_refs": comparison_review_evidence_refs(result),
+            }
+            instruction = (
+                "只引用comparison中的事实生成中央对照复盘，明确收益、代价与限制；"
+                "findings.evidence_refs中的每一项必须从allowed_evidence_refs原样选择，"
+                "不得使用JSON字段路径或自创引用。"
+            )
+        else:
+            payload = result.model_dump(mode="json", exclude={"central_review"})
+            instruction = "只引用输入JSON中的事实生成中央复盘，明确收益、代价与限制。"
         return await self._structured(
             model=self.central_model,
-            instruction="只引用输入JSON中的事实生成中央复盘，明确收益、代价与限制。",
-            payload=result.model_dump(mode="json", exclude={"central_review"}),
+            instruction=instruction,
+            payload=payload,
             response_type=CentralReview,
             fallback=lambda: self.fallback.generate_central_review(result),
         )

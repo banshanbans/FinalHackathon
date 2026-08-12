@@ -650,6 +650,8 @@ Provider 公开能力至少包含：
 
 默认比赛场景必须预生成完整缓存。不得把现场演示完全押在模型网络调用上。
 
+Live 开发模式默认使用 DeepSeek OpenAI 兼容接口：中央、省级和企业模型必须可分别配置，当前均为 `deepseek-v4-flash`；超时 60 秒，并发上限 8，最大输出 4096 tokens。结构化调用使用 JSON Object 输出并显式关闭 thinking。这一配置不改变比赛默认 Cache 与 Fake 测试策略。
+
 ---
 
 ## 11. 信息架构与核心页面
@@ -770,6 +772,9 @@ POST /api/experiments/{id}/branches
 POST /api/branches/{id}/run
 GET  /api/experiments/{id}/compare
 GET  /api/experiments/{id}/replay
+GET  /api/experiments/{id}/audit
+GET  /api/experiments/{id}/audit/{record_id}
+GET  /api/experiments/{id}/evidence/{evidence_id}
 GET  /api/meta/provinces
 GET  /api/meta/province-persona-types
 GET  /api/meta/enterprise-archetypes
@@ -816,13 +821,17 @@ province.feedback.completed
 
 事件 ID 单调、支持 `Last-Event-ID`、客户端去重。SSE 只通知事实，完整状态通过 WorldState 获取。
 
-### 12.3 Replay
+### 12.3 Replay 与审计记录
 
-- Append-only JSONL。
-- 保存中央、省级和企业结构化输出。
-- 保存校验、修复、fallback、环境贡献和版本。
-- 保存审批和分支谱系。
-- 不保存 API Key、模型长思维链和未授权材料。
+- `replay.jsonl` 保持现有 `SimulationEvent[]` 事实流，供 SSE 恢复、前端去重、趋势和事件面板使用。
+- `audit.jsonl` 为独立 append-only 记录，不取代 WorldState、Checkpoint 或 Replay。
+- `audit-record-v1` 包含单调 sequence、实验/分支/阶段、主体、父记录、前一记录哈希和当前 SHA-256 哈希。并发调用必须使用实验级写锁。
+- `agent-invocation-trace-v1` 记录规范化输入及哈希、实际角色模型、Prompt/Schema 版本、延迟、token usage、最多两次校验摘要、结构化输出及哈希、run mode、fallback 与输出对象 ID。
+- `mechanism-explanation-v1` 记录公式 ID/版本、来源对象、输入与系数、逐项贡献、原值、未裁剪值、裁剪调整、最终值和守恒残差。
+- `decision-gate-trace-v1` 记录两次人工审批、Checkpoint、Control/Treatment 派生、政策差异和分支隔离证明。
+- 完成/fallback 事件在 payload 中附带 `audit_record_id`。Evidence 解析器支持 `audit:`、`action:`、`mechanism:`、`metric:`、`checkpoint:` 和 `comparison:`；未知 ID 返回稳定 404。
+- 中央对照复盘必须在输入中获得可引用的 `comparison:` Evidence Ref 白名单。若结构合法但语义引用越界，当次复盘转为确定性 fallback，Compare 仍完成；审计只保存错误路径、无效输出哈希和 fallback 原因。
+- 全部字段递归脱敏 `api_key`、Authorization、token、secret 和 `reasoning_content`。校验失败只保存错误码、字段路径和无效响应哈希，不保存原始无效响应、API Key 或模型长思维链。
 
 ---
 
@@ -889,7 +898,7 @@ Profile 和 Top-K 网络在 T0 生成 `province-persona-v1`。公式、百分位
 - 首个 SSE 事件 2 秒内出现。
 - Cache 模式完整实验目标 20 秒内。
 - Live 模式目标 120 秒内；超过则允许显式 fallback。
-- 单次模型调用默认超时 12 秒。
+- 单次 Live 模型调用默认超时 60 秒。
 - 地图状态更新后 500ms 内完成渲染。
 
 ### 15.2 稳定性
@@ -905,6 +914,7 @@ Profile 和 Top-K 网络在 T0 生成 `province-persona-v1`。公式、百分位
 - 每个 Agent Action 可追溯到输入哈希、Prompt、模型和校验状态。
 - 每条中央建议和复盘可跳转到结构化证据。
 - 不展示模型长思维链，只展示原因码和短摘要。
+- 环境每次状态更新必须同时生成可反算的企业、省级和全国机制解释；守恒失败、NaN/Infinity 或越界时立即失败。
 
 ---
 

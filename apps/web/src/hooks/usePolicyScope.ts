@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 
 import { ApiError, policyScopeApi } from "../api/client";
@@ -30,6 +30,7 @@ export function usePolicyScope() {
   const [intervention, setIntervention] = useState<CentralIntervention | null>(null);
   const [comparison, setComparison] = useState<ComparisonResult | null>(null);
   const [events, setEvents] = useState<SimulationEvent[]>([]);
+  const [connectionState, setConnectionState] = useState<"idle" | "connected" | "reconnecting">("idle");
   const [busyLabel, setBusyLabel] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [hydrating, setHydrating] = useState(true);
@@ -60,6 +61,21 @@ export function usePolicyScope() {
     queryFn: policyScopeApi.health,
     staleTime: 30_000,
   });
+  const replayQuery = useQuery({
+    queryKey: ["experiment-replay-v3", routeExperimentId],
+    queryFn: () => policyScopeApi.replay(routeExperimentId!),
+    enabled: Boolean(routeExperimentId),
+    staleTime: Number.POSITIVE_INFINITY,
+  });
+  const mergedEvents = useMemo(() => {
+    const byId = new Map<string, SimulationEvent>();
+    const replayEvents = Array.isArray(replayQuery.data) ? replayQuery.data : [];
+    [...replayEvents, ...events].forEach((event) => byId.set(event.event_id, event));
+    return [...byId.values()].sort((left, right) => {
+      const timeDelta = Date.parse(left.timestamp) - Date.parse(right.timestamp);
+      return timeDelta === 0 ? left.event_id.localeCompare(right.event_id) : timeDelta;
+    });
+  }, [events, replayQuery.data]);
 
   useEffect(() => {
     if (!routeExperimentId) {
@@ -78,6 +94,8 @@ export function usePolicyScope() {
     setBranch(null);
     setIntervention(null);
     setComparison(null);
+    seenEvents.current.clear();
+    setEvents([]);
     policyScopeApi
       .getState(routeExperimentId)
       .then((next) => {
@@ -92,8 +110,14 @@ export function usePolicyScope() {
   }, [routeExperimentId, world?.experiment_id]);
 
   useEffect(() => {
-    if (!world?.experiment_id || world.status === "completed") return;
+    if (!world?.experiment_id || world.experiment_id !== routeExperimentId || world.status === "completed") {
+      setConnectionState("idle");
+      return;
+    }
     const source = new EventSource(policyScopeApi.streamUrl(world.experiment_id));
+    setConnectionState("reconnecting");
+    source.onopen = () => setConnectionState("connected");
+    source.onerror = () => setConnectionState("reconnecting");
     const onEvent = (message: MessageEvent<string>) => {
       const event = JSON.parse(message.data) as SimulationEvent;
       if (seenEvents.current.has(event.event_id)) return;
@@ -103,8 +127,11 @@ export function usePolicyScope() {
     SIMULATION_EVENT_TYPES.forEach((name) =>
       source.addEventListener(name, onEvent as EventListener),
     );
-    return () => source.close();
-  }, [world?.experiment_id, world?.status]);
+    return () => {
+      source.close();
+      setConnectionState("idle");
+    };
+  }, [routeExperimentId, world?.experiment_id, world?.status]);
 
   const execute = useCallback(async <T,>(label: string, task: () => Promise<T>) => {
     setBusyLabel(label);
@@ -255,6 +282,8 @@ export function usePolicyScope() {
     setError(null);
   };
 
+  const routedWorld = routeExperimentId && world?.experiment_id !== routeExperimentId ? null : world;
+
   return {
     profiles: profilesQuery.data ?? [],
     archetypes: archetypesQuery.data ?? [],
@@ -271,13 +300,15 @@ export function usePolicyScope() {
       ?? personaTypesQuery.error
       ?? defaultPolicyQuery.error,
     configuredRunMode: healthQuery.data?.run_mode ?? "cache",
-    world,
-    control,
-    treatment,
+    world: routedWorld,
+    control: routedWorld ? control : null,
+    treatment: routedWorld ? treatment : null,
     branch,
     intervention,
     comparison,
-    events,
+    events: mergedEvents,
+    connectionState,
+    replayLoading: replayQuery.isLoading,
     busyLabel,
     error,
     hydrating,

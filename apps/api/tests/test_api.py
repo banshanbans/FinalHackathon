@@ -63,6 +63,31 @@ def test_complete_v21_api_flow_and_idempotency(tmp_path) -> None:
         assert len(t3.json()["province_feedback"]) == 31
         assert len(t3.json()["enterprise_actions"]) == 186
         proposal = t3.json()["intervention_proposals"][0]
+        audit = client.get(
+            f"/api/experiments/{experiment_id}/audit",
+            params={"record_type": "agent_invocation", "limit": 5},
+        )
+        assert audit.status_code == 200
+        assert audit.json()["schema_version"] == "audit-list-v1"
+        assert len(audit.json()["records"]) == 5
+        assert (
+            client.get(
+                f"/api/experiments/{experiment_id}/audit",
+                params={"status": "succeeded", "limit": 5},
+            ).status_code
+            == 200
+        )
+        first_audit_id = audit.json()["records"][0]["record_id"]
+        audit_detail = client.get(f"/api/experiments/{experiment_id}/audit/{first_audit_id}")
+        assert audit_detail.status_code == 200
+        assert audit_detail.json()["record_hash"]
+        audit_evidence = client.get(
+            f"/api/experiments/{experiment_id}/evidence/audit:{first_audit_id}"
+        )
+        assert audit_evidence.status_code == 200
+        assert audit_evidence.json()["audit_chain_valid"] is True
+        missing_evidence = client.get(f"/api/experiments/{experiment_id}/evidence/action:not-found")
+        assert missing_evidence.status_code == 404
         province_detail = client.get(f"/api/experiments/{experiment_id}/provinces/41")
         assert province_detail.status_code == 200
         assert province_detail.json()["persona"]["primary_type"] == "inclusive_diffusion"

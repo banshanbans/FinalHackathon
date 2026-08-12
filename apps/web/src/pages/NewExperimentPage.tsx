@@ -69,7 +69,7 @@ export default function NewExperimentPage() {
   return (
     <div className="new-experiment-page page-stack">
       <header className="page-heading">
-        <div><span className="eyebrow">T0 · 中央政策配置</span><h1>配置制造业设备更新政策</h1><p>设定全国目标、政策工具与地方约束，审批后进入省企响应推演。</p></div>
+        <div><span className="eyebrow">T0 · 中央政策配置</span><h1>配置制造业设备更新政策</h1><p>设定全国目标、政策工具与地方约束，审批后进入 31 省政策决策与企业反馈。</p></div>
         <div className="page-heading-status"><span className="status-dot" /><strong>{statusLabel}</strong><small>{isApproved ? "审批状态已同步" : "人工审批控制"}</small></div>
       </header>
       <div className="creation-grid">
@@ -87,7 +87,7 @@ export default function NewExperimentPage() {
             <PolicyEditor onChange={setPolicy} policy={policy} readOnly={!isDraft} />
             <div className="constraints"><strong>硬约束</strong>{flow.world.directive.hard_constraints.map((item) => <span key={item}><Icon name="check_circle" />{HARD_CONSTRAINT_LABELS[item] ?? item}</span>)}</div>
             {isDraft && !policyIsValid(policy) && <div className="field-warning"><Icon name="warning" />政策工具组合与技术组合必须分别合计 100%。</div>}
-            <div className="approval-footer"><div><Icon name={isApproved ? "task_alt" : isRejected ? "cancel" : "verified_user"} /><span><strong>{isApproved ? "审批已完成" : isRejected ? "草案已退回" : "审批确认"}</strong><small>{isApproved ? "政策参数已锁定，可继续查看推演" : isRejected ? "请生成新的政策草案" : "提交当前完整政策参数"}</small></span></div>{!isRejected && <button className="approve-button" disabled={Boolean(flow.busyLabel) || (isDraft && !policyIsValid(policy))} onClick={() => void approve()} type="button">{isApproved ? "进入实时推演" : "批准并启动省企推演"}<Icon name="arrow_forward" /></button>}</div>
+            <div className="approval-footer"><div><Icon name={isApproved ? "task_alt" : isRejected ? "cancel" : "verified_user"} /><span><strong>{isApproved ? "审批已完成" : isRejected ? "草案已退回" : "审批确认"}</strong><small>{isApproved ? "政策参数已锁定，可继续查看推演" : isRejected ? "请生成新的政策草案" : "提交当前完整政策参数"}</small></span></div>{!isRejected && <button className="approve-button" disabled={Boolean(flow.busyLabel) || (isDraft && !policyIsValid(policy))} onClick={() => void approve()} type="button">{isApproved ? "进入全国推演" : "批准并进入全国推演"}<Icon name="arrow_forward" /></button>}</div>
           </>}
         </section>
       </div>

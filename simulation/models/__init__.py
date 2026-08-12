@@ -111,3 +111,18 @@ __all__ = [
     "UpgradeType",
     "WorldState",
 ]
+from simulation.models.audit import (
+    AgentInvocationTrace,
+    AuditListResponse,
+    AuditRecord,
+    DecisionGateTrace,
+    MechanismExplanation,
+)
+
+__all__ = [
+    "AgentInvocationTrace",
+    "AuditListResponse",
+    "AuditRecord",
+    "DecisionGateTrace",
+    "MechanismExplanation",
+]

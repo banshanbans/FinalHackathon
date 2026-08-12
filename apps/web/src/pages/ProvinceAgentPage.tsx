@@ -5,6 +5,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { policyScopeApi } from "../api/client";
 import { DeepLinkDrawers } from "../components/DeepLinkDrawers";
 import { Icon } from "../components/Icon";
+import { usePolicyScopeContext } from "../context/PolicyScopeContext";
 import type { ProvinceAgentBranchSnapshot } from "../types";
 import {
   ARCHETYPE_LABELS,
@@ -85,6 +86,7 @@ function ActionSummary({ snapshot, provinceNames }: { snapshot: ProvinceAgentBra
 }
 
 export default function ProvinceAgentPage() {
+  const flow = usePolicyScopeContext();
   const { id, provinceCode } = useParams<{ id: string; provinceCode: string }>();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -92,7 +94,7 @@ export default function ProvinceAgentPage() {
   const detailQuery = useQuery({
     queryKey: ["province-agent-detail-v1", id, provinceCode],
     queryFn: () => policyScopeApi.getProvinceDetail(id!, provinceCode!),
-    enabled: Boolean(id && provinceCode),
+    enabled: Boolean(id && provinceCode && flow.world?.experiment_id === id && flow.world.directive.approval_status === "approved"),
   });
   const detail = detailQuery.data;
   const snapshot = detail?.branches[requestedBranch];
@@ -108,7 +110,8 @@ export default function ProvinceAgentPage() {
     setSearchParams(next);
   };
 
-  if (detailQuery.isLoading) return <div className="card page-empty empty-state"><span className="spinner" /><h2>正在加载省级 Agent 详情…</h2></div>;
+  if (flow.hydrating || detailQuery.isLoading) return <div className="card page-empty empty-state"><span className="spinner" /><h2>正在加载省级 Agent 详情…</h2></div>;
+  if (flow.world && flow.world.directive.approval_status !== "approved") return <div className="card page-empty empty-state"><Icon name="verified_user" /><h2>省级决策尚未启动</h2><p>请先完成中央政策审批。</p><button className="primary-button" onClick={() => navigate("/experiments/new")} type="button">返回政策审批</button></div>;
   if (detailQuery.error || !detail) return <div className="card page-empty empty-state"><Icon name="error" /><h2>省级 Agent 详情不可用</h2><p>{detailQuery.error instanceof Error ? detailQuery.error.message : "请确认省级代码与推演编号。"}</p><button className="primary-button" onClick={() => navigate(`/experiments/${id}/live`)} type="button">返回全国推演</button></div>;
 
   return <div className="province-agent-page page-stack">
@@ -155,7 +158,7 @@ export default function ProvinceAgentPage() {
       </section>
 
       <div className="province-bottom-grid">
-        <section className="card mechanism-card"><div className="card-heading"><div><span className="source-label environment">环境计算</span><h2>机制贡献汇总</h2></div><small>单位：指数点</small></div><div className="mechanism-list">{Object.entries(snapshot.mechanism_summary).map(([key, value]) => <div key={key}><span>{MECHANISM_LABELS[key] ?? key}</span><i className={value < 0 ? "negative" : "positive"}><b style={{ width: `${Math.min(100, Math.abs(value) * 8)}%` }} /></i><strong>{value > 0 ? "+" : ""}{value.toFixed(2)}</strong></div>)}</div></section>
+        <section className="card mechanism-card"><div className="card-heading"><div><span className="source-label environment">环境计算</span><h2>机制贡献汇总</h2></div><button className="text-button" onClick={() => openEvidence(`mechanism:${provinceCode}`)} type="button"><Icon name="functions" />查看公式与代入</button></div><div className="mechanism-list">{Object.entries(snapshot.mechanism_summary).map(([key, value]) => <div key={key}><span>{MECHANISM_LABELS[key] ?? key}</span><i className={value < 0 ? "negative" : "positive"}><b style={{ width: `${Math.min(100, Math.abs(value) * 8)}%` }} /></i><strong>{value > 0 ? "+" : ""}{value.toFixed(2)}</strong></div>)}</div></section>
         <section className="card neighbors-card"><div className="card-heading"><div><span className="source-label environment">省际网络</span><h2>Top-K 关联省份</h2></div></div><div className="neighbor-list">{detail.top_k_neighbors.map((neighbor) => <button key={neighbor.province_code} onClick={() => navigate(`/experiments/${id}/provinces/${neighbor.province_code}?branch=${requestedBranch}`)} type="button"><span>{neighbor.province_name}</span><strong>关联权重 {(neighbor.weight * 100).toFixed(0)}</strong><Icon name="arrow_forward" /></button>)}</div><div className="evidence-actions">{snapshot.evidence_refs.slice(0, 4).map((ref) => <button key={ref} onClick={() => openEvidence(ref)} type="button"><Icon name="fact_check" />{ref}</button>)}</div></section>
       </div>
     </>}

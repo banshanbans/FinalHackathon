@@ -313,9 +313,11 @@ React Web
 - SSE 支持 `Last-Event-ID`、客户端去重和断线恢复。
 - `event-v3` 中，省级事件至少包括 Persona 就绪、决策开始/完成/fallback、调整意向完成和策略迁移；企业事件继续包括批量决策开始、完成、fallback 和聚合更新。
 - SSE 只通知事实；完整状态由 WorldState 获取。
-- Replay 为 append-only JSONL，记录 Agent 结构化输出、校验、fallback、机制贡献、审批和版本。
-- Checkpoint 用于恢复和分支，Replay 用于审计；两者不能混同。
-- 不保存 API Key、访问令牌或模型长思维链。
+- Replay 为 append-only `SimulationEvent[]` JSONL 事实流，用于 SSE 恢复、前端去重、趋势和事件面板；不得改为详细审计 DTO。
+- 详细追溯单独写入 `audit.jsonl`，使用 `audit-record-v1`、`agent-invocation-trace-v1`、`mechanism-explanation-v1` 和 `decision-gate-trace-v1`，带单调序号、并发写锁和 SHA-256 前向哈希链。
+- Checkpoint 用于恢复和分支，Replay 用于事件恢复，Audit 用于行为与机制追溯；三者不能混同。
+- 完成/fallback SSE 事件必须携带 `audit_record_id`；Evidence 支持 `audit:`、`action:`、`mechanism:`、`metric:`、`checkpoint:` 和 `comparison:` 强类型深链，未知 ID 返回稳定 404。
+- 不保存 API Key、访问令牌、原始无效响应、`reasoning_content` 或模型长思维链；无效输出只记录错误码、字段路径和哈希。
 
 ---
 
@@ -337,7 +339,9 @@ React Web
 ### 12.1 正式实现方式
 
 - 品牌统一为“PolicyScope / 政策涟漪”。
-- 保持 Stitch 浅色“现代制度工作台”、12 栅格、Inter + Noto Sans SC、蓝/青/靛语义色。
+- 以“全国态势高密度工作台”为全站视觉母版，旧 Stitch 页面只保留业务语义参考。
+- 保持浅色“现代制度工作台”、12 栅格、Inter + Noto Sans SC、蓝/青/靛语义色；主色使用 `#5548E7`，页面背景使用 `#F7F8FB`。
+- 全局壳层使用 244px/216px 左侧栏和双层顶栏；不得添加未实现的场景库、政策库、指标库或 Agent 设置假导航。
 - 正式前端继续使用 React、React Router、API hooks、SSE 和本地资源。
 - 禁止 iframe 五个静态 HTML，禁止把 Stitch `code.html` 直接发布。
 - 禁止运行时依赖 Google Fonts、Material CDN、Tailwind CDN 或远程地图资源。
@@ -377,8 +381,8 @@ Control/Treatment 展示名使用“原始方案/干预方案”。预期方向�
 
 ### 12.5 画布与 Design QA
 
-- 1440 × 900 是主验收画布，核心入口必须首屏可达。
-- 1280 宽仍需可用；P0 不要求移动端。
+- 1536 × 1024 和 1440 × 900 都要形成完整驾驶舱，核心入口必须首屏可达。
+- 1280 宽允许纵向重排但不得横向滚动；P0 不要求移动端。
 - 交付前逐页、逐状态对五张源图与实现截图进行同画布视觉比较。
 - 结果记录到 `design-qa.md`，修完所有 P0/P1/P2 后 `final result` 必须为 `passed`。
 
@@ -429,7 +433,9 @@ Control/Treatment 展示名使用“原始方案/干预方案”。预期方向�
 
 - 正常响应、非法转换、未审批拒绝和稳定错误码。
 - 企业事件、Last-Event-ID、去重和断线恢复。
-- Replay、Checkpoint、版本和 fallback 完整性。
+- Replay、Audit 哈希链、Checkpoint、版本和 fallback 完整性。
+- 审计记录覆盖 T0–T5 主体、父子关系、脱敏、防篡改、人工审批、Checkpoint 和分支隔离。
+- 机制记录可反算企业四项指标、省级六类聚合/财政压力、全国六项指标、边界裁剪和贡献守恒。
 
 ### 前端 / E2E
 
@@ -527,4 +533,4 @@ V2.1 完成标准以 `DEVELOPMENT_PLAN.md` 的 V2.1 Definition of Done 为准，
 
 ## 18. 当前唯一下一步
 
-待用户恢复验证后执行 M12：运行全部门禁、两条 Playwright E2E、连续三次 Cache 流程及 1440×900/1280 截图对照。在此之前保持 `design-qa.md` 为 pending；比赛版地图上线决定不变。
+待用户恢复验证后执行 M12：运行全部门禁、两条 Playwright E2E、连续三次 Cache 流程及 1536×1024/1440×900/1280 高密度工作台截图对照。在此之前保持 `design-qa.md` 为 `pending redesign verification`；比赛版地图上线决定不变。

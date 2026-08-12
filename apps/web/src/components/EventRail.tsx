@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import { EVENT_LABELS } from "../events";
 import type { SimulationEvent } from "../types";
 import { branchLabel } from "../utils/display";
@@ -37,4 +39,3 @@ export function EventRail({ events }: { events: SimulationEvent[] }) {
     </aside>
   );
 }
-import { useState } from "react";

@@ -1,9 +1,13 @@
 import type {
+  AuditListResponse,
+  AuditRecord,
+  AuditRecordType,
   Branch,
   CentralIntervention,
   ComparisonResult,
   EnterpriseArchetypeDefinition,
   EvidenceRecord,
+  SimulationEvent,
   Policy,
   ProvinceAgentDetail,
   ProvincePersonaTypeDefinition,
@@ -150,8 +154,43 @@ export const policyScopeApi = {
       `/experiments/${experimentId}/evidence/${encodeURIComponent(evidenceId)}`,
     ),
 
+  audit: (
+    experimentId: string,
+    filters: {
+      branchId?: string;
+      phase?: string;
+      actorKind?: string;
+      actorId?: string;
+      recordType?: AuditRecordType;
+      status?: string;
+      outcome?: string;
+      afterSequence?: number;
+      limit?: number;
+    } = {},
+  ) => {
+    const query = new URLSearchParams();
+    if (filters.branchId) query.set("branch_id", filters.branchId);
+    if (filters.phase) query.set("phase", filters.phase);
+    if (filters.actorKind) query.set("actor_kind", filters.actorKind);
+    if (filters.actorId) query.set("actor_id", filters.actorId);
+    if (filters.recordType) query.set("record_type", filters.recordType);
+    if (filters.status) query.set("status", filters.status);
+    if (filters.outcome) query.set("outcome", filters.outcome);
+    if (filters.afterSequence !== undefined) {
+      query.set("after_sequence", String(filters.afterSequence));
+    }
+    if (filters.limit !== undefined) query.set("limit", String(filters.limit));
+    const suffix = query.size > 0 ? `?${query.toString()}` : "";
+    return request<AuditListResponse>(`/experiments/${experimentId}/audit${suffix}`);
+  },
+
+  auditRecord: (experimentId: string, recordId: string) =>
+    request<AuditRecord>(
+      `/experiments/${experimentId}/audit/${encodeURIComponent(recordId)}`,
+    ),
+
   replay: (experimentId: string) =>
-    request<Array<Record<string, unknown>>>(`/experiments/${experimentId}/replay`),
+    request<SimulationEvent[]>(`/experiments/${experimentId}/replay`),
 
   streamUrl: (experimentId: string) => `${API_ROOT}/experiments/${experimentId}/stream`,
 };

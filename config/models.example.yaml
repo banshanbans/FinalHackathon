@@ -1,8 +1,10 @@
-run_mode: fake
-base_url: https://api.openai.com/v1
-central_model: gpt-5-mini
-province_model: gpt-5-mini
-timeout_seconds: 12
-max_concurrency: 16
+run_mode: cache
+base_url: https://api.deepseek.com
+central_model: deepseek-v4-flash
+province_model: deepseek-v4-flash
+enterprise_model: deepseek-v4-flash
+timeout_seconds: 60
+max_concurrency: 8
+max_tokens: 4096
+thinking: disabled
 prompt_version: province-agent-v1
-

@@ -8,6 +8,7 @@ import "@fontsource-variable/inter";
 import "@fontsource-variable/noto-sans-sc";
 import "material-symbols/rounded.css";
 import "./styles.css";
+import "./workspace.css";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },

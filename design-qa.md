@@ -3,20 +3,23 @@
 ## V2.1 status
 
 > Contract: “省级 Agent 主决策、企业 Agent 作市场反馈”
-> Status: **implementation complete; verification paused**
-> V2.1 final result: **pending verification**
+> Status: **high-density redesign implemented; verification paused**
+> V2.1 final result: **pending redesign verification**
 
-V2.1 独立省级 Agent 详情路由以及 Live、Intervention 和 Compare 的省级优先信息层级已实现。按用户要求，Playwright E2E 与截图比较当前暂停；本文件后续的 V2 `passed` 只证明历史基线，不代表 V2.1 已通过。
+V2.1 独立省级 Agent 详情路由以及 Live、Intervention 和 Compare 的省级优先信息层级已实现；全站已进一步按 `policyscope-dashboard-reference` 全国态势原型重构为高密度制度工作台。按用户要求，自动化测试、Playwright E2E 与截图比较当前暂停；本文件后续的 V2 `passed` 只证明历史基线，不代表 V2.1 新版视觉已通过。
 
 V2.1 视觉门禁至少包括：
 
 - Live 默认地图为地方执行强度，省级决策事件优先。
+- 全局 244px/216px 壳层、双层顶栏、真实最近访问、五路由阶段门禁和生产级中文文案。
+- Live 四层驾驶舱：六指标、地图+政策、三组真实派生图表+关键事件、T0–T5 时间线。
+- Replay 趋势仅消费 `environment.updated`，SSE 增量按 `event_id` 去重；缺少节点时不插值。
 - 页面使用 `province-persona-v1`、`province-profile-v3`、`province-action-v3`、`province-feedback-v3`、`world-state-v3`、`comparison-v3` 和 `event-v3`，不以 V2 前端静态推导替代。
 - 五个正式路由覆盖中央政策、Live、省级详情、干预审批和 Compare；完整 A/B 预算仍为中央 3 次、省级约 124 次、企业约 93 次，Persona 不增加模型调用。
 - 河南、广东、山西的实验决策画像、目标约束和省际策略页面。
 - T3 先展示省级目标、支持请求与调整意向。
 - A/B 先展示省级策略迁移，再展示企业行为迁移。
-- 五路由在 1440 × 900 与 1280 宽的截图、可访问性、禁止文案和真实 API 状态检查。
+- 五路由在 1536 × 1024、1440 × 900 与 1280 宽的截图、可访问性、禁止文案和真实 API 状态检查。
 
 只有 V2.1 实现完成、P0/P1/P2 全部关闭后，才能把上述结果改为 `passed`。
 

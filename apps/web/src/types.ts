@@ -495,7 +495,106 @@ export interface EvidenceRecord {
   app_version?: string;
   seed?: number;
   parent_checkpoint_id?: string | null;
+  audit_chain_valid?: boolean;
+  audit_record?: AuditRecord;
+  audit_records?: AuditRecord[];
   [key: string]: unknown;
+}
+
+export type AuditRecordType =
+  | "agent_invocation"
+  | "mechanism_explanation"
+  | "decision_gate";
+
+export interface ProviderAttemptTrace {
+  attempt: number;
+  status: "succeeded" | "validation_error" | "provider_error";
+  latency_ms: number;
+  error_code: string | null;
+  validation_paths: string[];
+  invalid_response_hash: string | null;
+}
+
+export interface AgentInvocationTrace {
+  kind: "agent_invocation";
+  actor_kind: string;
+  actor_id: string;
+  operation: string;
+  run_mode: string;
+  model: string;
+  prompt_version: string;
+  response_schema: string;
+  input_hash: string;
+  input_snapshot: unknown;
+  attempts: ProviderAttemptTrace[];
+  usage: {
+    prompt_tokens: number | null;
+    completion_tokens: number | null;
+    total_tokens: number | null;
+  } | null;
+  latency_ms: number;
+  outcome: string;
+  output_ids: string[];
+  output_hash: string;
+  output_snapshot: unknown;
+  cache_key_hash: string | null;
+  fallback_reason: string | null;
+}
+
+export interface MechanismExplanationTrace {
+  kind: "mechanism_explanation";
+  explanation_id: string;
+  scope: "enterprise" | "province" | "national" | "comparison";
+  subject_id: string;
+  metric: string;
+  formula_id: string;
+  formula_version: string;
+  source_refs: string[];
+  terms: Array<{
+    name: string;
+    input_value: number;
+    coefficient: number;
+    contribution: number;
+    source_ref: string | null;
+  }>;
+  previous_value: number | null;
+  raw_value: number;
+  clamp_min: number;
+  clamp_max: number;
+  clamp_adjustment: number;
+  final_value: number;
+  residual: number;
+  unit: string;
+}
+
+export interface DecisionGateTrace {
+  kind: "decision_gate";
+  actor_kind: string;
+  actor_id: string;
+  operation: string;
+  outcome: string;
+  object_ids: string[];
+  details: Record<string, unknown>;
+}
+
+export interface AuditRecord {
+  schema_version: "audit-record-v1";
+  record_id: string;
+  sequence: number;
+  experiment_id: string;
+  branch_id: string;
+  phase: Phase;
+  timestamp: string;
+  parent_record_ids: string[];
+  previous_record_hash: string | null;
+  record_hash: string;
+  payload: AgentInvocationTrace | MechanismExplanationTrace | DecisionGateTrace;
+}
+
+export interface AuditListResponse {
+  schema_version: "audit-list-v1";
+  records: AuditRecord[];
+  next_sequence: number | null;
 }
 
 export interface SimulationEvent {

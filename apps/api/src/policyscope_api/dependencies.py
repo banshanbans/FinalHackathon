@@ -11,16 +11,19 @@ from simulation.models.common import RunMode
 def build_adapter(settings: Settings) -> AsyncioSimulationAdapter:
     fallback = FakeLLMProvider()
     if settings.run_mode == RunMode.LIVE:
-        if not settings.llm_api_key:
+        if not settings.llm_api_key.get_secret_value():
             raise RuntimeError("POLICYSCOPE_LLM_API_KEY is required in live mode")
         provider = LiveLLMProvider(
-            api_key=settings.llm_api_key,
+            api_key=settings.llm_api_key.get_secret_value(),
             base_url=settings.llm_base_url,
             central_model=settings.central_model,
             province_model=settings.province_model,
+            enterprise_model=settings.enterprise_model,
             fallback=fallback,
             timeout_seconds=settings.llm_timeout_seconds,
             max_concurrency=settings.llm_max_concurrency,
+            max_tokens=settings.llm_max_tokens,
+            thinking_enabled=settings.llm_thinking == "enabled",
         )
     elif settings.run_mode == RunMode.CACHE:
         provider = CachedLLMProvider(

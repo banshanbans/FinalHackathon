@@ -15,6 +15,7 @@ from simulation.models.world import (
     ProvinceStrategyTransition,
     WorldState,
 )
+from simulation.services.evidence import comparison_review_evidence_refs
 
 PROVINCE_STRATEGY_PATHS = (
     "primary_goal",
@@ -229,16 +230,7 @@ class ComparisonService:
 
     @staticmethod
     def validate_review(review: CentralReview, comparison: ComparisonResult) -> None:
-        allowed = {
-            f"comparison:national_metrics:{metric}" for metric in comparison.national_metrics
-        }
-        allowed.update(
-            f"comparison:province:{item.province_code}" for item in comparison.province_deltas
-        )
-        allowed.update(
-            f"comparison:province_strategy:{item.province_code}"
-            for item in comparison.province_strategy_transitions
-        )
+        allowed = set(comparison_review_evidence_refs(comparison))
         for finding in review.findings:
             invalid = [ref for ref in finding.evidence_refs if ref not in allowed]
             if invalid:

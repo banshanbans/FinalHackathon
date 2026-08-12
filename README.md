@@ -23,10 +23,10 @@ PolicyScope 是面向国务院层面政策统筹人员的“制造业设备更�
 
 ## 当前交付状态
 
-- 领域契约已统一升级为 `policy-v2`、`world-state-v2`、`comparison-v2` 和 `event-v2`。
+- 中央 Policy 和企业领域对象继续使用 V2；省级、WorldState、Comparison 和 Event 已升级为 V3，审计信封为 `audit-record-v1`。
 - 已提交六类企业原型、31 × 6 企业群体、数据 provenance 和 `equipment_renewal_v2.yaml` 机制配置。
-- T0–T5、审批/拒绝、同源 A/B、企业迁移、REST、SSE、Evidence、Replay、Cache/Fake/Live Provider 已接通。
-- React 前端已替换为四路由 Stitch 工作台和两个可深链抽屉；全部核心 CTA 使用真实 API。
+- T0–T5、审批/拒绝、同源 A/B、企业迁移、REST、SSE、Evidence、Replay、独立审计链与 Cache/Fake/Live Provider 已接通。
+- React 前端已升级为五路由高密度政策工作台和可深链证据抽屉；抽屉内含“行为链 / 机制链 / 版本与来源”三个页签，全部核心 CTA 使用真实 API。
 - 全国页与方案对照页共用本地 ECharts SVG 地图。资源源自自然资源部标准地图 GS(2016)1609，省域标注、来源、校验和转换过程见 [地图说明](./apps/web/src/assets/maps/README.md)。根据已确认的比赛发布规则，比赛版可直接上线该地图。
 - 默认演示模式为 `cache`，测试模式为 `fake`，`live` 是可选增强且不构成交付依赖。
 - V1 回滚点为 Git 提交 `12456a3`。
@@ -52,6 +52,8 @@ PolicyScope 是面向国务院层面政策统筹人员的“制造业设备更�
 
 V2.1 的领域、数据、Provider、T0–T5 编排、API/SSE 与五路由 React 前端已实现。默认 Cache 场景通过 `runtime/cache/default/v21_manifest.json` 锁定 220 个精选产物；历史 V2 缓存保留但不命中 V3 省级契约。最终 E2E、连续三次 Cache 和截图 Design QA 按用户要求暂停，因此 V2.1 尚未标记为最终验收通过。
 
+当前前端以“全国态势高密度工作台”为全站视觉母版：244px/216px 自适应左侧栏、双层顶栏、六指标条、真实 Replay 趋势和高密度卡片栅格已落地。旧 Stitch 页面继续用于页面语义参考，不作为全站视觉母版。
+
 ## 产品路由
 
 当前正式产品已实现：
@@ -62,7 +64,7 @@ V2.1 的领域、数据、Provider、T0–T5 编排、API/SSE 与五路由 React
 - `/experiments/:id/intervention`：省级证据 → 中央 Agent 建议 → 用户审批。
 - `/experiments/:id/compare`：地方执行双地图、省级策略迁移、企业行为迁移、机制归因与中央复盘。
 - `?province=41`：兼容入口，自动导航到正式省级路由并保留 `branch/evidence` 参数。
-- `?evidence=method`：数据质量、版本、seed、父检查点和证据记录。
+- `?evidence=method`：打开行为链、机制链、版本与来源。也支持 `audit:`、`action:`、`mechanism:`、`metric:`、`checkpoint:` 和 `comparison:` 深链。
 
 Stitch 的 `code.html` 只用于布局参考；正式产品是 React、真实 API、SSE 和本地资源实现，没有 iframe、假导航或运行时 CDN。
 
@@ -87,18 +89,31 @@ make dev-web
 
 ```text
 POLICYSCOPE_RUN_MODE=cache
-POLICYSCOPE_LLM_BASE_URL=...
+POLICYSCOPE_LLM_BASE_URL=https://api.deepseek.com
 POLICYSCOPE_LLM_API_KEY=...
-POLICYSCOPE_CENTRAL_MODEL=...
-POLICYSCOPE_PROVINCE_MODEL=...
-POLICYSCOPE_ENTERPRISE_MODEL=...
+POLICYSCOPE_CENTRAL_MODEL=deepseek-v4-flash
+POLICYSCOPE_PROVINCE_MODEL=deepseek-v4-flash
+POLICYSCOPE_ENTERPRISE_MODEL=deepseek-v4-flash
+POLICYSCOPE_LLM_TIMEOUT_SECONDS=60
+POLICYSCOPE_LLM_CONCURRENCY=8
+POLICYSCOPE_LLM_MAX_TOKENS=4096
+POLICYSCOPE_LLM_THINKING=disabled
 ```
 
 - `fake`：确定性测试 Provider，不访问网络。
 - `cache`：默认演示模式；读取精选结构化缓存，缺失时显式 fallback。
-- `live`：调用 OpenAI 兼容结构化模型；Schema 首次失败修复一次，再失败整省 fallback。
+- `live`：调用 DeepSeek OpenAI 兼容接口的 JSON Object 输出；中央、省级、企业可独立指定模型。Schema 首次失败修复一次，再失败整省 fallback。
 
-缓存键包含政策、企业/Profile、模型、Prompt、版本和 seed。完整 A/B 的模型调用预算为中央 3 次、省级约 124 次、企业约 93 次分省批量调用。
+本地 `.env` 已被 Git 忽略；`.env.example` 永远保留空密钥。Thinking 显式关闭，系统只保存结构化输入输出、校验摘要和用量，不保存 `reasoning_content`、长思维链或密钥。兼容约束参见 [DeepSeek 模型列表](https://api-docs.deepseek.com/api/list-models)、[JSON Output](https://api-docs.deepseek.com/guides/json_mode) 和 [Thinking Mode](https://api-docs.deepseek.com/guides/thinking_mode)。
+
+缓存键包含政策、企业/Profile、模型、Prompt、版本和 seed。完整 A/B 的模型调用预算为中央 3 次、省级约 124 次、企业约 93 次分省批量调用。比赛默认仍为 `cache`，测试仍为 `fake`。
+
+## 行为追溯与机制解释
+
+- `/replay` 只返回事实事件，供 SSE 合并、趋势和事件面板使用。
+- `audit.jsonl` 是独立的追加式审计流，使用单调序号和 SHA-256 前向哈希链；记录 Agent 调用、确定性机制公式与审批/分支门禁。
+- `GET /api/experiments/{id}/audit` 支持按分支、阶段、主体、类型、状态和游标过滤；`GET /api/experiments/{id}/audit/{record_id}` 返回完整记录。
+- 机制记录包含公式 ID/版本、输入、系数、逐项贡献、原值、未裁剪值、裁剪调整、最终值和守恒残差。
 
 ## 验证
 

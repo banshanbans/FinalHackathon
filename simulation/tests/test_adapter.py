@@ -20,6 +20,16 @@ class SlowEnterpriseProvider(FakeLLMProvider):
         return await super().generate_enterprise_actions_batch(**kwargs)
 
 
+class InvalidReviewEvidenceProvider(FakeLLMProvider):
+    async def generate_central_review(self, result):
+        review = await super().generate_central_review(result)
+        review.findings[0].evidence_refs = [
+            "national_metrics.sme_financing_accessibility_index",
+            "policy_diff",
+        ]
+        return review
+
+
 class CountingProvider(FakeLLMProvider):
     def __init__(self):
         self.central = 0
@@ -155,6 +165,39 @@ async def test_repeated_comparison_does_not_repeat_review_or_events(tmp_path) ->
     assert second == first
     assert provider.central == central_before == 3
     assert events_after == events_before
+
+
+@pytest.mark.asyncio
+async def test_invalid_review_evidence_falls_back_and_is_audited(tmp_path) -> None:
+    adapter = AsyncioSimulationAdapter(InvalidReviewEvidenceProvider(), runtime_dir=tmp_path)
+    comparison = await adapter.run_full_demo(ExperimentConfig(objective="验证复盘证据降级"))
+
+    assert comparison.central_review is not None
+    assert all(
+        ref.startswith("comparison:")
+        for finding in comparison.central_review.findings
+        for ref in finding.evidence_refs
+    )
+    records = (
+        await adapter.get_audit(
+            comparison.experiment_id,
+            actor_kind="central_agent",
+            actor_id="central",
+            outcome="fallback",
+            limit=20,
+        )
+    ).records
+    review_record = next(
+        item for item in records if item.payload.operation == "review_comparison"
+    )
+    assert review_record.payload.fallback_reason
+    assert review_record.payload.attempts[-1].error_code == (
+        "central_review_evidence_validation_failed"
+    )
+    assert review_record.payload.attempts[-1].invalid_response_hash
+    assert "national_metrics.sme_financing_accessibility_index" not in (
+        str(review_record.payload.output_snapshot)
+    )
 
 
 @pytest.mark.asyncio

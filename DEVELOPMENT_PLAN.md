@@ -130,9 +130,9 @@ Control/Treatment 共享父检查点、数据版本、机制版本、Prompt/模�
 
 中央、省级和企业批量 Action 均应预生成缓存。Fallback 必须可见并进入 Replay。
 
-### C-09 Stitch 是视觉基准，不是运行时
+### C-09 全国态势原型是视觉母版，Stitch 是语义参考
 
-正式前端在现有 React 工程中实现。不得 iframe 静态 HTML、依赖 Tailwind CDN 或用截图冒充地图和组件。
+正式前端在现有 React 工程中实现。不得 iframe 静态 HTML、依赖 Tailwind CDN 或用截图冒充地图和组件；不得复制原型的静态业务结果、假导航或伪操作。
 
 ### C-10 决策画像稳定且 T3 不修改政策
 
@@ -529,6 +529,9 @@ M0–M7 是已经完成的 V2 历史基线，继续保留以证明当前代码�
 | SIM-211 | 省级策略迁移与省级优先 Comparison | Complete | SIM-210 |
 | API-210 | V3 DTO、Persona 元数据与省级详情接口 | Complete | SIM-211 |
 | API-211 | Event v3、SSE 恢复、Replay 与 Evidence | Complete | API-210 |
+| AUDIT-210 | `audit-record-v1` 及 Agent/机制/门禁三类审计契约、独立 JSONL 哈希链 | Complete | API-211 |
+| AUDIT-211 | T0–T5 调用元数据、机制反算、审批/检查点/分支记录 | Complete | AUDIT-210 |
+| API-212 | 审计过滤分页、详情 API 与强类型 Evidence 深链 | Complete | AUDIT-211 |
 
 退出条件：省际目标只能来自 Top-K；独立推进无目标省；T3 不修改 Policy/Action/Checkpoint；T4 引用上一 Action；调用预算仍为中央 3、省级约 124、企业约 93。
 
@@ -541,6 +544,8 @@ M0–M7 是已经完成的 V2 历史基线，继续保留以证明当前代码�
 | WEB-212 | 旧 `?province=` 兼容导航与 Evidence 深链 | Complete | WEB-211 |
 | WEB-213 | Intervention 省级证据优先 | Complete | API-211 |
 | WEB-214 | Compare 省级策略迁移优先 | Complete | SIM-211, WEB-210 |
+| WEB-215 | 全站高密度壳层、Live 四层驾驶舱与 Replay 真实趋势 | Complete, verification paused | WEB-210–214 |
+| WEB-216 | 行为链/机制链/版本与来源三页签抽屉与事件深链 | Complete, targeted tests passed | AUDIT-211, API-212, WEB-215 |
 
 退出条件：五路由均受状态门禁保护；地图、行动流、审批和 A/B 先呈现省级策略；企业反馈保持 31×6 完整且位于第二层。
 
@@ -550,10 +555,14 @@ M0–M7 是已经完成的 V2 历史基线，继续保留以证明当前代码�
 |---|---|---|---|
 | QA-210 | 领域、Agent、分支、API/SSE 和数据门禁 | Paused | M10 |
 | QA-211 | 五路由 E2E、禁止文案与可访问性 | Paused | M11 |
-| QA-212 | 1440×900 / 1280 V2.1 Design QA | Pending | QA-211 |
+| QA-212 | 1536×1024 / 1440×900 / 1280 V2.1 Design QA | Pending redesign verification | QA-211 |
 | RELEASE-210 | Cache 三次全流程并冻结 V2.1 | Pending | QA-210, QA-212 |
 
-退出条件：`make test`、`make lint`、`make validate-data`、`make smoke` 全部通过；Cache 完整流程连续三次；`design-qa.md` 的 V2.1 结果由 `pending verification` 更新为 `passed`。
+退出条件：`make test`、`make lint`、`make validate-data`、`make smoke` 全部通过；Cache 完整流程连续三次；`design-qa.md` 的 V2.1 结果由 `pending redesign verification` 更新为 `passed`。
+
+追溯方案的定向验证已完成：Python 审计/环境/Adapter/Provider/API 定向用例、Ruff、Web 单测、ESLint 和生产构建通过；DeepSeek 已完成最小模型列表预检和一次关闭 thinking 的 JSON 结构化调用。这些结果不替代 M12 的全量门禁、两条 Playwright E2E、连续三次 Cache 或截图 QA；`design-qa.md` 继续保持 `pending redesign verification`。
+
+中央对照复盘已增加精确 Evidence Ref 白名单与语义校验 fallback：模型使用旧式 JSON 路径或越界引用时，不再中断 Compare，且会记录脱敏失败哈希和降级原因。
 
 ---
 
@@ -816,12 +825,12 @@ M0 先修复脚本导入路径，再把 V2 验证接入相同命令。不得为�
 | M8 V2.1 文档门禁 | Complete | 六份文档与公共契约已获用户批准 |
 | M9 V2.1 Schema/数据 | Complete | V3 领域、数据快照、Persona 与 provenance 已实现 |
 | M10 V2.1 Agent/API | Complete | 三 Provider、T0–T5、详情 API、SSE/Replay 与省级迁移已实现 |
-| M11 五路由前端 | Complete | URL 权威加载、省级详情、Live/Intervention/Compare 省级优先已实现 |
+| M11 五路由前端 | Complete, verification paused | URL 权威加载、高密度全局壳层、Live 四层驾驶舱与五路由省级优先体验已实现 |
 | M12 V2.1 QA/冻结 | Paused | 用户要求暂不运行测试；E2E、Cache 三次和 Design QA 待恢复 |
 
 ### 当前唯一下一任务
 
-待用户恢复验证后完成 M12：全量门禁、两条 E2E、连续三次 Cache 与 1440×900/1280 截图 QA。V2 比赛版和地图上线决定保持不变。
+待用户恢复验证后完成 M12：全量门禁、两条 E2E、连续三次 Cache 与 1536×1024/1440×900/1280 高密度工作台截图 QA。V2 比赛版和地图上线决定保持不变。
 
 ---
 

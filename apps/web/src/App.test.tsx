@@ -185,7 +185,27 @@ describe("PolicyScope V2.1 shell", () => {
     });
     vi.stubGlobal("fetch", vi.fn((request: RequestInfo | URL) => {
       const url = String(request);
-      const payload = url.includes("/experiments/exp-approved/provinces/41")
+      const payload = url.includes("/experiments/exp-approved/replay")
+        ? []
+        : url.includes("/experiments/exp-approved/audit")
+          ? { schema_version: "audit-list-v1", records: [], next_sequence: null }
+          : url.includes("/experiments/exp-approved/evidence/method")
+            ? {
+                evidence_id: "method",
+                experiment_id: "exp-approved",
+                kind: "method_and_versions",
+                quality: "proxy",
+                source: "PolicyScope 版本化模型、环境与哈希链审计记录",
+                data_version: "test-data",
+                mechanism_version: "test-mechanism",
+                prompt_version: "test-prompt",
+                model_version: "test-model",
+                app_version: "test-app",
+                seed: 20260812,
+                parent_checkpoint_id: "checkpoint-t3",
+                audit_chain_valid: true,
+              }
+            : url.includes("/experiments/exp-approved/provinces/41")
         ? provinceDetail
         : url.includes("/experiments/exp-approved/state")
           ? approvedWorld
@@ -202,7 +222,7 @@ describe("PolicyScope V2.1 shell", () => {
 
   it("shows production Chinese copy and the approval-first workflow", async () => {
     renderApp();
-    expect(await screen.findByText(/配置制造业设备更新政策/)).toBeInTheDocument();
+    expect((await screen.findAllByText(/配置制造业设备更新政策/)).length).toBeGreaterThan(0);
     expect(screen.getByText(/用于政策方案比较/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /生成结构化政策草案/ })).toBeInTheDocument();
     expect(screen.getByText(/人工审批控制/)).toBeInTheDocument();
@@ -219,7 +239,7 @@ describe("PolicyScope V2.1 shell", () => {
     localStorage.setItem("policyscope.recent-experiment.v3", "exp-other");
     renderApp("/experiments/exp-approved/live");
 
-    expect(await screen.findByText("31 省政策决策与企业反馈")).toBeInTheDocument();
+    expect(await screen.findByText("31 省政策响应态势")).toBeInTheDocument();
     expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/experiments/exp-approved/state"), expect.anything());
     expect(fetch).not.toHaveBeenCalledWith(expect.stringContaining("/experiments/exp-other/state"), expect.anything());
   });
@@ -230,6 +250,9 @@ describe("PolicyScope V2.1 shell", () => {
     expect(await screen.findByText("未创建干预方案")).toBeInTheDocument();
     expect(screen.getByText("河南省")).toBeInTheDocument();
     expect(screen.getByText("普惠扩散型")).toBeInTheDocument();
+    expect(await screen.findByRole("tab", { name: "行为链" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "机制链" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "版本与来源" })).toBeInTheDocument();
   });
 
   it("redirects the legacy province query to the province route", async () => {
