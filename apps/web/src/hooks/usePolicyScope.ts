@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { policyScopeApi } from "../api/client";
+import { ApiError, policyScopeApi } from "../api/client";
+import { SIMULATION_EVENT_TYPES } from "../events";
 import type {
   Branch,
   CentralIntervention,
@@ -64,36 +65,15 @@ export function usePolicyScope() {
   useEffect(() => {
     if (!world?.experiment_id || world.status === "completed") return;
     const source = new EventSource(policyScopeApi.streamUrl(world.experiment_id));
-    const eventTypes = [
-      "experiment.started",
-      "central.directive.completed",
-      "central.directive.approved",
-      "phase.started",
-      "agent.decision.started",
-      "agent.decision.completed",
-      "agent.decision.fallback",
-      "enterprise.batch.started",
-      "enterprise.batch.completed",
-      "enterprise.batch.fallback",
-      "enterprise.aggregate.updated",
-      "province.feedback.completed",
-      "environment.updated",
-      "world_state.updated",
-      "central.intervention.proposed",
-      "central.intervention.approved",
-      "central.intervention.rejected",
-      "checkpoint.created",
-      "branch.created",
-      "phase.completed",
-      "experiment.completed",
-    ];
     const onEvent = (message: MessageEvent<string>) => {
       const event = JSON.parse(message.data) as SimulationEvent;
       if (seenEvents.current.has(event.event_id)) return;
       seenEvents.current.add(event.event_id);
       setEvents((current) => [...current.slice(-99), event]);
     };
-    eventTypes.forEach((name) => source.addEventListener(name, onEvent as EventListener));
+    SIMULATION_EVENT_TYPES.forEach((name) =>
+      source.addEventListener(name, onEvent as EventListener),
+    );
     return () => source.close();
   }, [world?.experiment_id, world?.status]);
 
@@ -111,7 +91,7 @@ export function usePolicyScope() {
   }, []);
 
   const createDraft = (objective: string, runMode: RunMode) =>
-    execute("国务院 Agent 正在形成结构化政策草案…", async () => {
+    execute("中央研判智能体正在生成政策草案…", async () => {
       const next = await policyScopeApi.createExperiment(objective, runMode);
       localStorage.setItem(ACTIVE_EXPERIMENT_KEY, next.experiment_id);
       seenEvents.current.clear();
@@ -126,23 +106,38 @@ export function usePolicyScope() {
     });
 
   const approveDirective = (policy: Policy) =>
-    execute("正在确认中央政策指令…", async () => {
+    execute("正在提交中央政策审批…", async () => {
       if (!world) throw new Error("请先生成政策草案");
-      const next = await policyScopeApi.approveDirective(world.experiment_id, policy);
-      setWorld(next);
-      return next;
+      try {
+        const next = await policyScopeApi.approveDirective(world.experiment_id, policy);
+        setWorld(next);
+        return next;
+      } catch (reason) {
+        if (
+          reason instanceof ApiError
+          && (
+            reason.errorCode === "DIRECTIVE_NOT_AWAITING_APPROVAL"
+            || reason.message === "directive is not awaiting approval"
+          )
+        ) {
+          const current = await policyScopeApi.getState(world.experiment_id);
+          setWorld(current);
+          if (current.directive.approval_status === "approved") return current;
+        }
+        throw reason;
+      }
     });
 
   const runToT3 = () =>
-    execute("地方与企业 Agent 正在推演至 T3…", async () => {
-      if (!world) throw new Error("请先创建实验");
+    execute("省级与企业智能体正在推演至 T3…", async () => {
+      if (!world) throw new Error("请先新建推演");
       const next = await policyScopeApi.runExperiment(world.experiment_id, "T3");
       setWorld(next);
       return next;
     });
 
   const approveProposal = (proposalId: string, policy: Policy) =>
-    execute("正在批准建议并创建干预方案…", async () => {
+    execute("正在批准政策调整并创建干预方案…", async () => {
       if (!world) throw new Error("请先运行到 T3");
       const approved = await policyScopeApi.approveIntervention(
         world.experiment_id,
@@ -174,7 +169,7 @@ export function usePolicyScope() {
     });
 
   const runComparison = () =>
-    execute("原始方案与干预方案正在同源演化至 T5…", async () => {
+    execute("原始方案与干预方案正在运行至 T5…", async () => {
       if (!world || !branch) throw new Error("请先批准建议并创建分支");
       const controlState = await policyScopeApi.runExperiment(
         world.experiment_id,
@@ -191,8 +186,8 @@ export function usePolicyScope() {
     });
 
   const runSingleBranch = () =>
-    execute("原始方案正在继续演化至 T5…", async () => {
-      if (!world) throw new Error("请先创建实验");
+    execute("原始方案正在运行至 T5…", async () => {
+      if (!world) throw new Error("请先新建推演");
       const next = await policyScopeApi.runExperiment(world.experiment_id, "T5", "control");
       setControl(next);
       setWorld(next);
@@ -200,13 +195,13 @@ export function usePolicyScope() {
     });
 
   const loadEvidence = useCallback((evidenceId: string) => {
-    if (!world) throw new Error("尚未创建实验");
+    if (!world) throw new Error("尚未新建推演");
     return policyScopeApi.evidence(world.experiment_id, evidenceId);
   }, [world]);
 
   const loadComparison = useCallback(() =>
-    execute("正在读取同源对照结果…", async () => {
-      if (!world) throw new Error("尚未创建实验");
+    execute("正在加载双方案对照结果…", async () => {
+      if (!world) throw new Error("尚未新建推演");
       const result = await policyScopeApi.compare(world.experiment_id);
       const [controlState, treatmentState] = await Promise.all([
         policyScopeApi.getState(world.experiment_id, result.control_branch_id),

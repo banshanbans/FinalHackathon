@@ -35,6 +35,56 @@ const policy = {
   technology_mix: { digital: 0.4, green: 0.3, general: 0.3 },
   mechanism_version: "equipment-renewal-env-v2",
 };
+const approvedWorld = {
+  schema_version: "world-state-v2",
+  experiment_id: "exp-approved",
+  branch_id: "control",
+  parent_checkpoint_id: "checkpoint-t3",
+  phase: "T5",
+  status: "completed",
+  run_mode: "cache",
+  policy,
+  directive: {
+    directive_id: "directive-approved",
+    policy,
+    policy_objectives: ["equipment_renewal"],
+    hard_constraints: ["human_approval_required"],
+    public_summary: "中央政策已完成审批。",
+    requires_human_approval: true,
+    approval_status: "approved",
+  },
+  national_metrics: {
+    schema_version: "national-metrics-v2",
+    enterprise_participation_index: 50,
+    equipment_renewal_willingness_index: 50,
+    sme_financing_accessibility_index: 50,
+    industrial_upgrade_index: 50,
+    local_fiscal_pressure_index: 50,
+    regional_gap_index: 50,
+  },
+  province_profiles: {},
+  province_states: {},
+  province_actions: {},
+  province_feedback: {},
+  enterprise_profiles: {},
+  enterprise_states: {},
+  enterprise_actions: {},
+  enterprise_aggregates: {},
+  contributions: {},
+  fallback_provinces: [],
+  intervention_proposals: [],
+  intervention_decision: null,
+  approved_intervention: null,
+  central_review: null,
+  versions: {
+    data: "test-data",
+    mechanism: "test-mechanism",
+    prompt: "test-prompt",
+    model: "test-model",
+    app: "test-app",
+  },
+  seed: 20260812,
+};
 
 function renderApp(path = "/experiments/new") {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -55,21 +105,33 @@ describe("PolicyScope V2 shell", () => {
     });
     vi.stubGlobal("fetch", vi.fn((request: RequestInfo | URL) => {
       const url = String(request);
-      const payload = url.includes("/meta/provinces") ? profiles : url.includes("/meta/enterprise-archetypes") ? [] : url.includes("/meta/default-policy") ? policy : { status: "ok", runtime: "asyncio", run_mode: "cache", version: "0.2.0" };
+      const payload = url.includes("/experiments/exp-approved/state") ? approvedWorld : url.includes("/meta/provinces") ? profiles : url.includes("/meta/enterprise-archetypes") ? [] : url.includes("/meta/default-policy") ? policy : { status: "ok", runtime: "asyncio", run_mode: "cache", version: "0.2.0" };
       return Promise.resolve({ ok: true, json: () => Promise.resolve(payload) });
     }));
   });
 
-  it("shows the State Council target, fixed disclosure, and approval-first flow", async () => {
+  it("shows production Chinese copy and the approval-first workflow", async () => {
     renderApp();
-    expect(await screen.findByText(/将政策目标转化为可审批参数/)).toBeInTheDocument();
-    expect(screen.getByText(/不构成现实政策预测或决策建议/)).toBeInTheDocument();
+    expect(await screen.findByText(/配置制造业设备更新政策/)).toBeInTheDocument();
+    expect(screen.getByText(/用于政策方案比较/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /生成结构化政策草案/ })).toBeInTheDocument();
-    expect(screen.getByText(/人类最终控制/)).toBeInTheDocument();
+    expect(screen.getByText(/人工审批控制/)).toBeInTheDocument();
+    expect(screen.queryByText("READY")).not.toBeInTheDocument();
+    expect(screen.queryByText("情景实验")).not.toBeInTheDocument();
   });
 
   it("redirects unknown routes to the new experiment route", async () => {
     renderApp("/unknown");
-    expect(await screen.findByText(/中央政策设定/)).toBeInTheDocument();
+    expect(await screen.findByText(/中央政策配置/)).toBeInTheDocument();
+  });
+
+  it("does not offer duplicate approval for an approved directive", async () => {
+    localStorage.setItem("policyscope.active-experiment.v2", "exp-approved");
+    renderApp();
+
+    expect(await screen.findByText("中央政策已审批")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /进入实时推演/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /批准并启动省企推演/ })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("slider").every((input) => input.hasAttribute("disabled"))).toBe(true);
   });
 });

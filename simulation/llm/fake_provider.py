@@ -98,7 +98,7 @@ class FakeLLMProvider:
                 "human_approval_required",
                 "no_real_world_forecast",
             ],
-            public_summary="中央政策研判 Agent 已形成设备更新实验草案，等待用户核对并批准。",
+            public_summary="中央研判智能体已生成设备更新政策草案，待审批确认。",
             approval_status=ApprovalStatus.DRAFT,
         )
 
@@ -416,7 +416,7 @@ class FakeLLMProvider:
                 ],
                 public_summary="".join(
                     [
-                        "中央政策研判 Agent 建议提高担保、SME 与区域倾斜；",
+                        "中央研判建议提高融资担保、中小企业支持与区域倾斜；",
                         "预期方向待同源分支验证。",
                     ]
                 ),
@@ -436,7 +436,7 @@ class FakeLLMProvider:
                 ),
                 ReviewFinding(
                     title="融资可达性与财政代价",
-                    summary=f"SME 融资可达性变化 {access.delta:+.1f} 指数点。",
+                    summary=f"中小企业融资可达性变化 {access.delta:+.1f} 指数点。",
                     evidence_refs=["comparison:national_metrics:sme_financing_accessibility_index"],
                     tradeoff=f"地方财政压力同步变化 {fiscal.delta:+.1f} 指数点。",
                 ),
@@ -444,7 +444,7 @@ class FakeLLMProvider:
             review_mode = ReviewMode.COMPARISON
             public_summary = "".join(
                 [
-                    "中央政策研判 Agent 已完成同源 A/B 复盘，",
+                    "中央研判智能体已完成双方案对照复盘，",
                     "请结合参与、可达性与财政代价判断。",
                 ]
             )
@@ -465,7 +465,7 @@ class FakeLLMProvider:
                 )
             ]
             review_mode = ReviewMode.SINGLE_BRANCH
-            public_summary = "用户拒绝干预后，原始方案已单线结算；系统未伪造 A/B 结果。"
+            public_summary = "干预建议被驳回后，原始方案已完成单方案结算。"
             payload = result.model_dump(mode="json", exclude={"central_review"})
         return CentralReview(
             review_id=_stable_id("review", payload),

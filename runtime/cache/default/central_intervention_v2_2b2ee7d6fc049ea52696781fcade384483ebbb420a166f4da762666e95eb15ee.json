@@ -68,7 +68,7 @@
       "metric:national:regional_gap_index:T2",
       "feedback:mean_support_request:0.366"
     ],
-    "public_summary": "中央政策研判 Agent 建议提高担保、SME 与区域倾斜；预期方向待同源分支验证。",
+    "public_summary": "中央研判建议提高融资担保、中小企业支持与区域倾斜，待双方案验证。",
     "requires_human_approval": true,
     "approval_status": "draft"
   }

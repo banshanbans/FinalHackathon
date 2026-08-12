@@ -3,13 +3,14 @@ import { useSearchParams } from "react-router-dom";
 
 import { usePolicyScopeContext } from "../context/PolicyScopeContext";
 import type { EvidenceRecord } from "../types";
+import { QUALITY_LABELS } from "../utils/display";
 import { Icon } from "./Icon";
 
 const ARCHETYPE_LABELS: Record<string, string> = {
   large_state_owned: "大型国有制造企业",
   large_private: "大型民营制造企业",
-  technology_sme: "科技型 SME",
-  traditional_sme: "传统制造 SME",
+  technology_sme: "科技型中小企业",
+  traditional_sme: "传统制造中小企业",
   high_energy_industrial: "高耗能工业企业",
   export_manufacturer: "出口制造企业",
 };
@@ -31,6 +32,27 @@ const UPGRADE_LABELS: Record<string, string> = {
   green: "绿色",
   general: "基础技改",
   none: "无",
+};
+const EVIDENCE_KIND_LABELS: Record<string, string> = {
+  method_and_versions: "运行方法与版本",
+  simulation_evidence: "推演证据",
+};
+const EVIDENCE_FIELD_LABELS: Record<string, string> = {
+  experiment_id: "推演编号",
+  source_url: "来源链接",
+  source_year: "数据年份",
+  unit: "指标单位",
+  transformation: "处理方法",
+  missing_value_handling: "异常处理",
+  data_version: "数据版本",
+  mechanism_version: "机制版本",
+  prompt_version: "研判规则版本",
+  model_version: "模型版本",
+  app_version: "应用版本",
+  seed: "随机种子",
+  parent_checkpoint_id: "父检查点",
+  description: "证据说明",
+  disclaimer: "研判口径",
 };
 
 function DrawerFrame({ title, kicker, children, onClose }: { title: string; kicker: string; children: React.ReactNode; onClose: () => void }) {
@@ -58,25 +80,25 @@ function ProvinceDrawer({ code, onClose }: { code: string; onClose: () => void }
   return (
     <DrawerFrame kicker="省企联动详情" onClose={onClose} title={profile?.name ?? code}>
       <div className="drawer-meta-row">
-        <span className={`quality-pill ${profile?.data_quality ?? "demo"}`}>{profile?.data_quality ?? "demo"}</span>
+        <span className={`quality-pill ${profile?.data_quality ?? "demo"}`}>{QUALITY_LABELS[profile?.data_quality ?? "demo"]}</span>
         <span>{state?.phase ?? "T0"}</span><span>省级代码 {code}</span>
       </div>
       {state && <div className="drawer-metrics">
         <div><span>企业参与</span><strong>{state.enterprise_participation_index.toFixed(1)}</strong><small>/100</small></div>
         <div><span>更新意愿</span><strong>{state.equipment_renewal_willingness_index.toFixed(1)}</strong><small>/100</small></div>
-        <div><span>SME 融资可达性</span><strong>{state.sme_financing_accessibility_index.toFixed(1)}</strong><small>/100</small></div>
+        <div><span>中小企业融资可达性</span><strong>{state.sme_financing_accessibility_index.toFixed(1)}</strong><small>/100</small></div>
         <div><span>财政压力</span><strong>{state.fiscal_pressure_index.toFixed(1)}</strong><small>/100</small></div>
       </div>}
-      {action && <section className="drawer-section"><div className="section-heading"><span className="source-label model">模型策略</span><strong>地方政策工具</strong></div><p>{action.public_summary}</p><div className="inline-facts"><span>执行强度 {(action.implementation_intensity * 100).toFixed(0)}%</span><span>地方配套 {(action.local_match_ratio * 100).toFixed(0)}%</span><span>SME 倾斜 {(action.sme_preference * 100).toFixed(0)}%</span></div></section>}
+      {action && <section className="drawer-section"><div className="section-heading"><span className="source-label model">智能体策略</span><strong>地方政策工具</strong></div><p>{action.public_summary}</p><div className="inline-facts"><span>执行强度 {(action.implementation_intensity * 100).toFixed(0)}%</span><span>地方配套 {(action.local_match_ratio * 100).toFixed(0)}%</span><span>中小企业倾斜 {(action.sme_preference * 100).toFixed(0)}%</span></div></section>}
       {feedback && <section className="drawer-section"><div className="section-heading"><span className="source-label model">地方反馈</span><strong>{feedback.implementation_assessment}</strong></div><p>{feedback.public_summary}</p></section>}
-      <section className="drawer-section enterprise-section"><div className="section-heading"><span className="source-label environment">环境计算</span><strong>六类企业群体响应</strong></div>
+      <section className="drawer-section enterprise-section"><div className="section-heading"><span className="source-label environment">机制测算</span><strong>六类企业群体响应</strong></div>
         <div className="enterprise-card-grid">
           {enterpriseProfiles.map((enterprise) => {
             const enterpriseAction = flow.world?.enterprise_actions[enterprise.enterprise_id];
             const enterpriseState = flow.world?.enterprise_states[enterprise.enterprise_id];
             const contribution = flow.world?.contributions[enterprise.enterprise_id];
             return <article className="enterprise-card" key={enterprise.enterprise_id}>
-              <header><Icon name={enterprise.archetype.includes("sme") ? "factory" : "domain"} /><div><strong>{ARCHETYPE_LABELS[enterprise.archetype]}</strong><span className={`quality-pill ${enterprise.data_quality}`}>{enterprise.data_quality}</span></div></header>
+              <header><Icon name={enterprise.archetype.includes("sme") ? "factory" : "domain"} /><div><strong>{ARCHETYPE_LABELS[enterprise.archetype]}</strong><span className={`quality-pill ${enterprise.data_quality}`}>{QUALITY_LABELS[enterprise.data_quality]}</span></div></header>
               {enterpriseAction ? <>
                 <div className={`participation ${enterpriseAction.participation}`}>{PARTICIPATION_LABELS[enterpriseAction.participation]}</div>
                 <dl><div><dt>技改方向</dt><dd>{UPGRADE_LABELS[enterpriseAction.upgrade_type]}</dd></div><div><dt>融资选择</dt><dd>{FINANCING_LABELS[enterpriseAction.financing_choice]}</dd></div><div><dt>投入强度</dt><dd>{(enterpriseAction.investment_intensity * 100).toFixed(0)} / 100</dd></div></dl>
@@ -88,7 +110,7 @@ function ProvinceDrawer({ code, onClose }: { code: string; onClose: () => void }
           })}
         </div>
       </section>
-      {flow.world?.fallback_provinces.includes(code) && <div className="fallback-notice"><Icon name="warning" /><div><strong>确定性 fallback 已启用</strong><p>该省企业批量结构化输出在一次修复后仍未通过校验，整省使用可审计的确定性结果。</p></div></div>}
+      {flow.world?.fallback_provinces.includes(code) && <div className="fallback-notice"><Icon name="warning" /><div><strong>规则接管已启用</strong><p>该省企业响应由确定性规则生成，已纳入审计记录。</p></div></div>}
     </DrawerFrame>
   );
 }
@@ -103,15 +125,15 @@ function EvidenceDrawer({ evidenceId, onClose }: { evidenceId: string; onClose: 
     loadEvidence(evidenceId).then((result) => active && setRecord(result)).catch((reason: unknown) => active && setError(reason instanceof Error ? reason.message : "证据读取失败"));
     return () => { active = false; };
   }, [evidenceId, loadEvidence]);
-  return <DrawerFrame kicker="方法与证据" onClose={onClose} title={evidenceId === "method" ? "实验审计信息" : evidenceId}>
+  return <DrawerFrame kicker="数据与审计" onClose={onClose} title={evidenceId === "method" ? "运行审计信息" : evidenceId}>
     {!record && !error && <div className="drawer-loading"><span className="spinner" />正在读取证据…</div>}
     {error && <div className="fallback-notice"><Icon name="error" /><div><strong>证据不可用</strong><p>{error}</p></div></div>}
     {record && <>
-      <div className="evidence-summary"><Icon name="verified" /><div><span className={`quality-pill ${record.quality}`}>{record.quality}</span><h3>{record.kind}</h3><p>{record.source}</p></div></div>
+      <div className="evidence-summary"><Icon name="verified" /><div><span className={`quality-pill ${record.quality}`}>{QUALITY_LABELS[record.quality]}</span><h3>{EVIDENCE_KIND_LABELS[record.kind] ?? record.kind}</h3><p>{record.source}</p></div></div>
       <dl className="evidence-list">
-        {Object.entries(record).filter(([key]) => !["evidence_id", "kind", "quality", "source"].includes(key)).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{typeof value === "object" ? JSON.stringify(value) : String(value ?? "—")}</dd></div>)}
+        {Object.entries(record).filter(([key]) => !["evidence_id", "kind", "quality", "source"].includes(key)).map(([key, value]) => <div key={key}><dt>{EVIDENCE_FIELD_LABELS[key] ?? key}</dt><dd>{typeof value === "object" ? JSON.stringify(value) : String(value ?? "—")}</dd></div>)}
       </dl>
-      <div className="method-note"><Icon name="science" /><p>模型解释用于形成策略；结果指标与机制贡献只由版本化环境计算。所有运行均记录 data、mechanism、prompt、model、app 版本与 seed。</p></div>
+      <div className="method-note"><Icon name="science" /><p>决策策略由智能体生成，指标与机制贡献由版本化环境统一测算。</p></div>
     </>}
   </DrawerFrame>;
 }

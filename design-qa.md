@@ -55,6 +55,7 @@ QA used runtime browser screenshots, DOM accessibility snapshots and real API st
 | Priority | Issue | Resolution |
 |---|---|---|
 | P0 | Static/fake map and blank A/B map | Replaced with one local, source-recorded ECharts SVG used by both views |
+| P0 | Province regions were shifted by one source path and labels duplicated | Skipped the national fill path, bound every province code to an individual geometry signature, and retained only the source label layer |
 | P0 | Core Stitch links and approvals were static | Rebuilt as React Router + API/SSE actions |
 | P1 | Result route refresh could lose branch completion state | Completed comparison and single-branch states now restore from API state |
 | P1 | Global evidence action changed Compare to Live | Drawer now opens on the current route and preserves query state |
@@ -63,11 +64,12 @@ QA used runtime browser screenshots, DOM accessibility snapshots and real API st
 | P2 | Page transitions retained the previous scroll position | Route-level scroll restoration added |
 | P2 | Initial ECharts bundle produced a monolithic build warning | Routes and ECharts are lazy-loaded into separate chunks |
 
-## 6. Remaining release gate
+## 6. Release status
 
-No P0, P1 or P2 product/design issue remains open. The following is a compliance release gate rather than a UI defect:
+No P0, P1 or P2 product/design issue remains open.
 
-- The map is derived from the Natural Resources Ministry standard map GS(2016)1609 and passes source checksum, geometry checksum and 31-province annotation validation. Public deployment remains blocked until a human confirms the applicable standard-map attribution and edited-map review requirements. See `apps/web/src/assets/maps/README.md`.
+- The map is derived from the Natural Resources Ministry standard map GS(2016)1609 and passes the source checksum, aggregate geometry checksum, 31-province completeness check, and per-province code-to-geometry signature validation.
+- Based on the competition release rule confirmed by the user, the competition build has no additional map-compliance release gate and may publish this asset directly. See `apps/web/src/assets/maps/README.md`.
 
 ## 7. Final decision
 

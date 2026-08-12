@@ -45,6 +45,13 @@ def test_complete_v2_api_flow_and_idempotency(tmp_path) -> None:
             headers={"Idempotency-Key": "approve-t0"},
         )
         assert approve.status_code == 200
+        repeated_approval = client.post(
+            f"/api/experiments/{experiment_id}/directive/approve",
+            json={"policy": policy},
+            headers={"Idempotency-Key": "approve-t0-repeat"},
+        )
+        assert repeated_approval.status_code == 409
+        assert repeated_approval.json()["detail"]["error_code"] == "DIRECTIVE_NOT_AWAITING_APPROVAL"
         t3 = client.post(
             f"/api/experiments/{experiment_id}/run",
             json={"until_phase": "T3"},

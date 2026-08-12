@@ -29,6 +29,14 @@ ResponseT = TypeVar("ResponseT")
 
 def _http_error(error: Exception) -> HTTPException:
     message = str(error)
+    if message == "directive is not awaiting approval":
+        return HTTPException(
+            status_code=409,
+            detail={
+                "error_code": "DIRECTIVE_NOT_AWAITING_APPROVAL",
+                "message": "该中央政策已完成审批，不能重复提交。请直接进入实时推演。",
+            },
+        )
     if "COMPARISON_NOT_AVAILABLE" in message:
         return HTTPException(
             status_code=409,

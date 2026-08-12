@@ -25,7 +25,7 @@ export function MetricChart({ comparison }: { comparison: ComparisonResult }) {
     animationDuration: 700,
     grid: { left: 14, right: 16, top: 18, bottom: 16, containLabel: true },
     tooltip: { trigger: "axis", backgroundColor: "#102432", borderColor: "#2a5266" },
-    legend: { data: ["Control", "Treatment"], textStyle: { color: "#91a9b7" }, top: 0 },
+    legend: { data: ["原始方案", "干预方案"], textStyle: { color: "#91a9b7" }, top: 0 },
     xAxis: {
       type: "value",
       min: 0,
@@ -42,14 +42,14 @@ export function MetricChart({ comparison }: { comparison: ComparisonResult }) {
     },
     series: [
       {
-        name: "Control",
+        name: "原始方案",
         type: "bar",
         data: entries.map(([, value]) => value.control),
         itemStyle: { color: "#476477", borderRadius: [0, 3, 3, 0] },
         barMaxWidth: 8,
       },
       {
-        name: "Treatment",
+        name: "干预方案",
         type: "bar",
         data: entries.map(([, value]) => value.treatment),
         itemStyle: { color: "#1fc8b1", borderRadius: [0, 3, 3, 0] },

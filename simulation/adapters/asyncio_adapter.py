@@ -843,15 +843,13 @@ class AsyncioSimulationAdapter:
             "source": (
                 "PolicyScope 实验方法、版本与父检查点记录"
                 if is_method
-                else "当前实验快照中的结构化字段与 Replay 事件"
+                else "当前推演快照中的结构化字段与审计事件"
             ),
             "source_url": None,
             "source_year": 2024,
             "unit": "指数/100 或指数点变化",
-            "transformation": "版本化机制确定性计算；LLM 不输出最终结果指标",
-            "missing_value_handling": (
-                "缺失或校验失败时按整省 deterministic fallback 处理并显式标记"
-            ),
+            "transformation": "指标与机制贡献由版本化环境统一测算",
+            "missing_value_handling": ("缺失或校验失败时按整省规则接管处理并标记"),
             "data_version": world.versions.data,
             "mechanism_version": world.versions.mechanism,
             "prompt_version": world.versions.prompt,
@@ -859,8 +857,8 @@ class AsyncioSimulationAdapter:
             "app_version": world.versions.app,
             "seed": world.seed,
             "parent_checkpoint_id": world.parent_checkpoint_id,
-            "description": "该证据来自当前实验快照中的结构化字段与版本记录。",
-            "disclaimer": "情景实验，不构成现实政策预测或决策建议。",
+            "description": "该证据来自当前推演快照与版本记录。",
+            "disclaimer": "结果为当前数据与机制参数下的模拟指数，用于方案比较。",
         }
 
     async def run_full_demo(self, config: ExperimentConfig) -> ComparisonResult:

@@ -131,19 +131,18 @@ export function ProvinceMap({
           top: 2,
           bottom: 22,
           label: {
-            show: !compact,
-            color: "#34405a",
-            fontSize: 9,
-            formatter: (params: { name: string }) =>
-              EXCLUDED_NAMES.has(params.name) ? "" : params.name,
+            // Province labels are already part of the source artwork.
+            // Rendering a second ECharts label layer creates duplicates and
+            // produces poor auto-centering for narrow or multipart regions.
+            show: false,
           },
           itemStyle: { areaColor: "#eef0ff", color: "#eef0ff", borderColor: "#ffffff", borderWidth: 1 },
           select: {
-            label: { color: "#ffffff", fontWeight: 700 },
+            label: { show: false },
             itemStyle: { areaColor: "#2737d5", color: "#2737d5", borderColor: "#111b8a", borderWidth: 1.8 },
           },
           emphasis: {
-            label: { color: "#111a3b", fontWeight: 700 },
+            label: { show: false },
             itemStyle: { areaColor: "#7480f5", color: "#7480f5", borderColor: "#ffffff" },
           },
         },
@@ -190,7 +189,7 @@ export function ProvinceMap({
         </div>
       )}
       <p className="map-source-note">
-        计算范围：中国大陆 31 个省级行政区；港澳台不进入模型。底图：自然资源部标准地图 GS(2016)1609，公开发布前须完成地图合规复核。
+        底图：自然资源部标准地图 GS(2016)1609 ｜ 指标范围：中国大陆 31 个省级行政区
       </p>
     </div>
   );

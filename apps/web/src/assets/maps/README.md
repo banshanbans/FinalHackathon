@@ -29,12 +29,13 @@ python scripts/annotate_standard_map.py \
 
 - `pstoedit 4.3`、`Ghostscript 10.07.1` 仅用于离线格式转换。
 - 转换后的边界 path 未进行手工重绘、简化或坐标变换。
-- `annotate_standard_map.py` 只为原图中 31 个大陆省级填色 path 增加稳定的 `name`、`data-code` 和 `id`，供 ECharts `registerMap` 识别。
+- 原图 path 0 为海洋背景，path 1 为全国底色轮廓，path 2..32 为 31 个大陆省级填色区域。`annotate_standard_map.py` 仅对 path 2..32 增加稳定的 `name`、`data-code` 和 `id`，供 ECharts `registerMap` 识别。
+- 2026-08-12 复核发现旧脚本把全国底色轮廓误当为内蒙古，造成 31 个省域标注依次串位。现已修正路径起点，并为每个行政区代码增加独立几何 SHA-256 绑定校验。
 - 港澳台保留在标准地图视觉中，但不带 `simulation-province` 标记，不进入仿真、指标着色或点击详情。
-- 31 个交互 path 的几何摘要 SHA-256：`3f4d35ae47742f8e272ca23621c4ed79e7b188036bbf2c0cfc44e160b2fa4197`。
+- 31 个交互 path 的几何摘要 SHA-256：`2f6aea81b85e929df44aa83beb6c4dcf3fe8f14b8274506e62c6b836ac1c97d6`。
 
-## 合规门禁
+## 比赛版发布状态
 
-该资产可用于本仓库的内部开发、比赛现场演示与评审截图。任何面向公众的部署或传播，都必须在发布检查表中重新核对标准地图服务条款、审图号展示和编辑后地图审核要求；未完成核验时不得公开发布。
+根据用户确认的比赛发布规则，比赛产品不设额外地图合规审核门禁，该资产可直接随比赛 Web 产品上线。源头地图、审图号、转换步骤和几何签名仍继续保留，用于资产追溯和回归校验。
 
-运行 `make validate-data` 会同时校验原始 EPS 哈希、31 省完整性、交互代码和转换后几何摘要。
+运行 `make validate-data` 会同时校验原始 EPS 哈希、31 省完整性、交互代码、总几何摘要以及每个省域代码与几何路径的绑定关系。

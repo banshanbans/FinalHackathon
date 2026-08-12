@@ -34,7 +34,7 @@
     "human_approval_required",
     "no_real_world_forecast"
   ],
-  "public_summary": "中央政策研判 Agent 已形成设备更新实验草案，等待用户核对并批准。",
+  "public_summary": "中央研判智能体已生成设备更新政策草案，待审批确认。",
   "requires_human_approval": true,
   "approval_status": "draft"
 }

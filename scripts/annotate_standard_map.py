@@ -3,9 +3,9 @@
 
 The source EPS is the 1:48,000,000 China map downloaded from the Ministry of
 Natural Resources standard-map service.  pstoedit preserves the Illustrator
-stacking order: the first path is the ocean/background and the next 31 paths
-are the mainland provincial fills.  This script makes that ordering explicit
-and reproducible for ECharts' SVG map parser.
+stacking order: path 0 is the ocean/background, path 1 is the national fill,
+and paths 2..32 are the 31 mainland provincial fills. This script makes that
+ordering explicit and reproducible for ECharts' SVG map parser.
 """
 
 from __future__ import annotations
@@ -49,6 +49,9 @@ PROVINCES: tuple[tuple[str, str], ...] = (
     ("46", "海南"),
 )
 
+PROVINCE_PATH_START = 2
+REGION_METADATA_ATTRIBUTES = ("id", "name", "data-code", "data-region-role")
+
 
 def annotate(source: Path, destination: Path) -> None:
     ET.register_namespace("", SVG_NS)
@@ -76,12 +79,20 @@ def annotate(source: Path, destination: Path) -> None:
             if normalized.startswith(frame_mask_start) and "M 32.2773 515.09" in normalized:
                 parent.remove(child)
     paths = list(root.iter(f"{{{SVG_NS}}}path"))
-    if len(paths) < len(PROVINCES) + 1:
-        raise ValueError(f"expected at least 32 paths, found {len(paths)}")
+    required_path_count = PROVINCE_PATH_START + len(PROVINCES)
+    if len(paths) < required_path_count:
+        raise ValueError(f"expected at least {required_path_count} paths, found {len(paths)}")
 
-    # Path zero is the sea/background.  Paths 1..31 are the mainland fills in
-    # the source Illustrator stacking order; do not infer this at runtime.
-    for path, (code, name) in zip(paths[1 : len(PROVINCES) + 1], PROVINCES, strict=True):
+    # Clear prior generated metadata so the annotation step is idempotent and
+    # an old offset cannot leave a second interactive region behind.
+    for path in paths:
+        for attribute in REGION_METADATA_ATTRIBUTES:
+            path.attrib.pop(attribute, None)
+
+    # Path zero is the sea/background and path one is the full national fill.
+    # Paths 2..32 are the provincial fills in the source Illustrator order.
+    province_paths = paths[PROVINCE_PATH_START:required_path_count]
+    for path, (code, name) in zip(province_paths, PROVINCES, strict=True):
         path.set("id", f"province-{code}")
         path.set("name", name)
         path.set("data-code", code)

@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 
 import { usePolicyScopeContext } from "../context/PolicyScopeContext";
+import { RUN_MODE_LABELS } from "../utils/display";
 import { Icon } from "./Icon";
 
 const navigation = [
@@ -42,7 +43,7 @@ export function AppShell() {
           <span className="brand-symbol"><Icon name="radar" /></span>
           <span><strong>PolicyScope</strong><small>政策涟漪</small></span>
         </button>
-        <div className="sidebar-section-label">国务院政策推演台</div>
+        <div className="sidebar-section-label">中央政策统筹工作台</div>
         <nav aria-label="主导航">
           {navigation.map((item) => {
             const enabled = routeEnabled(item.route, flow.world?.phase, Boolean(flow.world));
@@ -62,25 +63,25 @@ export function AppShell() {
           })}
         </nav>
         <div className="sidebar-bottom">
-          <button onClick={() => { flow.resetExperiment(); navigate("/experiments/new"); }} type="button"><Icon name="restart_alt" />新建实验</button>
-          <button disabled={!flow.world} onClick={openEvidence} type="button"><Icon name="database" />证据与方法</button>
+          <button onClick={() => { flow.resetExperiment(); navigate("/experiments/new"); }} type="button"><Icon name="restart_alt" />新建推演</button>
+          <button disabled={!flow.world} onClick={openEvidence} type="button"><Icon name="database" />数据与审计</button>
         </div>
       </aside>
       <div className="app-main">
         <header className="topbar">
-          <div className="breadcrumb"><span>制造业设备更新</span><Icon name="chevron_right" /><strong>{flow.world?.experiment_id ? `实验 ${flow.world.experiment_id.slice(-8)}` : "新实验"}</strong></div>
+          <div className="breadcrumb"><span>制造业设备更新专项</span><Icon name="chevron_right" /><strong>{flow.world?.experiment_id ? `推演 ${flow.world.experiment_id.slice(-8)}` : "新建推演"}</strong></div>
           <div className="topbar-actions">
-            {flow.world && <span className={`mode-badge ${flow.world.run_mode}`}><i />{flow.world.run_mode.toUpperCase()}</span>}
-            <span className="scenario-badge">情景实验</span>
-            <button aria-label="打开证据抽屉" disabled={!flow.world} onClick={openEvidence} type="button"><Icon name="fact_check" /></button>
+            {flow.world && <span className={`mode-badge ${flow.world.run_mode}`}><i />{RUN_MODE_LABELS[flow.world.run_mode]}</span>}
+            <span className="scenario-badge">设备更新专项</span>
+            <button aria-label="打开数据与审计" disabled={!flow.world} onClick={openEvidence} type="button"><Icon name="fact_check" /></button>
           </div>
         </header>
         <div className="disclaimer">
           <Icon name="info" />
-          <span>这是在当前数据、参数与机制假设下的情景实验，不构成现实政策预测或决策建议。</span>
+          <span>研判口径：结果为当前数据与机制参数下的模拟指数，用于政策方案比较。</span>
         </div>
-        {flow.error && <div className="error-banner"><Icon name="error" /><strong>操作未完成</strong><span>{flow.error}</span></div>}
-        {flow.busyLabel && <div className="busy-overlay"><span className="spinner" /><strong>{flow.busyLabel}</strong><small>阶段结果将原子提交并写入 Replay</small></div>}
+        {flow.error && <div className="error-banner"><Icon name="error" /><strong>操作失败</strong><span>{flow.error}</span></div>}
+        {flow.busyLabel && <div className="busy-overlay"><span className="spinner" /><strong>{flow.busyLabel}</strong><small>阶段完成后统一提交结果并更新审计记录</small></div>}
         <main className="page-content"><Outlet /></main>
       </div>
     </div>
