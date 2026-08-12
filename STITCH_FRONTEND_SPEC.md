@@ -1,7 +1,7 @@
-# PolicyScope V3.0 正式前端规范
+# PolicyScope V3.0 / V3.1 正式前端规范
 
 > 产品：PolicyScope / 政策涟漪
-> 规范版本：V3.0（已实现并通过 Design QA）
+> 规范版本：V3.1（事件协同增量已实现，Design QA 待 M28 冻结）
 > 更新日期：2026-08-12
 > 主验收画布：1536 × 1024、1440 × 900、1280 宽
 > 当前门禁：M18 前端和 M20 QA 已完成；五路由正式消费 V3 API，新增视觉范围需重新评审
@@ -807,3 +807,18 @@ V3 前端只有同时满足以下条件才完成：
 - `design-qa.md` 的 V3 `final result` 为 `passed`。
 
 上述条件已由正式 React 运行时、V3 API、两条 Playwright 流程和 1536×1024、1440×900、1280 三画布截图验证。V3.0 前端状态为“已实现，Design QA passed”。
+
+---
+
+## 21. V3.1 五路由增量
+
+- New 在实验目标与政策草案之间加入两种比较模式选择，并用一句短标签说明唯一主动差异。
+- Intervention 的政策模式保留比例审批；事件模式改为首年脆弱性证据、同政策证明和双分支确认，不展示可编辑比例。
+- Live 在两分支完成 Y2_Q2 后显示事件实验台：模板、强度、机制预览、不可逆批准按钮；批准前不得进入 Y2_Q3。
+- Live 地图新增 `event_exposure` 填色层和 `province_interaction` 响应层；协作清单保留 matched/unmatched，不把单向提议画成成功关系。
+- Province 在常规财政、补贴、Persona、Peer、车企和机制之后显示“事件暴露 → 首轮信号 → Peer 响应 → 协作状态”链。
+- Compare 根据模式使用“原始方案/干预方案”或“无事件基线/事件情景”，在地图和指标之前显示 Checkpoint、`policy_diff`、`event_diff` 与唯一主动差异证明。
+- 事件实验台固定显示情景免责声明；不得使用现实油价预测、现实法规结论、企业承诺或官方立场表达。
+- 不新增正式路由；loading、empty、error、fallback、重连和 Evidence 深链继续沿用五路由运行时。
+
+V3.1 前端只有两条模式 E2E 和三画布检查完成后才能标记 Design QA passed；V3.0 的历史截图不能替代。

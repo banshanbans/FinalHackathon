@@ -1,10 +1,10 @@
-# PolicyScope V3.0 新能源汽车补贴与产业布局开发计划
+# PolicyScope V3.0 / V3.1 新能源汽车补贴、产业布局与事件协同开发计划
 
 > 对应 PRD：[PRD_省域政策多智能体推演平台.md](./PRD_省域政策多智能体推演平台.md)
 > 前端规范：[STITCH_FRONTEND_SPEC.md](./STITCH_FRONTEND_SPEC.md)
-> 计划版本：V3.0（已实现并通过 P0 验收）
+> 计划版本：V3.1（M21–M28 已完成，M29 数据迁移待启动）
 > 更新日期：2026-08-12
-> 当前门禁：M13–M20 已形成实现与验证证据；V3.0 进入冻结维护，新增范围需重新评审契约
+> 当前门禁：V3.0 只读冻结；V3.1 事件协同契约与运行证据已冻结，下一阶段仅按 M29 数据清单迁移真实事实层
 
 ---
 
@@ -626,6 +626,12 @@ make demo
 make smoke
 ```
 
+运行模式入口固定为：
+
+- `make dev-api`：本地开发，强制 `POLICYSCOPE_RUN_MODE=fake`。
+- `make start-api`：线上部署，强制 `POLICYSCOPE_RUN_MODE=live`，并要求部署环境注入模型 API Key。
+- `cache`：只供预计算、回归和离线可复现验证，不作为本地 Web/API 默认模式。
+
 V3 实现后必须让这些命令覆盖新领域；不得为了通过门禁跳过旧断言、隐藏 fallback 或硬编码结果。
 
 ---
@@ -683,3 +689,39 @@ V3 实现后必须让这些命令覆盖新领域；不得为了通过门禁跳�
 - [x] 两条 E2E 和 Cache 连续三次通过。
 - [x] `design-qa.md` 的 V3 `final result` 为 `passed`。
 - [x] 无现实预测、企业承诺、未授权 Logo、官方身份暗示或最优政策结论。
+
+---
+
+## 16. V3.1 M21–M28 增量里程碑
+
+| 里程碑 | 状态 | 退出证据 |
+|---|---|---|
+| M21 文档与 ADR | Complete | PRD、AGENTS、计划、前端规范、DESIGN、README、Design QA 与 ADR-310 同步；用户副本和 `prototypes/` 未覆盖 |
+| M22 Schema、数据与网络 | Complete | V5 World/Comparison、5 模板、31 省四项代理字段与 provenance、观察/协作资格边验证 |
+| M23 Provider 与两轮交互 | Complete | Fake/Cache/Live 支持信号与响应；Round 1 全量冻结后启动 Round 2；主体级 fallback |
+| M24 事件环境 | Complete | 技术、法规、油价、电池、Peer 与双向协作贡献进入 `nev-policy-env-v2` |
+| M25 Orchestrator 与审批 | Complete | `awaiting_event`、一次原子审批、两种同源模式及唯一主动差异校验 |
+| M26 API/SSE/Audit/Evidence | Complete | 三个事件 REST、9 类 SSE、Replay、决策/机制 Audit、`scenario:`/`interaction:` |
+| M27 五路由前端 | Complete | 模式选择、同政策确认、事件实验台、事件/交互图层、省级链与模式化 Compare |
+| M28 Cache/E2E/Design QA | Complete | 30 场景/2047 对象缓存矩阵；连续三次 281/281 与 219/219 命中；两模式三画布 E2E、Design QA 与禁止文案扫描通过 |
+
+V3.1 调用预算：政策干预模式 281 次；事件反事实模式 219 次，其中 Control 无事件不产生伪交互调用。缓存矩阵按公共首年语义输入去重，不按实验 ID 或审批时间重复。
+
+### V3.1 当前唯一下一任务
+
+启动 M29 的省级真实事实层采集与迁移；当前 V3.1 代理字段继续明确标记为 `proxy` 或 `scenario_assumption`，不得改称真实事实或 `verified`。
+
+### M29：省级真实事实层与 Peer 语义拆分（M28 后启动）
+
+状态：Approved next milestone；M28 已完成，可按最新采集清单启动。
+
+- 建立 31 省经济原始事实、产业结构原始事实与近 3–5 年历史政策证据表。
+- 建立 31 省新能源汽车产业与市场基线、真实电池/整车节点、地理/物流距离矩阵和省际产业链关系。
+- 补齐智驾、法规试点、油价/出行成本和供应链互补四类事件敏感度原始输入。
+- 按集团、品牌、上市主体和生产基地口径补齐 10 家车企真实冻结基线。
+- 每个派生指数保存输入字段、权重、方向、缩尾和归一化版本，支持从 UI Evidence 反查原值。
+- Profile/Persona/Prompt 分离结构能力、历史偏好和当期响应，移除任何省份刻板性格捷径。
+- 将观察、竞争和协作三类 Peer 网络拆分为独立版本、边和 provenance。
+- 验收依据固定为 `docs/data/PROVINCE_PROFILE_DATA_REQUIREMENTS_V3_1.md`。
+
+数据质量只允许 `verified | proxy | scenario_assumption`；每条记录必须保存原值、单位、年份/有效期、机构、原始链接、表名/公告/章节、获取日期、统计口径、转换和缺失值处理。无来源数据不得标记 verified。

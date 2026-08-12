@@ -1,12 +1,16 @@
 from collections import defaultdict
 
 from simulation.llm.fake_provider import policy_diff
+from simulation.models.common import ComparisonMode
 from simulation.models.province import ProvinceProfile
+from simulation.models.scenario import EventScenarioDiff
 from simulation.models.world import (
+    ActiveDifferenceProof,
     AutomakerStrategyTransition,
     ComparisonResult,
     MetricDelta,
     ProvinceDelta,
+    ProvinceEventTransition,
     ProvinceStrategyTransition,
     StrategyFieldChange,
     WorldState,
@@ -48,6 +52,31 @@ class ComparisonService:
             raise ValueError("same-source branches must share seed and versions")
         if control.province_personas != treatment.province_personas:
             raise ValueError("same-source branches must share province personas")
+        policy_changes = policy_diff(control.policy, treatment.policy)
+        control_event_id = (
+            control.approved_event_scenario.scenario_id
+            if control.event_applied and control.approved_event_scenario
+            else None
+        )
+        treatment_event_id = (
+            treatment.approved_event_scenario.scenario_id
+            if treatment.event_applied and treatment.approved_event_scenario
+            else None
+        )
+        if control.comparison_mode is not treatment.comparison_mode:
+            raise ValueError("same-source branches must share comparison mode")
+        if control.comparison_mode is ComparisonMode.POLICY_INTERVENTION:
+            if not policy_changes or control_event_id != treatment_event_id or not control_event_id:
+                raise ValueError(
+                    "policy comparison requires one policy difference and the same event"
+                )
+            same_policy, same_event, active_difference = False, True, "policy"
+        else:
+            if policy_changes or control_event_id is not None or treatment_event_id is None:
+                raise ValueError(
+                    "event comparison requires the same policy and event only in treatment"
+                )
+            same_policy, same_event, active_difference = True, False, "event"
         metric_deltas: dict[str, MetricDelta] = {}
         for field in type(control.national_metrics).model_fields:
             if field == "schema_version":
@@ -137,6 +166,32 @@ class ComparisonService:
                     facility_changes=facility_changes,
                 )
             )
+        event_transitions = [
+            ProvinceEventTransition(
+                province_code=code,
+                control_response_id=(
+                    control.province_event_responses[code].response_id
+                    if code in control.province_event_responses
+                    else None
+                ),
+                treatment_response_id=(
+                    treatment.province_event_responses[code].response_id
+                    if code in treatment.province_event_responses
+                    else None
+                ),
+                control_mode=(
+                    control.province_event_responses[code].response_mode.value
+                    if code in control.province_event_responses
+                    else None
+                ),
+                treatment_mode=(
+                    treatment.province_event_responses[code].response_mode.value
+                    if code in treatment.province_event_responses
+                    else None
+                ),
+            )
+            for code in sorted(profiles)
+        ]
         mechanism_totals: defaultdict[str, float] = defaultdict(float)
         for key, after in treatment.contributions.items():
             before = control.contributions.get(key)
@@ -148,7 +203,25 @@ class ComparisonService:
             checkpoint_id=checkpoint_id,
             control_branch_id=control.branch_id,
             treatment_branch_id=treatment.branch_id,
-            policy_diff=policy_diff(control.policy, treatment.policy),
+            comparison_mode=control.comparison_mode,
+            active_difference_proof=ActiveDifferenceProof(
+                comparison_mode=control.comparison_mode,
+                checkpoint_id=checkpoint_id,
+                same_policy=same_policy,
+                same_event=same_event,
+                active_difference=active_difference,
+            ),
+            policy_diff=policy_changes,
+            event_diff=EventScenarioDiff(
+                control_scenario_id=control_event_id,
+                treatment_scenario_id=treatment_event_id,
+                changed=control_event_id != treatment_event_id,
+                description=(
+                    "两分支共享同一事件情景"
+                    if same_event
+                    else "原始分支无事件，事件情景仅作用于干预分支"
+                ),
+            ),
             delta_gap=round(
                 treatment.national_metrics.regional_development_gap
                 - control.national_metrics.regional_development_gap,
@@ -157,6 +230,7 @@ class ComparisonService:
             national_metrics=metric_deltas,
             province_strategy_transitions=province_transitions,
             automaker_strategy_transitions=automaker_transitions,
+            province_event_transitions=event_transitions,
             province_deltas=province_deltas,
             mechanism_totals={key: round(value, 4) for key, value in mechanism_totals.items()},
             top_improved=[item.province_code for item in ranked[:5]],

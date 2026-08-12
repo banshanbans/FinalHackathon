@@ -12,6 +12,7 @@ from sse_starlette.sse import EventSourceResponse
 from policyscope_api.dependencies import build_adapter, get_adapter
 from policyscope_api.schemas import (
     ApproveDirectiveRequest,
+    ApproveEventScenarioRequest,
     ApproveInterventionRequest,
     CreateBranchRequest,
     CreateExperimentRequest,
@@ -21,7 +22,7 @@ from policyscope_api.schemas import (
 )
 from policyscope_api.settings import Settings, get_settings
 from simulation.adapters.asyncio_adapter import AsyncioSimulationAdapter
-from simulation.catalog import automaker_catalog, policy_region_catalog
+from simulation.catalog import automaker_catalog, event_scenario_catalog, policy_region_catalog
 from simulation.models.audit import AuditRecordType
 from simulation.models.common import Phase, PolicyRegion, ProvincePersonaType
 from simulation.models.experiment import ExperimentConfig
@@ -42,6 +43,22 @@ def _http_error(error: Exception) -> HTTPException:
             detail={
                 "error_code": "DIRECTIVE_NOT_AWAITING_APPROVAL",
                 "message": "该中央政策已完成审批，不能重复提交。请直接进入实时推演。",
+            },
+        )
+    if message == "EVENT_APPROVAL_REQUIRED":
+        return HTTPException(
+            status_code=403,
+            detail={
+                "error_code": "EVENT_APPROVAL_REQUIRED",
+                "message": "两个分支完成 Y2_Q2 后必须先由用户批准一次事件情景。",
+            },
+        )
+    if message == "event scenario already approved":
+        return HTTPException(
+            status_code=409,
+            detail={
+                "error_code": "EVENT_ALREADY_APPROVED",
+                "message": "本实验的事件情景已批准，不能重复审批或修改。",
             },
         )
     if "COMPARISON_NOT_AVAILABLE" in message:
@@ -93,8 +110,8 @@ def create_app(
 
     application = FastAPI(
         title="PolicyScope API",
-        version="0.4.0",
-        description="PolicyScope V3 auditable NEV subsidy and industrial-layout simulation API",
+        version="0.5.0",
+        description="PolicyScope V3.1 event-driven interprovincial simulation API",
         lifespan=lifespan,
     )
     application.add_middleware(
@@ -138,7 +155,7 @@ def create_app(
             "status": "ok",
             "runtime": "asyncio",
             "run_mode": app_settings.run_mode.value,
-            "version": "0.4.0",
+            "version": "0.5.0",
         }
 
     @application.get("/api/meta/provinces")
@@ -204,6 +221,15 @@ def create_app(
     ) -> dict[str, object]:
         return simulation.default_policy.model_dump(mode="json")
 
+    @application.get("/api/meta/event-scenarios")
+    async def event_scenarios() -> list[dict[str, object]]:
+        return [
+            template.model_dump(mode="json")
+            for _, template in sorted(
+                event_scenario_catalog().items(), key=lambda item: item[0].value
+            )
+        ]
+
     @application.post("/api/experiments", status_code=status.HTTP_201_CREATED)
     async def create_experiment(
         body: CreateExperimentRequest,
@@ -219,6 +245,7 @@ def create_app(
                 scenario_id=body.scenario_id,
                 seed=body.seed,
                 run_mode=selected_mode,
+                comparison_mode=body.comparison_mode,
                 model_version=(
                     app_settings.central_model
                     if selected_mode.value == "live"
@@ -435,12 +462,51 @@ def create_app(
         simulation: AsyncioSimulationAdapter = Depends(get_adapter),
     ) -> dict[str, object]:
         async def operation() -> dict[str, object]:
-            branch = await simulation.create_approved_branch(experiment_id, body.intervention_id)
+            if body.kind == "policy_intervention":
+                branch = await simulation.create_approved_branch(
+                    experiment_id, body.intervention_id
+                )
+            else:
+                branch = await simulation.create_event_counterfactual_branches(experiment_id)
             return branch.model_dump(mode="json")
 
         try:
             return await idempotent(
                 scope=f"create-branch:{experiment_id}",
+                key=idempotency_key,
+                payload=body.model_dump(mode="json"),
+                operation=operation,
+            )
+        except HTTPException:
+            raise
+        except Exception as error:
+            raise _http_error(error) from error
+
+    @application.get("/api/experiments/{experiment_id}/event-scenario")
+    async def get_event_scenario(
+        experiment_id: str,
+        simulation: AsyncioSimulationAdapter = Depends(get_adapter),
+    ) -> dict[str, object] | None:
+        try:
+            scenario = await simulation.get_event_scenario(experiment_id)
+            return scenario.model_dump(mode="json") if scenario else None
+        except Exception as error:
+            raise _http_error(error) from error
+
+    @application.post("/api/experiments/{experiment_id}/event-scenario/approve")
+    async def approve_event_scenario(
+        experiment_id: str,
+        body: ApproveEventScenarioRequest,
+        idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+        simulation: AsyncioSimulationAdapter = Depends(get_adapter),
+    ) -> dict[str, object]:
+        async def operation() -> dict[str, object]:
+            scenario = await simulation.approve_event_scenario(experiment_id, body)
+            return scenario.model_dump(mode="json")
+
+        try:
+            return await idempotent(
+                scope=f"approve-event-scenario:{experiment_id}",
                 key=idempotency_key,
                 payload=body.model_dump(mode="json"),
                 operation=operation,

@@ -40,6 +40,7 @@ class ExperimentStatus(StrEnum):
     READY = "ready"
     RUNNING = "running"
     AWAITING_INTERVENTION = "awaiting_intervention"
+    AWAITING_EVENT = "awaiting_event"
     COMPLETED = "completed"
     FAILED = "failed"
 
@@ -60,6 +61,11 @@ class PolicyStatus(StrEnum):
 class BranchKind(StrEnum):
     CONTROL = "control"
     TREATMENT = "treatment"
+
+
+class ComparisonMode(StrEnum):
+    POLICY_INTERVENTION = "policy_intervention"
+    EVENT_COUNTERFACTUAL = "event_counterfactual"
 
 
 class DataQuality(StrEnum):
@@ -87,6 +93,56 @@ class PeerResponseMode(StrEnum):
     FOLLOW = "follow"
     DIFFERENTIATE = "differentiate"
     HOLD = "hold"
+    COORDINATE = "coordinate"
+
+
+class EventFamily(StrEnum):
+    TECHNOLOGY = "technology"
+    REGULATION = "regulation"
+    ENERGY = "energy"
+
+
+class EventTemplateId(StrEnum):
+    BATTERY_NODE_UPGRADE_SICHUAN = "battery_node_upgrade_sichuan"
+    INTELLIGENT_DRIVING_UPGRADE = "intelligent_driving_upgrade"
+    L3_ENTERPRISE_LIABILITY_INCREASE = "l3_enterprise_liability_increase"
+    OIL_PRICE_RISE = "oil_price_rise"
+    OIL_PRICE_FALL = "oil_price_fall"
+
+
+class EventIntensity(StrEnum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+
+    @property
+    def magnitude(self) -> float:
+        return {self.LOW: 0.25, self.MEDIUM: 0.50, self.HIGH: 0.75}[self]
+
+
+class EventScenarioStatus(StrEnum):
+    DRAFT = "draft"
+    APPROVED = "approved"
+
+
+class EventPerception(StrEnum):
+    OPPORTUNITY = "opportunity"
+    RISK = "risk"
+    MIXED = "mixed"
+
+
+class EventPolicyFocus(StrEnum):
+    CONSUMER_SUPPORT = "consumer_support"
+    FIXED_COST_SUPPORT = "fixed_cost_support"
+    VARIABLE_COST_SUPPORT = "variable_cost_support"
+    REGULATORY_PILOT = "regulatory_pilot"
+    SUPPLY_CHAIN_COORDINATION = "supply_chain_coordination"
+    FISCAL_RESERVE = "fiscal_reserve"
+
+
+class CoordinationStatus(StrEnum):
+    MATCHED = "matched"
+    UNMATCHED = "unmatched"
 
 
 class StrategyAssessment(StrEnum):

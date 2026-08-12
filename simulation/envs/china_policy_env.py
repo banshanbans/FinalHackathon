@@ -9,9 +9,16 @@ from simulation.domain_constants import AUTOMAKER_IDS, MAINLAND_PROVINCE_CODES
 from simulation.models.action import MechanismContribution, MechanismTerm
 from simulation.models.automaker import AutomakerAction, AutomakerProfile, AutomakerState
 from simulation.models.base import DomainModel
-from simulation.models.common import FacilityActionKind, Phase
+from simulation.models.common import (
+    CoordinationStatus,
+    EventPolicyFocus,
+    EventTemplateId,
+    FacilityActionKind,
+    Phase,
+)
 from simulation.models.policy import PolicySchema
 from simulation.models.province import ProvinceAction, ProvinceProfile, ProvinceState
+from simulation.models.scenario import CoordinationMatch, EventScenario, ProvinceEventResponse
 from simulation.models.world import NationalMetrics
 
 
@@ -23,6 +30,10 @@ def _clamp(value: float, minimum: float = 0, maximum: float = 100) -> float:
     if not isfinite(value):
         raise ValueError("environment value must be finite")
     return _round(max(minimum, min(maximum, value)))
+
+
+def _clamp01(value: float) -> float:
+    return _clamp(value, 0, 1)
 
 
 def normalized_gini(values: list[float]) -> float:
@@ -106,7 +117,7 @@ def fixed_variable_cost_threshold(
 class ChinaPolicyEnv:
     """Deterministic authority for fiscal, demand, ROI and industrial-layout outcomes."""
 
-    formula_version = "nev-policy-env-v1"
+    formula_version = "nev-policy-env-v2"
 
     def __init__(
         self,
@@ -213,6 +224,96 @@ class ChinaPolicyEnv:
             evidence_refs=evidence_refs,
         )
 
+    def event_exposure(self, scenario: EventScenario) -> dict[str, float]:
+        exposures: dict[str, float] = {}
+        for code, profile in self.profiles.items():
+            if scenario.template_id is EventTemplateId.BATTERY_NODE_UPGRADE_SICHUAN:
+                readiness = (
+                    1.0
+                    if code in scenario.target_province_codes
+                    else 0.65 * (1 - profile.battery_supply_distance_index)
+                    + 0.35 * profile.supply_chain_complementarity_index
+                )
+            elif scenario.template_id is EventTemplateId.INTELLIGENT_DRIVING_UPGRADE:
+                readiness = (
+                    0.50 * profile.intelligent_driving_readiness_index
+                    + 0.30 * profile.rd_activity
+                    + 0.20 * profile.urbanization_index
+                )
+            elif scenario.template_id is EventTemplateId.L3_ENTERPRISE_LIABILITY_INCREASE:
+                readiness = (
+                    0.45 * profile.intelligent_driving_readiness_index
+                    + 0.35 * profile.market_scale
+                    + 0.20 * profile.regulatory_execution_capacity_index
+                )
+            else:
+                readiness = profile.oil_price_sensitivity_index
+            exposures[code] = _round(_clamp01(scenario.magnitude * readiness))
+        return exposures
+
+    def match_coordination(
+        self,
+        scenario: EventScenario,
+        responses: dict[str, ProvinceEventResponse],
+        coordination_eligible_pairs: set[tuple[str, str]] | None = None,
+    ) -> list[CoordinationMatch]:
+        pairs = {
+            tuple(sorted((code, target)))
+            for code, response in responses.items()
+            for target in response.coordination_target_codes
+        }
+        matches: list[CoordinationMatch] = []
+        for left, right in sorted(pairs):
+            left_response = responses[left]
+            right_response = responses.get(right)
+            reciprocal = bool(
+                right_response
+                and left in right_response.coordination_target_codes
+                and right in left_response.coordination_target_codes
+                and (
+                    coordination_eligible_pairs is None
+                    or (left, right) in coordination_eligible_pairs
+                )
+            )
+            complementarity = _round(
+                fmean(
+                    (
+                        self.profiles[left].supply_chain_complementarity_index,
+                        self.profiles[right].supply_chain_complementarity_index,
+                    )
+                )
+            )
+            contribution = (
+                _round(
+                    5
+                    * min(left_response.response_intensity, right_response.response_intensity)
+                    * complementarity
+                )
+                if reciprocal and right_response
+                else 0
+            )
+            matches.append(
+                CoordinationMatch(
+                    match_id=f"coord_{scenario.scenario_id}_{left}_{right}",
+                    scenario_id=scenario.scenario_id,
+                    left_province_code=left,
+                    right_province_code=right,
+                    status=(
+                        CoordinationStatus.MATCHED if reciprocal else CoordinationStatus.UNMATCHED
+                    ),
+                    policy_focus=left_response.policy_focus,
+                    complementarity=complementarity,
+                    contribution=contribution,
+                    evidence_refs=[
+                        f"interaction:{left_response.response_id}",
+                        f"interaction:{right_response.response_id}"
+                        if right_response
+                        else f"scenario:{scenario.scenario_id}",
+                    ],
+                )
+            )
+        return matches
+
     def settle_year(
         self,
         *,
@@ -221,6 +322,9 @@ class ChinaPolicyEnv:
         automaker_actions: dict[str, AutomakerAction],
         phase: Phase,
         previous_province_states: dict[str, ProvinceState] | None = None,
+        event_scenario: EventScenario | None = None,
+        event_responses: dict[str, ProvinceEventResponse] | None = None,
+        coordination_matches: list[CoordinationMatch] | None = None,
     ) -> YearSettlement:
         if phase not in {Phase.Y1_Q4, Phase.Y2_Q4}:
             raise ValueError("annual settlement is only valid in Q4")
@@ -236,6 +340,15 @@ class ChinaPolicyEnv:
             action.phase is not expected_automaker_phase for action in automaker_actions.values()
         ):
             raise ValueError("automaker action year does not match settlement")
+        if event_scenario is not None:
+            if phase is not Phase.Y2_Q4:
+                raise ValueError("event scenarios only settle in Y2_Q4")
+            if set(event_responses or {}) != set(MAINLAND_PROVINCE_CODES):
+                raise ValueError("event settlement requires 31 province responses")
+        elif event_responses:
+            raise ValueError("event responses require an approved scenario")
+        event_exposures = self.event_exposure(event_scenario) if event_scenario else {}
+        matches = coordination_matches or []
         states: dict[str, ProvinceState] = {}
         contributions: dict[str, MechanismContribution] = {}
         thresholds: dict[str, FixedVariableThreshold] = {}
@@ -264,6 +377,142 @@ class ChinaPolicyEnv:
             )
             facility_values.append(facility)
             local_support = 100 * action.overall_support_intensity
+            response = (event_responses or {}).get(code)
+            exposure = event_exposures.get(code, 0)
+            effective_consumer = action.subsidy_mix.consumer
+            effective_fixed = action.subsidy_mix.fixed_cost
+            effective_variable = action.subsidy_mix.variable_cost
+            if response:
+                effective_consumer += response.subsidy_mix_delta.consumer
+                effective_fixed += response.subsidy_mix_delta.fixed_cost
+                effective_variable += response.subsidy_mix_delta.variable_cost
+                effective_mix = (effective_consumer, effective_fixed, effective_variable)
+                if any(value < -1e-9 or value > 1 + 1e-9 for value in effective_mix):
+                    raise ValueError("event response produces an invalid effective subsidy mix")
+                if abs(sum(effective_mix) - 1) > 1e-6:
+                    raise ValueError("event response violates subsidy mix conservation")
+            event_demand_terms: list[MechanismTerm] = []
+            event_industry_terms: list[MechanismTerm] = []
+            if event_scenario:
+                if event_scenario.template_id is EventTemplateId.OIL_PRICE_RISE:
+                    event_demand_terms.append(
+                        MechanismTerm(
+                            name="oil_relative_cost_advantage",
+                            input_value=exposure,
+                            coefficient=12,
+                            contribution=12 * exposure,
+                        )
+                    )
+                elif event_scenario.template_id is EventTemplateId.OIL_PRICE_FALL:
+                    event_demand_terms.append(
+                        MechanismTerm(
+                            name="oil_relative_cost_advantage",
+                            input_value=exposure,
+                            coefficient=-12,
+                            contribution=-12 * exposure,
+                        )
+                    )
+                elif event_scenario.template_id is EventTemplateId.INTELLIGENT_DRIVING_UPGRADE:
+                    event_demand_terms.extend(
+                        [
+                            MechanismTerm(
+                                name="intelligent_driving_acceptance",
+                                input_value=exposure,
+                                coefficient=4,
+                                contribution=4 * exposure,
+                            ),
+                            MechanismTerm(
+                                name="technology_market_adaptation",
+                                input_value=exposure,
+                                coefficient=2,
+                                contribution=2 * exposure,
+                            ),
+                        ]
+                    )
+                    event_industry_terms.append(
+                        MechanismTerm(
+                            name="intelligent_driving_industry_activity",
+                            input_value=exposure,
+                            coefficient=10,
+                            contribution=10 * exposure,
+                        )
+                    )
+                elif event_scenario.template_id is EventTemplateId.BATTERY_NODE_UPGRADE_SICHUAN:
+                    event_industry_terms.extend(
+                        [
+                            MechanismTerm(
+                                name="battery_distance_relief",
+                                input_value=exposure,
+                                coefficient=6,
+                                contribution=6 * exposure,
+                            ),
+                            MechanismTerm(
+                                name="battery_logistics_relief",
+                                input_value=exposure,
+                                coefficient=4,
+                                contribution=4 * exposure,
+                            ),
+                        ]
+                    )
+                elif event_scenario.template_id is EventTemplateId.L3_ENTERPRISE_LIABILITY_INCREASE:
+                    event_demand_terms.extend(
+                        [
+                            MechanismTerm(
+                                name="l3_liability_clarity_acceptance",
+                                input_value=exposure,
+                                coefficient=6,
+                                contribution=6 * exposure,
+                            ),
+                            MechanismTerm(
+                                name="l3_liability_acceptance_drag",
+                                input_value=exposure,
+                                coefficient=-2,
+                                contribution=-2 * exposure,
+                            ),
+                        ]
+                    )
+                    event_industry_terms.append(
+                        MechanismTerm(
+                            name="l3_enterprise_liability_cost",
+                            input_value=exposure,
+                            coefficient=-3,
+                            contribution=-3 * exposure,
+                        )
+                    )
+            response_demand = 0.0
+            response_industry = 0.0
+            peer_effect = 0.0
+            coordination_effect = sum(
+                item.contribution
+                for item in matches
+                if code in {item.left_province_code, item.right_province_code}
+                and item.status is CoordinationStatus.MATCHED
+            )
+            if response:
+                response_effect = 4 * response.response_intensity * exposure
+                if response.policy_focus is EventPolicyFocus.CONSUMER_SUPPORT:
+                    response_demand = response_effect
+                elif response.policy_focus in {
+                    EventPolicyFocus.FIXED_COST_SUPPORT,
+                    EventPolicyFocus.VARIABLE_COST_SUPPORT,
+                    EventPolicyFocus.SUPPLY_CHAIN_COORDINATION,
+                }:
+                    response_industry = response_effect
+                elif response.policy_focus is EventPolicyFocus.REGULATORY_PILOT:
+                    response_demand = response_effect / 2
+                    response_industry = response_effect / 2
+                aligned = sum(
+                    1
+                    for peer in response.observed_peer_codes
+                    if peer in (event_responses or {})
+                    and (event_responses or {})[peer].policy_focus is response.policy_focus
+                )
+                peer_effect = (
+                    3
+                    * response.response_intensity
+                    * exposure
+                    * (aligned / max(1, len(response.observed_peer_codes)))
+                )
             demand_terms = [
                 MechanismTerm(
                     name="consumer_wtp",
@@ -273,11 +522,9 @@ class ChinaPolicyEnv:
                 ),
                 MechanismTerm(
                     name="consumer_subsidy",
-                    input_value=action.overall_support_intensity * action.subsidy_mix.consumer,
+                    input_value=action.overall_support_intensity * effective_consumer,
                     coefficient=27,
-                    contribution=27
-                    * action.overall_support_intensity
-                    * action.subsidy_mix.consumer,
+                    contribution=27 * action.overall_support_intensity * effective_consumer,
                 ),
                 MechanismTerm(
                     name="automaker_sales",
@@ -291,6 +538,19 @@ class ChinaPolicyEnv:
                     coefficient=20,
                     contribution=20 * profile.charging_infrastructure_index,
                 ),
+                *event_demand_terms,
+                MechanismTerm(
+                    name="event_policy_response",
+                    input_value=response.response_intensity if response else 0,
+                    coefficient=4,
+                    contribution=response_demand,
+                ),
+                MechanismTerm(
+                    name="peer_event_diffusion",
+                    input_value=exposure,
+                    coefficient=3,
+                    contribution=peer_effect if response_demand else 0,
+                ),
             ]
             industry_terms = [
                 MechanismTerm(
@@ -301,19 +561,15 @@ class ChinaPolicyEnv:
                 ),
                 MechanismTerm(
                     name="fixed_cost_support",
-                    input_value=action.overall_support_intensity * action.subsidy_mix.fixed_cost,
+                    input_value=action.overall_support_intensity * effective_fixed,
                     coefficient=25,
-                    contribution=25
-                    * action.overall_support_intensity
-                    * action.subsidy_mix.fixed_cost,
+                    contribution=25 * action.overall_support_intensity * effective_fixed,
                 ),
                 MechanismTerm(
                     name="variable_cost_support",
-                    input_value=action.overall_support_intensity * action.subsidy_mix.variable_cost,
+                    input_value=action.overall_support_intensity * effective_variable,
                     coefficient=20,
-                    contribution=20
-                    * action.overall_support_intensity
-                    * action.subsidy_mix.variable_cost,
+                    contribution=20 * action.overall_support_intensity * effective_variable,
                 ),
                 MechanismTerm(
                     name="battery_proximity",
@@ -326,6 +582,25 @@ class ChinaPolicyEnv:
                     input_value=min(1, facility),
                     coefficient=15,
                     contribution=15 * min(1, facility),
+                ),
+                *event_industry_terms,
+                MechanismTerm(
+                    name="event_policy_response",
+                    input_value=response.response_intensity if response else 0,
+                    coefficient=4,
+                    contribution=response_industry,
+                ),
+                MechanismTerm(
+                    name="peer_event_diffusion",
+                    input_value=exposure,
+                    coefficient=3,
+                    contribution=peer_effect if response_industry else 0,
+                ),
+                MechanismTerm(
+                    name="province_coordination_effect",
+                    input_value=coordination_effect / 5,
+                    coefficient=5,
+                    contribution=coordination_effect,
                 ),
             ]
             demand_contribution = self._contribution(
@@ -359,14 +634,19 @@ class ChinaPolicyEnv:
                 industry_activity_index=industry,
                 development_index=province_development_index(demand, industry),
                 fiscal_pressure_index=fiscal_pressure,
+                event_exposure_index=_clamp(exposure * 100),
+                event_response_effect_index=_clamp(
+                    response_demand + response_industry + peer_effect + coordination_effect
+                ),
                 last_action_id=action.action_id,
+                last_event_response_id=response.response_id if response else None,
             )
             contributions[f"{code}:demand"] = demand_contribution
             contributions[f"{code}:industry"] = industry_contribution
             thresholds[code] = fixed_variable_cost_threshold(
                 code,
-                action.overall_support_intensity * action.subsidy_mix.fixed_cost,
-                action.overall_support_intensity * action.subsidy_mix.variable_cost,
+                action.overall_support_intensity * effective_fixed,
+                action.overall_support_intensity * effective_variable,
             )
         automaker_states: dict[str, AutomakerState] = {}
         for automaker_id, action in automaker_actions.items():
@@ -386,6 +666,21 @@ class ChinaPolicyEnv:
                 + 0.25 * self.profiles[item.province_code].logistics_cost_index
                 for item in action.province_market_actions
             )
+            event_roi_delta = 0.0
+            if event_scenario:
+                mean_exposure = fmean(event_exposures.values())
+                if event_scenario.template_id is EventTemplateId.INTELLIGENT_DRIVING_UPGRADE:
+                    event_roi_delta = 5 * mean_exposure
+                elif event_scenario.template_id is EventTemplateId.BATTERY_NODE_UPGRADE_SICHUAN:
+                    event_roi_delta = 4 * mean_exposure
+                elif event_scenario.template_id is EventTemplateId.L3_ENTERPRISE_LIABILITY_INCREASE:
+                    pilot_values = [
+                        response.response_intensity
+                        for response in (event_responses or {}).values()
+                        if response.policy_focus is EventPolicyFocus.REGULATORY_PILOT
+                    ]
+                    pilot_buffer = fmean(pilot_values) if pilot_values else 0
+                    event_roi_delta = -8 * mean_exposure * (1 - 0.30 * pilot_buffer)
             automaker_states[automaker_id] = AutomakerState(
                 automaker_id=automaker_id,
                 phase=phase,
@@ -396,6 +691,7 @@ class ChinaPolicyEnv:
                         + 0.30 * profile.profitability_index
                         + 0.25 * (1 - operating / 100)
                     )
+                    + event_roi_delta
                 ),
                 sales_activity_index=_clamp(mean_sales * 100),
                 facility_activity_index=_clamp(facility / 3 * 100),

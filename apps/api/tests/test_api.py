@@ -17,9 +17,10 @@ def _client(tmp_path):
 
 def test_complete_v3_api_flow_and_idempotency(tmp_path):
     with _client(tmp_path) as client:
-        assert client.get("/api/health").json()["version"] == "0.4.0"
+        assert client.get("/api/health").json()["version"] == "0.5.0"
         assert len(client.get("/api/meta/provinces").json()) == 31
         assert len(client.get("/api/meta/automakers").json()) == 10
+        assert len(client.get("/api/meta/event-scenarios").json()) == 5
         regions = client.get("/api/meta/policy-regions").json()
         assert [len(item["province_codes"]) for item in regions] == [12, 10, 9]
         assert [item["central_share"] for item in regions] == [0.95, 0.90, 0.85]
@@ -43,7 +44,7 @@ def test_complete_v3_api_flow_and_idempotency(tmp_path):
         )
         world = created.json()
         experiment_id = world["experiment_id"]
-        assert world["schema_version"] == "world-state-v4"
+        assert world["schema_version"] == "world-state-v5"
         assert len(world["province_personas"]) == 31 and len(world["automaker_profiles"]) == 10
         assert (
             client.post(
@@ -74,7 +75,10 @@ def test_complete_v3_api_flow_and_idempotency(tmp_path):
         )
         branch = client.post(
             f"/api/experiments/{experiment_id}/branches",
-            json={"intervention_id": intervention.json()["intervention_id"]},
+            json={
+                "kind": "policy_intervention",
+                "intervention_id": intervention.json()["intervention_id"],
+            },
         )
         assert branch.status_code == 201
         branches = client.get(f"/api/experiments/{experiment_id}/branches")
@@ -89,20 +93,55 @@ def test_complete_v3_api_flow_and_idempotency(tmp_path):
         assert (
             client.post(
                 f"/api/experiments/{experiment_id}/run",
+                json={"until_phase": "Y2_Q2", "branch_id": "control"},
+            ).status_code
+            == 200
+        )
+        assert (
+            client.post(
+                f"/api/branches/{branch.json()['branch_id']}/run", json={"until_phase": "Y2_Q2"}
+            ).status_code
+            == 200
+        )
+        blocked = client.post(
+            f"/api/experiments/{experiment_id}/run",
+            json={"until_phase": "Y2_Q3", "branch_id": "control"},
+        )
+        assert blocked.status_code == 403
+        assert blocked.json()["detail"]["error_code"] == "EVENT_APPROVAL_REQUIRED"
+        scenario = client.post(
+            f"/api/experiments/{experiment_id}/event-scenario/approve",
+            json={"template_id": "oil_price_rise", "intensity": "medium"},
+            headers={"Idempotency-Key": "event-once"},
+        )
+        assert scenario.status_code == 200 and scenario.json()["activation_phase"] == "Y2_Q3"
+        assert (
+            client.post(
+                f"/api/experiments/{experiment_id}/event-scenario/approve",
+                json={"template_id": "oil_price_rise", "intensity": "medium"},
+                headers={"Idempotency-Key": "event-once"},
+            ).json()["scenario_id"]
+            == scenario.json()["scenario_id"]
+        )
+        assert (
+            client.post(
+                f"/api/experiments/{experiment_id}/run",
                 json={"until_phase": "Y2_Q4", "branch_id": "control"},
             ).status_code
             == 200
         )
         assert (
             client.post(
-                f"/api/branches/{branch.json()['branch_id']}/run", json={"until_phase": "Y2_Q4"}
+                f"/api/branches/{branch.json()['branch_id']}/run",
+                json={"until_phase": "Y2_Q4"},
             ).status_code
             == 200
         )
         comparison = client.get(f"/api/experiments/{experiment_id}/compare")
         assert (
-            comparison.status_code == 200 and comparison.json()["schema_version"] == "comparison-v4"
+            comparison.status_code == 200 and comparison.json()["schema_version"] == "comparison-v5"
         )
+        assert comparison.json()["active_difference_proof"]["active_difference"] == "policy"
         assert len(comparison.json()["province_strategy_transitions"]) == 31
         assert len(comparison.json()["automaker_strategy_transitions"]) == 10
         assert client.get(f"/api/experiments/{experiment_id}/automakers/byd").status_code == 200
@@ -140,3 +179,48 @@ def test_reject_intervention_is_single_branch(tmp_path):
             and final.json()["central_review"]["review_mode"] == "single_branch"
         )
         assert client.get(f"/api/experiments/{experiment_id}/compare").status_code == 409
+
+
+def test_event_counterfactual_api_keeps_policy_identical(tmp_path):
+    with _client(tmp_path) as client:
+        policy = client.get("/api/meta/default-policy").json()
+        world = client.post(
+            "/api/experiments",
+            json={
+                "objective": "事件反事实接口验证",
+                "comparison_mode": "event_counterfactual",
+            },
+        ).json()
+        experiment_id = world["experiment_id"]
+        client.post(f"/api/experiments/{experiment_id}/directive/approve", json={"policy": policy})
+        client.post(f"/api/experiments/{experiment_id}/run", json={"until_phase": "YEAR1_REVIEW"})
+        branch = client.post(
+            f"/api/experiments/{experiment_id}/branches",
+            json={"kind": "event_counterfactual"},
+        ).json()
+        client.post(
+            f"/api/experiments/{experiment_id}/run",
+            json={"until_phase": "Y2_Q2", "branch_id": "control"},
+        )
+        client.post(f"/api/branches/{branch['branch_id']}/run", json={"until_phase": "Y2_Q2"})
+        approved = client.post(
+            f"/api/experiments/{experiment_id}/event-scenario/approve",
+            json={"template_id": "battery_node_upgrade_sichuan", "intensity": "high"},
+        )
+        assert approved.status_code == 200
+        client.post(
+            f"/api/experiments/{experiment_id}/run",
+            json={"until_phase": "Y2_Q4", "branch_id": "control"},
+        )
+        client.post(f"/api/branches/{branch['branch_id']}/run", json={"until_phase": "Y2_Q4"})
+        comparison = client.get(f"/api/experiments/{experiment_id}/compare").json()
+        assert comparison["policy_diff"] == []
+        assert comparison["event_diff"]["changed"]
+        assert comparison["active_difference_proof"]["active_difference"] == "event"
+        control = client.get(f"/api/experiments/{experiment_id}/state").json()
+        treatment = client.get(
+            f"/api/experiments/{experiment_id}/state",
+            params={"branch_id": branch["branch_id"]},
+        ).json()
+        assert len(control["province_event_signals"]) == 0
+        assert len(treatment["province_event_signals"]) == 31

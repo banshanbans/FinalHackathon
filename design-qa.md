@@ -1,5 +1,35 @@
 # PolicyScope Design QA
 
+## V3.1 verification status
+
+> Contract: 事件驱动省际协同增量
+> QA date: 2026-08-12
+> Runtime: React Router + V3.1 REST/SSE + 本地标准地图资源
+> Data / mechanism / seed: `nev-baseline-2025-v1` / `nev-policy-env-v2` / `20260812`
+> V3.1 final result: **passed**
+
+正式 React/FastAPI 运行时已分别走通政策干预与事件反事实，并在 1536×1024、1440×900、1280 三画布验证 Y2_Q3 事件实验台、`event_exposure` 与 `province_interaction` 图层、省级事件链、模式化 Compare 和不可逆审批状态。
+
+冻结证据：
+
+| 检查项 | 当前状态 |
+|---|---|
+| New 两模式选择 | Passed |
+| Intervention 政策/事件分流 | Passed |
+| Live Y2_Q2 事件实验台 | Passed |
+| 事件暴露与省际交互图层 | Passed |
+| Province 事件信号/响应/协作 | Passed |
+| Compare 唯一主动差异证明 | Passed |
+| 两条完整 E2E | Passed：两种模式均覆盖三画布 |
+| 三画布无遮挡与无横向滚动 | Passed：E2E 逐画布校验 `scrollWidth` |
+| 禁止现实预测式文案扫描 | Passed：正式前端零命中 |
+
+补充可靠性证据：完整缓存矩阵为 2 种模式 × 5 个模板 × 3 档强度，共 30 个场景、2047 个去重缓存对象；连续三轮政策模式均为 281 hit / 0 miss，事件模式均为 219 hit / 0 miss。`make test`、`make lint`、`make validate-data` 和 `make smoke` 均通过。V3.0 的 passed 结论只证明冻结基线，未被用来替代本节证据。
+
+三画布关键截图位于 `output/playwright/v3/chromium-{1536,1440,1280}/`：`09-compare-complete.png`、`12-event-lab.png` 和 `13-event-counterfactual-compare.png`。1280 画布路由切换已恢复到页面顶部；地图、事件审批和 ΔGap 摘要没有核心遮挡。
+
+---
+
 ## V3.0 final result
 
 > Contract: 新能源汽车补贴与产业布局地图推演

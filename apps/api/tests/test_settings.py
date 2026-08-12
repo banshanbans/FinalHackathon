@@ -4,6 +4,12 @@ from policyscope_api.settings import Settings
 from simulation.llm.live_provider import LiveLLMProvider
 
 
+def test_local_default_uses_fake_mode() -> None:
+    settings = Settings(_env_file=None)
+
+    assert settings.run_mode.value == "fake"
+
+
 def test_deepseek_role_defaults_and_secret_redaction() -> None:
     settings = Settings(_env_file=None, run_mode="live", llm_api_key="sensitive-test-key")
 

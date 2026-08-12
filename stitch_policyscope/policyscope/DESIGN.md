@@ -1,6 +1,6 @@
 ---
 name: PolicyScope
-version: V3.0-implemented
+version: V3.1-implemented
 status: implemented-design-qa-passed
 colors:
   surface: '#f8f9ff'
@@ -219,3 +219,12 @@ Forbidden content includes:
 - At 1280px, the context rail may move below the map; the map cannot be clipped or replaced with a thumbnail.
 - No page-level horizontal scrolling.
 - Mobile is not a P0 deliverable.
+
+## V3.1 Event Interaction Addendum
+
+- Event Lab uses the existing white institutional card, indigo approval action and muted scenario disclaimer; event families do not introduce alarm-red or news-ticker styling.
+- The interaction sequence is a compact four-step strip: event, province signal, authorized Peer response, coordination match. It must remain secondary to the China map.
+- `event_exposure` uses the existing sequential indigo/teal scale. `province_interaction` uses response intensity for province fill; matched relations use success teal and unmatched proposals use amber text without a success line.
+- Comparison proof is a four-cell evidence row before maps: active difference, parent Checkpoint, same policy, same event.
+- Event counterfactual labels are “无事件基线 / 事件情景”; policy comparison labels remain “原始方案 / 干预方案”.
+- Scenario approval is visually irreversible after submission: controls disabled, lock status visible, and no edit affordance.

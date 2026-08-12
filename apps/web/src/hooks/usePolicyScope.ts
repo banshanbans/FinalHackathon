@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 
 import { policyScopeApi } from "../api/client";
-import type { Branch, CentralIntervention, ComparisonResult, Policy, RunMode, SimulationEvent, WorldState } from "../types";
+import type { Branch, CentralIntervention, ComparisonMode, ComparisonResult, EventIntensity, EventScenario, EventTemplateId, Policy, RunMode, SimulationEvent, WorldState } from "../types";
 
 function experimentIdFromPath(pathname: string) { return pathname.match(/^\/experiments\/([^/]+)\//)?.[1] ?? null; }
 
@@ -16,6 +16,7 @@ export function usePolicyScope() {
   const [branch, setBranch] = useState<Branch | null>(null);
   const [intervention, setIntervention] = useState<CentralIntervention | null>(null);
   const [comparison, setComparison] = useState<ComparisonResult | null>(null);
+  const [eventScenario, setEventScenario] = useState<EventScenario | null>(null);
   const [events, setEvents] = useState<SimulationEvent[]>([]);
   const [busyLabel, setBusyLabel] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -25,14 +26,15 @@ export function usePolicyScope() {
 
   const profilesQuery = useQuery({ queryKey: ["province-profile-v4"], queryFn: policyScopeApi.listProvinces, staleTime: Infinity });
   const automakersQuery = useQuery({ queryKey: ["automaker-profile-v1"], queryFn: policyScopeApi.listAutomakers, staleTime: Infinity });
+  const eventTemplatesQuery = useQuery({ queryKey: ["event-scenario-v1"], queryFn: policyScopeApi.listEventScenarios, staleTime: Infinity });
   const defaultPolicyQuery = useQuery({ queryKey: ["policy-v3"], queryFn: policyScopeApi.defaultPolicy, staleTime: Infinity });
   const healthQuery = useQuery({ queryKey: ["health-v3"], queryFn: policyScopeApi.health, staleTime: 30_000 });
 
   useEffect(() => {
     if (!routeId || world?.experiment_id === routeId) { setHydrating(false); return; }
     setHydrating(true); setError(null);
-    void Promise.all([policyScopeApi.getState(routeId), policyScopeApi.listBranches(routeId)])
-      .then(async ([nextWorld, branches]) => {
+    void Promise.all([policyScopeApi.getState(routeId), policyScopeApi.listBranches(routeId), policyScopeApi.getEventScenario(routeId)])
+      .then(async ([nextWorld, branches, scenario]) => {
         const treatmentBranch = branches.find((item) => item.kind === "treatment") ?? null;
         const nextTreatment = treatmentBranch
           ? await policyScopeApi.getState(routeId, treatmentBranch.branch_id)
@@ -41,6 +43,7 @@ export function usePolicyScope() {
         setControl(nextWorld);
         setBranch(treatmentBranch);
         setTreatment(nextTreatment);
+        setEventScenario(scenario);
       })
       .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "推演加载失败"))
       .finally(() => setHydrating(false));
@@ -57,7 +60,7 @@ export function usePolicyScope() {
       if (seen.current.has(event.event_id)) return;
       seen.current.add(event.event_id); setEvents((items) => [...items.slice(-119), event]);
     };
-    ["phase.completed", "province.decision.completed", "automaker.decision.completed", "province.feedback.completed", "central.intervention.proposed", "comparison.completed"].forEach((type) => source.addEventListener(type, handler as EventListener));
+    ["phase.completed", "province.decision.completed", "automaker.decision.completed", "province.feedback.completed", "central.intervention.proposed", "scenario.awaiting_approval", "scenario.approved", "scenario.activated", "province.event_signal.completed", "province.event_signal.fallback", "province.event_response.completed", "province.event_response.fallback", "province.coordination.matched", "province.coordination.unmatched", "environment.event_propagated", "comparison.completed"].forEach((type) => source.addEventListener(type, handler as EventListener));
     return () => { source.close(); setConnectionStatus("idle"); };
   }, [routeId, world?.experiment_id, world?.status]);
 
@@ -66,12 +69,15 @@ export function usePolicyScope() {
     try { return await operation(); } catch (reason) { setError(reason instanceof Error ? reason.message : "操作失败"); throw reason; } finally { setBusyLabel(null); }
   }, []);
 
-  const createDraft = (objective: string, mode: RunMode) => execute("中央 Agent 正在生成政策草案…", async () => { const next = await policyScopeApi.createExperiment(objective, mode); setWorld(next); setControl(null); setTreatment(null); setBranch(null); setComparison(null); seen.current.clear(); setEvents([]); return next; });
+  const createDraft = (objective: string, mode: RunMode, comparisonMode: ComparisonMode = "policy_intervention") => execute("中央 Agent 正在生成政策草案…", async () => { const next = await policyScopeApi.createExperiment(objective, mode, comparisonMode); setWorld(next); setControl(null); setTreatment(null); setBranch(null); setComparison(null); setEventScenario(null); seen.current.clear(); setEvents([]); return next; });
   const approveDirective = (policy: Policy) => execute("正在提交人工审批…", async () => { if (!world) throw new Error("请先生成草案"); const next = await policyScopeApi.approveDirective(world.experiment_id, policy); setWorld(next); return next; });
   const runYearOne = () => execute("正在运行首年四季度与年末复盘…", async () => { if (!world) throw new Error("请先审批政策"); const next = await policyScopeApi.runExperiment(world.experiment_id, "YEAR1_REVIEW"); setWorld(next); return next; });
-  const approveProposal = (proposalId: string, policy: Policy) => execute("正在批准干预并派生同源分支…", async () => { if (!world) throw new Error("请先完成首年复盘"); const approved = await policyScopeApi.approveIntervention(world.experiment_id, proposalId, policy); const created = await policyScopeApi.createBranch(world.experiment_id, approved.intervention_id); setIntervention(approved); setBranch(created); return created; });
+  const approveProposal = (proposalId: string, policy: Policy) => execute("正在批准干预并派生同源分支…", async () => { if (!world) throw new Error("请先完成首年复盘"); const approved = await policyScopeApi.approveIntervention(world.experiment_id, proposalId, policy); const created = await policyScopeApi.createPolicyBranch(world.experiment_id, approved.intervention_id); setIntervention(approved); setBranch(created); return created; });
+  const confirmEventCounterfactual = () => execute("正在派生同政策事件分支…", async () => { if (!world) throw new Error("请先完成首年复盘"); const created = await policyScopeApi.createEventBranches(world.experiment_id); setBranch(created); return created; });
   const rejectProposal = (proposalId: string, reason: string) => execute("正在保留原始方案…", async () => { if (!world) throw new Error("请先完成首年复盘"); const next = await policyScopeApi.rejectIntervention(world.experiment_id, proposalId, reason); setWorld(next); setBranch(null); return next; });
-  const runComparison = () => execute("正在运行次年同源 A/B…", async () => { if (!world || !branch) throw new Error("请先批准干预并创建分支"); const [c, t] = await Promise.all([policyScopeApi.runExperiment(world.experiment_id, "Y2_Q4", "control"), policyScopeApi.runBranch(branch.branch_id)]); const result = await policyScopeApi.compare(world.experiment_id); setControl(c); setTreatment(t); setComparison(result); setWorld(c); return result; });
+  const runToEventGate = () => execute("正在运行两个分支至 Y2_Q2…", async () => { if (!world || !branch) throw new Error("请先创建同源分支"); const [c, t] = await Promise.all([policyScopeApi.runExperiment(world.experiment_id, "Y2_Q2", "control"), policyScopeApi.runBranch(branch.branch_id, "Y2_Q2")]); setControl(c); setTreatment(t); setWorld(c); return [c, t] as const; });
+  const approveEvent = (templateId: EventTemplateId, intensity: EventIntensity) => execute("正在原子批准事件情景…", async () => { if (!world) throw new Error("尚未创建实验"); const scenario = await policyScopeApi.approveEventScenario(world.experiment_id, templateId, intensity); setEventScenario(scenario); const [c, t] = branch ? await Promise.all([policyScopeApi.getState(world.experiment_id), policyScopeApi.getState(world.experiment_id, branch.branch_id)]) : [world, null]; setWorld(c); setControl(c); setTreatment(t); return scenario; });
+  const runComparison = () => execute("正在执行事件交互、环境传播与同源比较…", async () => { if (!world || !branch) throw new Error("请先创建同源分支"); if (!eventScenario) throw new Error("请先批准事件情景"); const [c, t] = await Promise.all([policyScopeApi.runExperiment(world.experiment_id, "Y2_Q4", "control"), policyScopeApi.runBranch(branch.branch_id)]); const result = await policyScopeApi.compare(world.experiment_id); setControl(c); setTreatment(t); setComparison(result); setWorld(c); return result; });
   const runSingleBranch = () => execute("正在运行原始方案次年…", async () => { if (!world) throw new Error("请先拒绝或批准干预"); const next = await policyScopeApi.runExperiment(world.experiment_id, "COMPLETE", "control"); setControl(next); setWorld(next); return next; });
   const loadComparison = useCallback(() => execute("正在加载 A/B 对照…", async () => { if (!world) throw new Error("尚未创建实验"); const result = await policyScopeApi.compare(world.experiment_id); const [c, t] = await Promise.all([policyScopeApi.getState(world.experiment_id, result.control_branch_id), policyScopeApi.getState(world.experiment_id, result.treatment_branch_id)]); setControl(c); setTreatment(t); setComparison(result); return result; }), [execute, world]);
 
@@ -83,16 +89,16 @@ export function usePolicyScope() {
   }, [branch, comparison, loadComparison, location.pathname, treatment?.phase, world?.phase]);
 
   const loadEvidence = useCallback((id: string) => { if (!world) throw new Error("尚未创建实验"); return policyScopeApi.evidence(world.experiment_id, id); }, [world]);
-  const resetExperiment = () => { setWorld(null); setControl(null); setTreatment(null); setBranch(null); setIntervention(null); setComparison(null); setEvents([]); setError(null); };
+  const resetExperiment = () => { setWorld(null); setControl(null); setTreatment(null); setBranch(null); setIntervention(null); setComparison(null); setEventScenario(null); setEvents([]); setError(null); };
 
   return {
-    profiles: profilesQuery.data ?? [], automakers: automakersQuery.data ?? [], defaultPolicy: defaultPolicyQuery.data ?? null,
-    metadataLoading: profilesQuery.isLoading || automakersQuery.isLoading || defaultPolicyQuery.isLoading,
-    metadataError: profilesQuery.error ?? automakersQuery.error ?? defaultPolicyQuery.error,
+    profiles: profilesQuery.data ?? [], automakers: automakersQuery.data ?? [], eventTemplates: eventTemplatesQuery.data ?? [], defaultPolicy: defaultPolicyQuery.data ?? null,
+    metadataLoading: profilesQuery.isLoading || automakersQuery.isLoading || eventTemplatesQuery.isLoading || defaultPolicyQuery.isLoading,
+    metadataError: profilesQuery.error ?? automakersQuery.error ?? eventTemplatesQuery.error ?? defaultPolicyQuery.error,
     configuredRunMode: healthQuery.data?.run_mode ?? "cache" as RunMode,
-    world, control, treatment, branch, intervention, comparison, events, busyLabel, error, hydrating, connectionStatus,
-    createDraft, approveDirective, runYearOne, approveProposal, rejectProposal,
-    runComparison, runSingleBranch, loadComparison, loadEvidence, resetExperiment,
+    world, control, treatment, branch, intervention, comparison, eventScenario, events, busyLabel, error, hydrating, connectionStatus,
+    createDraft, approveDirective, runYearOne, approveProposal, confirmEventCounterfactual, rejectProposal,
+    runToEventGate, approveEvent, runComparison, runSingleBranch, loadComparison, loadEvidence, resetExperiment,
   };
 }
 

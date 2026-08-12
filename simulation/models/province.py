@@ -23,7 +23,7 @@ from simulation.models.provenance import ProvenanceRecord
 
 
 class ProvinceProfile(DomainModel):
-    schema_version: Literal["province-profile-v4"] = "province-profile-v4"
+    schema_version: Literal["province-profile-v5"] = "province-profile-v5"
     province_code: str = Field(pattern=r"^\d{2}$")
     name: str
     short_name: str
@@ -46,6 +46,10 @@ class ProvinceProfile(DomainModel):
     urbanization_index: float = Field(ge=0, le=1)
     vehicle_consumption_index: float = Field(ge=0, le=1)
     nev_penetration_index: float = Field(ge=0, le=1)
+    intelligent_driving_readiness_index: float = Field(ge=0, le=1)
+    regulatory_execution_capacity_index: float = Field(ge=0, le=1)
+    oil_price_sensitivity_index: float = Field(ge=0, le=1)
+    supply_chain_complementarity_index: float = Field(ge=0, le=1)
     peer_province_codes: list[str] = Field(min_length=3, max_length=5)
     data_quality: DataQuality
     provenance: dict[str, ProvenanceRecord]
@@ -79,7 +83,7 @@ class ProvinceDecisionPersona(DomainModel):
     primary_type: ProvincePersonaType
     secondary_type: ProvincePersonaType | None = None
     key_constraints: list[ProvinceConstraint] = Field(min_length=1, max_length=3)
-    profile_version: Literal["province-profile-v4"] = "province-profile-v4"
+    profile_version: Literal["province-profile-v5"] = "province-profile-v5"
     network_version: str = "nev-peer-network-v1"
     method_version: str = "province-persona-method-v2"
     data_quality: Literal[DataQuality.PROXY, DataQuality.DEMO] = DataQuality.PROXY
@@ -199,7 +203,7 @@ class ProvinceFeedback(DomainModel):
 
 
 class ProvinceState(DomainModel):
-    schema_version: Literal["province-state-v4"] = "province-state-v4"
+    schema_version: Literal["province-state-v5"] = "province-state-v5"
     province_code: str = Field(pattern=r"^\d{2}$")
     phase: Phase = Phase.SETUP
     local_matching_burden_index: float = Field(default=0, ge=0, le=100)
@@ -209,5 +213,8 @@ class ProvinceState(DomainModel):
     industry_activity_index: float = Field(default=50, ge=0, le=100)
     development_index: float = Field(default=50, ge=0, le=100)
     fiscal_pressure_index: float = Field(default=50, ge=0, le=100)
+    event_exposure_index: float = Field(default=0, ge=0, le=100)
+    event_response_effect_index: float = Field(default=0, ge=0, le=100)
     last_action_id: str | None = None
     last_feedback_id: str | None = None
+    last_event_response_id: str | None = None

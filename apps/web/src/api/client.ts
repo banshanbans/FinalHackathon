@@ -1,4 +1,4 @@
-import type { AuditListResponse, AuditRecord, AuditRecordType, AutomakerDetail, AutomakerMeta, Branch, CentralIntervention, ComparisonResult, EvidenceRecord, Policy, ProvinceAgentDetail, ProvinceProfile, RunMode, SimulationEvent, WorldState } from "../types";
+import type { AuditListResponse, AuditRecord, AuditRecordType, AutomakerDetail, AutomakerMeta, Branch, CentralIntervention, ComparisonMode, ComparisonResult, EventIntensity, EventScenario, EventScenarioTemplate, EventTemplateId, EvidenceRecord, Policy, ProvinceAgentDetail, ProvinceProfile, RunMode, SimulationEvent, WorldState } from "../types";
 
 const configuredBase = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, "");
 const API_ROOT = configuredBase ? `${configuredBase}/api` : "/api";
@@ -19,16 +19,20 @@ export const policyScopeApi = {
   health: () => request<{ status: string; run_mode: RunMode; version: string }>("/health"),
   listProvinces: () => request<ProvinceProfile[]>("/meta/provinces"),
   listAutomakers: () => request<AutomakerMeta[]>("/meta/automakers"),
+  listEventScenarios: () => request<EventScenarioTemplate[]>("/meta/event-scenarios"),
   defaultPolicy: () => request<Policy>("/meta/default-policy"),
-  createExperiment: (objective: string, runMode: RunMode) => request<WorldState>("/experiments", { method: "POST", headers: keyed("create"), body: JSON.stringify({ objective, run_mode: runMode }) }),
+  createExperiment: (objective: string, runMode: RunMode, comparisonMode: ComparisonMode) => request<WorldState>("/experiments", { method: "POST", headers: keyed("create"), body: JSON.stringify({ objective, run_mode: runMode, comparison_mode: comparisonMode }) }),
   getState: (id: string, branch = "control") => request<WorldState>(`/experiments/${id}/state?branch_id=${branch}`),
   approveDirective: (id: string, policy: Policy) => request<WorldState>(`/experiments/${id}/directive/approve`, { method: "POST", headers: keyed("approve-directive"), body: JSON.stringify({ policy }) }),
   runExperiment: (id: string, phase: Phase, branch = "control") => request<WorldState>(`/experiments/${id}/run`, { method: "POST", headers: keyed(`run-${branch}-${phase}`), body: JSON.stringify({ until_phase: phase, branch_id: branch }) }),
   approveIntervention: (id: string, proposalId: string, policy: Policy) => request<CentralIntervention>(`/experiments/${id}/interventions/${proposalId}/approve`, { method: "POST", headers: keyed("approve-intervention"), body: JSON.stringify({ policy }) }),
   rejectIntervention: (id: string, proposalId: string, reason: string) => request<WorldState>(`/experiments/${id}/interventions/${proposalId}/reject`, { method: "POST", headers: keyed("reject-intervention"), body: JSON.stringify({ reason }) }),
   listBranches: (id: string) => request<Branch[]>(`/experiments/${id}/branches`),
-  createBranch: (id: string, interventionId: string) => request<Branch>(`/experiments/${id}/branches`, { method: "POST", headers: keyed("branch"), body: JSON.stringify({ intervention_id: interventionId }) }),
-  runBranch: (branch: string) => request<WorldState>(`/branches/${branch}/run`, { method: "POST", headers: keyed(`run-${branch}`), body: JSON.stringify({ until_phase: "Y2_Q4" }) }),
+  createPolicyBranch: (id: string, interventionId: string) => request<Branch>(`/experiments/${id}/branches`, { method: "POST", headers: keyed("branch-policy"), body: JSON.stringify({ kind: "policy_intervention", intervention_id: interventionId }) }),
+  createEventBranches: (id: string) => request<Branch>(`/experiments/${id}/branches`, { method: "POST", headers: keyed("branch-event"), body: JSON.stringify({ kind: "event_counterfactual" }) }),
+  runBranch: (branch: string, phase: Phase = "Y2_Q4") => request<WorldState>(`/branches/${branch}/run`, { method: "POST", headers: keyed(`run-${branch}-${phase}`), body: JSON.stringify({ until_phase: phase }) }),
+  getEventScenario: (id: string) => request<EventScenario | null>(`/experiments/${id}/event-scenario`),
+  approveEventScenario: (id: string, templateId: EventTemplateId, intensity: EventIntensity) => request<EventScenario>(`/experiments/${id}/event-scenario/approve`, { method: "POST", headers: keyed("approve-event"), body: JSON.stringify({ template_id: templateId, intensity }) }),
   compare: (id: string) => request<ComparisonResult>(`/experiments/${id}/compare`),
   getProvinceDetail: (id: string, code: string) => request<ProvinceAgentDetail>(`/experiments/${id}/provinces/${code}`),
   getAutomakerDetail: (id: string, automakerId: string) => request<AutomakerDetail>(`/experiments/${id}/automakers/${automakerId}`),

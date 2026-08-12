@@ -1,0 +1,30 @@
+schema_version: nev-policy-mechanism-v2
+formula_version: nev-policy-env-v2
+development_index:
+  demand_weight: 0.50
+  industry_activity_weight: 0.50
+gap:
+  method: equal_weight_normalized_gini
+concentration:
+  method: normalized_hhi
+event_intensity:
+  low: 0.25
+  medium: 0.50
+  high: 0.75
+event_coefficients:
+  oil_price_demand: 12
+  intelligent_driving_demand: 6
+  intelligent_driving_industry: 10
+  battery_node_industry: 10
+  l3_consumer_clarity: 4
+  l3_industry_cost: -3
+  l3_automaker_roi_cost: -8
+  local_response: 4
+  peer_diffusion: 3
+  bilateral_coordination: 5
+constraints:
+  activation_phase: Y2_Q3
+  duration_quarters: 2
+  event_count_per_experiment: 1
+  subsidy_mix_delta_sum: 0
+disclaimer: 所有事件均为冻结机制情景，输出为模拟指数变化，不代表现实事件、法规或价格走势预测。

@@ -1,8 +1,11 @@
+from typing import Annotated, Literal
+
 from pydantic import Field
 
 from simulation.models.base import DomainModel
-from simulation.models.common import Phase, RunMode
+from simulation.models.common import ComparisonMode, Phase, RunMode
 from simulation.models.policy import PolicySchema
+from simulation.models.scenario import EventScenarioSelection
 
 
 class CreateExperimentRequest(DomainModel):
@@ -14,6 +17,7 @@ class CreateExperimentRequest(DomainModel):
     scenario_id: str = "nev_subsidy_default"
     seed: int = 20260812
     run_mode: RunMode | None = None
+    comparison_mode: ComparisonMode = ComparisonMode.POLICY_INTERVENTION
 
 
 class ApproveDirectiveRequest(DomainModel):
@@ -33,8 +37,23 @@ class RejectInterventionRequest(DomainModel):
     reason: str = Field(default="用户保留原始方案", min_length=1, max_length=200)
 
 
-class CreateBranchRequest(DomainModel):
+class PolicyInterventionBranchRequest(DomainModel):
+    kind: Literal["policy_intervention"]
     intervention_id: str
+
+
+class EventCounterfactualBranchRequest(DomainModel):
+    kind: Literal["event_counterfactual"]
+
+
+CreateBranchRequest = Annotated[
+    PolicyInterventionBranchRequest | EventCounterfactualBranchRequest,
+    Field(discriminator="kind"),
+]
+
+
+class ApproveEventScenarioRequest(EventScenarioSelection):
+    pass
 
 
 class RunBranchRequest(DomainModel):

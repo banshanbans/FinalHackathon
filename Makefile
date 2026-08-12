@@ -4,7 +4,7 @@ PY := $(VENV)/bin/python
 PIP := $(VENV)/bin/pip
 NPM_CACHE := $(CURDIR)/.cache/npm
 
-.PHONY: setup setup-backend setup-web dev dev-api dev-web test test-sim test-api test-e2e capture-v3 lint validate-data precompute demo smoke spike-agentsociety clean
+.PHONY: setup setup-backend setup-web dev dev-api start-api dev-web test test-sim test-api test-e2e capture-v3 lint validate-data precompute verify-cache demo smoke spike-agentsociety clean
 
 setup: setup-backend setup-web
 
@@ -21,7 +21,10 @@ dev:
 	@echo "Run 'make dev-api' and 'make dev-web' in separate terminals."
 
 dev-api:
-	PYTHONPATH="$(CURDIR):$(CURDIR)/apps/api/src" $(VENV)/bin/uvicorn policyscope_api.main:app --app-dir apps/api/src --reload --port 8000
+	PYTHONPATH="$(CURDIR):$(CURDIR)/apps/api/src" POLICYSCOPE_RUN_MODE=fake $(VENV)/bin/uvicorn policyscope_api.main:app --app-dir apps/api/src --reload --port 8000
+
+start-api:
+	PYTHONPATH="$(CURDIR):$(CURDIR)/apps/api/src" POLICYSCOPE_RUN_MODE=live $(VENV)/bin/uvicorn policyscope_api.main:app --app-dir apps/api/src --host 0.0.0.0 --port 8000
 
 dev-web:
 	npm --prefix apps/web run dev
@@ -54,6 +57,9 @@ validate-data:
 
 precompute:
 	PYTHONPATH="$(CURDIR):$(CURDIR)/apps/api/src" $(PY) scripts/precompute_demo.py
+
+verify-cache:
+	PYTHONPATH="$(CURDIR):$(CURDIR)/apps/api/src" $(PY) scripts/verify_v31_cache.py
 
 demo:
 	PYTHONPATH="$(CURDIR):$(CURDIR)/apps/api/src" POLICYSCOPE_RUN_MODE=cache $(PY) scripts/smoke_demo.py

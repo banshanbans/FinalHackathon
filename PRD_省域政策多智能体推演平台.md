@@ -576,7 +576,11 @@ CachedLLMProvider
 FakeLLMProvider
 ```
 
+运行环境约束固定为：本地 Web/API 启动只允许 `fake` Mock Provider，线上部署使用 `live` Provider。`cache` 保留给预计算、回归验证和离线可复现流程，不作为本地交互启动模式。服务端运行模式是唯一真相，客户端不得在请求中切换 Provider。
+
 缓存键必须覆盖所有影响输出的输入：Policy、Profile、Persona、上一行动、Peer 摘要、31 省 Offer、公司经营快照、数据/机制/Prompt/Schema/模型/app 版本、阶段、分支和 seed。
+
+V3.1 事件交互缓存还必须覆盖事件模板、强度、事件语义哈希、分支应用范围、交互网络版本、冻结 Round 1 Peer 信号和 `nev-policy-env-v2`；审批时间等非语义交付元数据不得制造 cache miss。
 
 默认比赛场景必须有完整结构化缓存。Live 不得阻塞交付。任何 fallback 都必须显示主体、阶段、分支、原因和替代规则范围。
 
@@ -829,3 +833,38 @@ V2 已完成历史验收；V2.1 代码主体曾实现但最终验证未完成，
 - V2.1 历史 DTO 不得通过字段别名或 UI 映射伪装成 V3。
 - 只有实际实现并通过相应检查的里程碑可以标记完成。
 - 后续只有在实现和验收证据同步更新时，才允许改变本冻结契约或扩展 P0 范围。
+
+---
+
+## 20. V3.1 事件驱动省际协同增量契约
+
+V3.1 在 V3.0 两年推演、人工审批和首年同源 Checkpoint 上增加：
+
+```text
+两分支完成 Y2_Q2
+  → 用户从冻结目录选择并批准一次事件
+  → Y2_Q3 Round 1：31 省发布事件信号
+  → Round 1 全量冻结
+  → Round 2：31 省读取授权 Peer 信号并响应
+  → 环境匹配双向协作、传播事件与 Peer 贡献
+  → Y2_Q4 结算并生成唯一主动差异证明
+```
+
+比较模式在创建实验时冻结：
+
+| 模式 | 政策差异 | 事件差异 | 事件交互调用 |
+|---|---|---|---|
+| `policy_intervention` | 三档比例可不同 | 两分支使用相同事件哈希 | 31 信号 + 31 响应 × 2 |
+| `event_counterfactual` | 两分支政策哈希相同 | Control 无事件，Treatment 有事件 | 仅 Treatment 31 信号 + 31 响应 |
+
+事件目录固定为四川电池节点能力升级、全国智驾能力升级、L3 企业责任提高、国际冲突情景下油价上涨、油价回落；强度固定映射为 0.25/0.50/0.75。目录是机制实验情景，不接入实时新闻、实时油价或随机事件。
+
+省级响应新增 `coordinate` 和六类政策重点。补贴份额调整之和必须为零，应用后各项仍在 0–1 且不改变总体财政规模。互选且属于冻结协作资格网络才产生贡献；单向协作必须可见且贡献为零。
+
+环境分别输出智驾技术与接受度、L3 责任清晰与企业责任成本、油价相对使用成本、电池距离与物流、Peer 扩散和省际协作贡献。全部结果继续由确定性环境权威计算，Agent 不得写需求、财政、ROI、Gap 或 HHI。
+
+V3.1 公共版本矩阵固定为：`experiment-config-v4`、`province-profile-v5`、`event-scenario-v1`、`province-event-signal-v1`、`province-event-response-v1`、`province-interaction-network-v1`、`world-state-v5`、`comparison-v5`、`event-v5`、`checkpoint-v4`、`branch-v4`、`nev-policy-env-v2`。V3.0 运行数据不原地转换。
+
+### 20.1 后续省级数据迁移门禁
+
+V3.1 运行闭环完成后，省级 Profile 下一轮迁移必须以 `docs/data/PROVINCE_PROFILE_DATA_REQUIREMENTS_V3_1.md` 为验收真相：真实原始事实是主层，标准化指数是可反算派生层，Persona 是事实与历史政策证据形成的稳定先验，当期 Action 仍由 Agent 自主生成。观察、竞争、协作 Peer 必须拆分。当前代理 Profile 不得被宣传为已完成真实事实迁移。

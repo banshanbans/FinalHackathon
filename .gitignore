@@ -23,6 +23,8 @@ runtime/experiments/
 runtime/replays/
 runtime/cache/live/
 runtime/cache/fallback/
+runtime/cache/v3_1/
+runtime/cache-verification/
 runtime/cache/default/*.json
 !runtime/cache/default/v21_manifest.json
 *.log

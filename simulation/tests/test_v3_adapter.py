@@ -4,8 +4,9 @@ import pytest
 
 from simulation.adapters.asyncio_adapter import AsyncioSimulationAdapter
 from simulation.llm.fake_provider import FakeLLMProvider
-from simulation.models.common import Phase
+from simulation.models.common import EventIntensity, EventTemplateId, Phase
 from simulation.models.experiment import ExperimentConfig
+from simulation.models.scenario import EventScenarioSelection
 
 
 @pytest.mark.asyncio
@@ -14,7 +15,7 @@ async def test_full_same_source_ab_and_call_outputs(tmp_path):
     result = await adapter.run_full_demo(ExperimentConfig(objective="验证V3同源A/B"))
     runtime = adapter.runtimes[result.experiment_id]
     treatment = runtime.worlds[result.treatment_branch_id]
-    assert result.schema_version == "comparison-v4"
+    assert result.schema_version == "comparison-v5"
     assert runtime.worlds["control"].parent_checkpoint_id == treatment.parent_checkpoint_id
     assert runtime.worlds["control"].seed == treatment.seed
     assert [item.path for item in result.policy_diff] == [
@@ -58,7 +59,7 @@ async def test_replay_audit_and_evidence_are_separate(tmp_path):
     assert events and audit.records
     assert adapter.replay.verify_audit_chain(result.experiment_id)
     evidence = await adapter.get_evidence(result.experiment_id, "mechanism:41")
-    assert evidence["method_version"] == "nev-policy-env-v1"
+    assert evidence["method_version"] == "nev-policy-env-v2"
 
 
 @pytest.mark.asyncio
@@ -76,6 +77,20 @@ async def test_branch_runs_can_be_requested_concurrently(tmp_path):
     assert {item.kind.value for item in branches} == {"control", "treatment"}
     assert restored_control.intervention_decision == "approved"
     assert restored_control.approved_intervention.intervention_id == approved.intervention_id
+    control, treatment = await asyncio.gather(
+        adapter.run_to_phase(world.experiment_id, Phase.Y2_Q2, "control"),
+        adapter.run_to_phase(world.experiment_id, Phase.Y2_Q2, branch.branch_id),
+    )
+    assert control.phase is treatment.phase is Phase.Y2_Q2
+    with pytest.raises(PermissionError, match="EVENT_APPROVAL_REQUIRED"):
+        await adapter.run_phase(world.experiment_id, Phase.Y2_Q3, "control")
+    await adapter.approve_event_scenario(
+        world.experiment_id,
+        EventScenarioSelection(
+            template_id=EventTemplateId.INTELLIGENT_DRIVING_UPGRADE,
+            intensity=EventIntensity.MEDIUM,
+        ),
+    )
     control, treatment = await asyncio.gather(
         adapter.run_to_phase(world.experiment_id, Phase.Y2_Q4, "control"),
         adapter.run_to_phase(world.experiment_id, Phase.Y2_Q4, branch.branch_id),

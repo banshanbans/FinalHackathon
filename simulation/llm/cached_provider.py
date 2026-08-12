@@ -24,6 +24,7 @@ from simulation.models.province import (
     ProvinceProfile,
     ProvinceState,
 )
+from simulation.models.scenario import EventScenario, ProvinceEventResponse, ProvinceEventSignal
 from simulation.models.world import ComparisonResult, NationalMetrics, WorldState
 
 ModelT = TypeVar("ModelT", bound=BaseModel)
@@ -56,7 +57,13 @@ class CachedLLMProvider:
             return {
                 str(key): CachedLLMProvider._semantic_payload(value)
                 for key, value in payload.items()
-                if key not in {"run_mode", "fallback_used", "fallback_reason"}
+                if key
+                not in {
+                    "run_mode",
+                    "fallback_used",
+                    "fallback_reason",
+                    "approved_at",
+                }
             }
         if isinstance(payload, (list, tuple)):
             return [CachedLLMProvider._semantic_payload(item) for item in payload]
@@ -75,7 +82,16 @@ class CachedLLMProvider:
 
     @staticmethod
     def _with_mode(value: ModelT, *, hit: bool) -> ModelT:
-        if isinstance(value, (ProvinceAction, ProvinceFeedback, AutomakerAction)):
+        if isinstance(
+            value,
+            (
+                ProvinceAction,
+                ProvinceFeedback,
+                AutomakerAction,
+                ProvinceEventSignal,
+                ProvinceEventResponse,
+            ),
+        ):
             if hit:
                 return value.model_copy(
                     update={
@@ -298,6 +314,53 @@ class CachedLLMProvider:
             ),
         )
         return wrapper.proposals
+
+    async def generate_province_event_signal(
+        self,
+        *,
+        profile: ProvinceProfile,
+        persona: ProvinceDecisionPersona,
+        state: ProvinceState,
+        current_action: ProvinceAction,
+        scenario: EventScenario,
+        exposure: float,
+        related: list[NetworkEdge],
+        seed: int,
+        prompt_version: str,
+        model_version: str,
+    ) -> ProvinceEventSignal:
+        arguments = locals().copy()
+        arguments.pop("self")
+        return await self._get_or_create(
+            kind="province_event_signal_v1",
+            payload=arguments,
+            model_type=ProvinceEventSignal,
+            generate=lambda: self.fallback.generate_province_event_signal(**arguments),
+        )
+
+    async def generate_province_event_response(
+        self,
+        *,
+        profile: ProvinceProfile,
+        persona: ProvinceDecisionPersona,
+        state: ProvinceState,
+        current_action: ProvinceAction,
+        scenario: EventScenario,
+        own_signal: ProvinceEventSignal,
+        peer_signals: dict[str, ProvinceEventSignal],
+        related: list[NetworkEdge],
+        seed: int,
+        prompt_version: str,
+        model_version: str,
+    ) -> ProvinceEventResponse:
+        arguments = locals().copy()
+        arguments.pop("self")
+        return await self._get_or_create(
+            kind="province_event_response_v1",
+            payload=arguments,
+            model_type=ProvinceEventResponse,
+            generate=lambda: self.fallback.generate_province_event_response(**arguments),
+        )
 
     async def _proposal_wrapper(
         self, policy, metrics, states, feedback, automaker_actions

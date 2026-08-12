@@ -24,6 +24,7 @@ from simulation.models.province import (
     ProvinceProfile,
     ProvinceState,
 )
+from simulation.models.scenario import EventScenario, ProvinceEventResponse, ProvinceEventSignal
 from simulation.models.world import ComparisonResult, NationalMetrics, WorldState
 
 ModelT = TypeVar("ModelT", bound=BaseModel)
@@ -64,7 +65,16 @@ class LiveLLMProvider:
 
     @staticmethod
     def _mode(value: ModelT, mode: RunMode, reason: str | None = None) -> ModelT:
-        if isinstance(value, (ProvinceAction, ProvinceFeedback, AutomakerAction)):
+        if isinstance(
+            value,
+            (
+                ProvinceAction,
+                ProvinceFeedback,
+                AutomakerAction,
+                ProvinceEventSignal,
+                ProvinceEventResponse,
+            ),
+        ):
             return value.model_copy(
                 update={
                     "run_mode": mode,
@@ -89,6 +99,8 @@ class LiveLLMProvider:
                 "content": (
                     "你是 PolicyScope 的结构化策略 Agent。只返回符合 Schema 的 JSON；"
                     "不生成现实销量、利润、投资、财政金额或政策预测；不输出长思维链。"
+                    "省级产业偏好只能依据输入中的原始事实、派生特征、历史政策与 Evidence；"
+                    "不得使用省份刻板印象，也不得把结构能力直接等同于现实政府立场。"
                 ),
             },
             {
@@ -171,7 +183,10 @@ class LiveLLMProvider:
         arguments.pop("self")
         return await self._structured(
             model=self.province_model,
-            instruction="选择地方总体支持强度与消费/固定/可变成本补贴份额；三项份额必须合计 1。",
+            instruction=(
+                "依据已提供事实、历史政策证据和当期约束，自主选择地方总体支持强度"
+                "与消费/固定/可变成本补贴份额；三项份额必须合计 1。"
+            ),
             payload=arguments,
             response_type=ProvinceAction,
             fallback=lambda: self.fallback.generate_province_action(**arguments),
@@ -224,6 +239,61 @@ class LiveLLMProvider:
             payload=arguments,
             response_type=ProvinceFeedback,
             fallback=lambda: self.fallback.generate_province_feedback(**arguments),
+        )
+
+    async def generate_province_event_signal(
+        self,
+        *,
+        profile: ProvinceProfile,
+        persona: ProvinceDecisionPersona,
+        state: ProvinceState,
+        current_action: ProvinceAction,
+        scenario: EventScenario,
+        exposure: float,
+        related: list[NetworkEdge],
+        seed: int,
+        prompt_version: str,
+        model_version: str,
+    ) -> ProvinceEventSignal:
+        arguments = locals().copy()
+        arguments.pop("self")
+        return await self._structured(
+            model=self.province_model,
+            instruction=(
+                "依据可引用事实、派生特征与历史政策证据评估冻结事件暴露并发布"
+                "结构化省际政策信号；不得使用刻板标签或生成结果指标。"
+            ),
+            payload=arguments,
+            response_type=ProvinceEventSignal,
+            fallback=lambda: self.fallback.generate_province_event_signal(**arguments),
+        )
+
+    async def generate_province_event_response(
+        self,
+        *,
+        profile: ProvinceProfile,
+        persona: ProvinceDecisionPersona,
+        state: ProvinceState,
+        current_action: ProvinceAction,
+        scenario: EventScenario,
+        own_signal: ProvinceEventSignal,
+        peer_signals: dict[str, ProvinceEventSignal],
+        related: list[NetworkEdge],
+        seed: int,
+        prompt_version: str,
+        model_version: str,
+    ) -> ProvinceEventResponse:
+        arguments = locals().copy()
+        arguments.pop("self")
+        return await self._structured(
+            model=self.province_model,
+            instruction=(
+                "只读取授权 Peer 的冻结首轮信号，选择跟随、差异化、观望或协作响应；"
+                "三类补贴调整量合计必须为零，不得生成结果指标。"
+            ),
+            payload=arguments,
+            response_type=ProvinceEventResponse,
+            fallback=lambda: self.fallback.generate_province_event_response(**arguments),
         )
 
     async def generate_intervention_proposals(

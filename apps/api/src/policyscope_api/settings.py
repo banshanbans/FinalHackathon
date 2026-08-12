@@ -16,7 +16,9 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    run_mode: RunMode = RunMode.CACHE
+    # Safe default for local/direct starts. Production must opt in to live mode
+    # explicitly through POLICYSCOPE_RUN_MODE=live.
+    run_mode: RunMode = RunMode.FAKE
     llm_base_url: str = "https://api.deepseek.com"
     llm_api_key: SecretStr = SecretStr("")
     central_model: str = Field(default="deepseek-v4-flash", alias="POLICYSCOPE_CENTRAL_MODEL")

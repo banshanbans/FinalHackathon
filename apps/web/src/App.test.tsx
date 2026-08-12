@@ -23,8 +23,14 @@ describe("PolicyScope V3 shell", () => {
     renderApp();
     expect(await screen.findByText("新能源汽车补贴共担比例实验")).toBeInTheDocument();
     expect(screen.getByText(/31 省级 Agent/)).toBeInTheDocument();
-    expect(screen.getByText(/批准前不会启动省级或车企推演/)).toBeInTheDocument();
-    expect(screen.getByText(/不代表现实政府或企业的未来决定/)).toBeInTheDocument();
+    expect(screen.queryByText(/批准前不会启动省级或车企推演/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/不代表现实政府或企业的未来决定/)).not.toBeInTheDocument();
+    expect(screen.queryByText("SETUP · 中央政策配置")).not.toBeInTheDocument();
+    expect(screen.queryByText("LIVE")).not.toBeInTheDocument();
+    expect(screen.queryByText("人工审批门禁")).not.toBeInTheDocument();
+    expect(screen.queryByText("Y1_Q1 省级政策")).not.toBeInTheDocument();
+    expect(screen.getAllByText("政策设定")).toHaveLength(2);
+    expect(screen.getAllByText("方案对照")).toHaveLength(2);
   });
 
   it("redirects unknown routes to policy setup", async () => {

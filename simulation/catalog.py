@@ -2,7 +2,8 @@ from functools import lru_cache
 
 from simulation.domain_constants import AUTOMAKER_IDS, MAINLAND_PROVINCE_CODES
 from simulation.models.base import FrozenDomainModel
-from simulation.models.common import PolicyRegion
+from simulation.models.common import EventFamily, EventTemplateId, PolicyRegion
+from simulation.models.scenario import EventScenarioTemplate
 
 
 class ProvinceCatalogEntry(FrozenDomainModel):
@@ -90,3 +91,55 @@ def automaker_catalog() -> dict[str, AutomakerCatalogEntry]:
     if tuple(catalog) != AUTOMAKER_IDS:
         raise ValueError("automaker catalog must contain the frozen representative set")
     return catalog
+
+
+@lru_cache
+def event_scenario_catalog() -> dict[EventTemplateId, EventScenarioTemplate]:
+    templates = (
+        EventScenarioTemplate(
+            template_id=EventTemplateId.BATTERY_NODE_UPGRADE_SICHUAN,
+            family=EventFamily.TECHNOLOGY,
+            title="西部电池节点能力升级（四川情景）",
+            description="在冻结基线之上模拟四川电池节点能力提升及供应链距离传导。",
+            target_province_codes=["51"],
+            mechanism_channels=["battery_access", "logistics_cost", "industry_activity"],
+            provenance_refs=["scenario-method:battery-node-upgrade-v1"],
+        ),
+        EventScenarioTemplate(
+            template_id=EventTemplateId.INTELLIGENT_DRIVING_UPGRADE,
+            family=EventFamily.TECHNOLOGY,
+            title="全国智驾能力升级",
+            description="模拟智驾技术能力升级对技术适配、消费接受与产业活动的传导。",
+            mechanism_channels=[
+                "intelligent_driving_readiness",
+                "consumer_acceptance",
+                "rd_activity",
+            ],
+            provenance_refs=["scenario-method:intelligent-driving-upgrade-v1"],
+        ),
+        EventScenarioTemplate(
+            template_id=EventTemplateId.L3_ENTERPRISE_LIABILITY_INCREASE,
+            family=EventFamily.REGULATION,
+            title="L3 企业责任提高",
+            description="模拟责任边界调整带来的消费者清晰效应与企业责任成本效应。",
+            mechanism_channels=["consumer_trust", "enterprise_liability_cost", "regulatory_pilot"],
+            provenance_refs=["scenario-method:l3-liability-v1"],
+        ),
+        EventScenarioTemplate(
+            template_id=EventTemplateId.OIL_PRICE_RISE,
+            family=EventFamily.ENERGY,
+            title="国际冲突情景下油价上涨",
+            description="模拟油价上行情景对新能源汽车相对使用成本与接受度的影响。",
+            mechanism_channels=["relative_use_cost", "wtp_demand"],
+            provenance_refs=["scenario-method:oil-price-shock-v1"],
+        ),
+        EventScenarioTemplate(
+            template_id=EventTemplateId.OIL_PRICE_FALL,
+            family=EventFamily.ENERGY,
+            title="油价回落",
+            description="模拟油价回落情景对新能源汽车相对使用成本优势的影响。",
+            mechanism_channels=["relative_use_cost", "wtp_demand"],
+            provenance_refs=["scenario-method:oil-price-shock-v1"],
+        ),
+    )
+    return {item.template_id: item for item in templates}

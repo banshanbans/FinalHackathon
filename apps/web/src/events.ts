@@ -4,6 +4,11 @@ export const SIMULATION_EVENT_TYPES = [
   "automaker.decision.completed", "province.feedback.completed",
   "central.intervention.proposed", "central.intervention.approved",
   "central.intervention.rejected", "branch.created", "phase.completed",
+  "scenario.awaiting_approval", "scenario.approved", "scenario.activated",
+  "province.event_signal.completed", "province.event_signal.fallback",
+  "province.event_response.completed", "province.event_response.fallback",
+  "province.coordination.matched", "province.coordination.unmatched",
+  "environment.event_propagated",
   "comparison.completed",
 ] as const;
 
@@ -20,5 +25,15 @@ export const EVENT_LABELS: Record<string, string> = {
   "central.intervention.rejected": "用户保留原始方案",
   "branch.created": "同源干预分支已创建",
   "phase.completed": "季度阶段已完成",
+  "scenario.awaiting_approval": "等待用户批准事件情景",
+  "scenario.approved": "事件情景已批准并锁定",
+  "scenario.activated": "事件情景已在分支生效",
+  "province.event_signal.completed": "省级事件信号已发布",
+  "province.event_signal.fallback": "省级事件信号由 Fallback 接管",
+  "province.event_response.completed": "省级 Peer 响应已完成",
+  "province.event_response.fallback": "省级 Peer 响应由 Fallback 接管",
+  "province.coordination.matched": "双向省际协作已匹配",
+  "province.coordination.unmatched": "单向协作提议未匹配",
+  "environment.event_propagated": "事件与省际交互已完成环境传播",
   "comparison.completed": "同源 A/B 已结算",
 };

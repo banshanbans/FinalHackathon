@@ -16,6 +16,7 @@ from simulation.models.common import DataQuality, ExpansionPosture
 from simulation.models.policy import PolicySchema
 from simulation.models.provenance import ProvenanceRecord
 from simulation.models.province import ProvinceDecisionPersona, ProvinceProfile
+from simulation.models.scenario import ProvinceInteractionEdge, ProvinceInteractionNetwork
 from simulation.models.world import BatteryIndustryNode, ProvinceBatteryAccess
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -39,6 +40,10 @@ PROVINCE_MECHANISM_FIELDS = (
     "urbanization_index",
     "vehicle_consumption_index",
     "nev_penetration_index",
+    "intelligent_driving_readiness_index",
+    "regulatory_execution_capacity_index",
+    "oil_price_sensitivity_index",
+    "supply_chain_complementarity_index",
     "peer_province_codes",
 )
 
@@ -74,6 +79,25 @@ def load_network(path: Path | None = None) -> dict[str, list[NetworkEdge]]:
         if not set(targets) <= set(MAINLAND_PROVINCE_CODES):
             raise ValueError(f"{source} references an unknown province")
     return network
+
+
+def load_interaction_network() -> ProvinceInteractionNetwork:
+    """Separate observation permission from reciprocal collaboration eligibility."""
+
+    network = load_network()
+    directed = {(source, edge.target) for source, related in network.items() for edge in related}
+    return ProvinceInteractionNetwork(
+        edges=[
+            ProvinceInteractionEdge(
+                source_province_code=source,
+                target_province_code=edge.target,
+                observation_weight=edge.weight,
+                coordinate_eligible=(edge.target, source) in directed,
+            )
+            for source, related in sorted(network.items())
+            for edge in related
+        ]
+    )
 
 
 def _province_provenance(field_name: str, quality: DataQuality) -> ProvenanceRecord:
@@ -132,6 +156,18 @@ def build_province_profiles(path: Path | None = None) -> dict[str, ProvinceProfi
             "urbanization_index": _clamp(0.55 * scale + 0.45 * digital),
             "vehicle_consumption_index": _clamp(0.45 * scale + 0.30 * credit + 0.25 * digital),
             "nev_penetration_index": _clamp(0.45 * digital + 0.30 * green + 0.25 * scale),
+            "intelligent_driving_readiness_index": _clamp(
+                0.45 * rd + 0.35 * digital + 0.20 * manufacturing
+            ),
+            "regulatory_execution_capacity_index": _clamp(
+                0.40 * digital + 0.35 * fiscal + 0.25 * rd
+            ),
+            "oil_price_sensitivity_index": _clamp(
+                0.45 * scale + 0.35 * (1 - green) + 0.20 * (1 - digital)
+            ),
+            "supply_chain_complementarity_index": _clamp(
+                0.40 * diversity + 0.35 * manufacturing + 0.25 * green
+            ),
         }
         profiles[code] = ProvinceProfile(
             province_code=code,

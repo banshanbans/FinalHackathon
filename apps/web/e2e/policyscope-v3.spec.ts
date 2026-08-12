@@ -1,18 +1,18 @@
 import { expect, test, type Page, type TestInfo } from "@playwright/test";
 
 async function capture(page: Page, testInfo: TestInfo, name: string) {
-  if (process.env.POLICYSCOPE_CAPTURE !== "1") return;
   await page.screenshot({
     path: `../../output/playwright/v3/${testInfo.project.name}/${name}.png`,
     fullPage: true,
   });
 }
 
-async function createAndRunYearOne(page: Page, testInfo: TestInfo) {
+async function createAndRunYearOne(page: Page, testInfo: TestInfo, eventMode = false) {
   await page.goto("/experiments/new");
   await expect(
     page.getByRole("heading", { name: "新能源汽车补贴共担比例实验" }),
   ).toBeVisible();
+  if (eventMode) await page.getByRole("button", { name: /事件反事实/ }).click();
   await page.getByRole("button", { name: "生成中央政策草案" }).click();
   await expect(page.getByText("Agent 摘要")).toBeVisible();
   await expect(page.getByLabel("西部 12 省中央承担比例")).toHaveValue("95");
@@ -70,7 +70,7 @@ test("complete A/B flow exposes province, company and evidence detail", async (
   liveUrl.searchParams.set("evidence", "metric:national:regional_development_gap");
   await page.goto(liveUrl.toString());
   await expect(page.getByRole("heading", { name: "方法与证据" })).toBeVisible();
-  await expect(page.getByText(/nev-policy-env-v1/)).toBeVisible();
+  await expect(page.getByText(/nev-policy-env-v2/)).toBeVisible();
   await capture(page, testInfo, "07-evidence");
   await page.locator(".v3-drawer-close").click();
 
@@ -82,12 +82,16 @@ test("complete A/B flow exposes province, company and evidence detail", async (
   await capture(page, testInfo, "08-intervention-review");
 
   await page.getByRole("button", { name: "批准/修改后创建 A/B" }).click();
-  await expect(page.getByRole("heading", { name: "同源 A/B 尚未结算" })).toBeVisible();
-  await page.getByRole("button", { name: "运行次年同源 A/B" }).click();
+  await expect(page.getByRole("heading", { name: "先运行至事件注入点" })).toBeVisible();
+  await page.getByRole("button", { name: "运行至 Y2_Q2" }).click();
+  await expect(page.getByRole("heading", { name: "事件实验台" })).toBeVisible({ timeout: 60_000 });
+  await page.getByRole("button", { name: "批准并锁定事件" }).click();
+  await expect(page.getByText("事件已锁定", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "执行交互并生成比较" }).click();
   await expect(page.getByRole("heading", { name: "原始方案 / 干预方案" })).toBeVisible({
     timeout: 60_000,
   });
-  await expect(page.getByText("ΔGap", { exact: true })).toBeVisible();
+  await expect(page.getByText(/^ΔGap/)).toBeVisible();
   await expect(page.getByRole("heading", { name: "原始方案 · 省级发展指数" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "干预方案 · 省级发展指数" })).toBeVisible();
   await expect(page.locator(".v3-transition-grid button")).toHaveCount(10);
@@ -99,6 +103,27 @@ test("complete A/B flow exposes province, company and evidence detail", async (
   });
   await expect(page.locator(".v3-transition-grid button")).toHaveCount(10);
 
+  const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
+  const viewportWidth = await page.evaluate(() => window.innerWidth);
+  expect(scrollWidth).toBe(viewportWidth);
+});
+
+test("event counterfactual keeps policy fixed and applies interaction only to treatment", async ({ page }, testInfo) => {
+  await createAndRunYearOne(page, testInfo, true);
+  await page.getByRole("button", { name: "进入干预审批" }).click();
+  await expect(page.getByRole("heading", { name: "同政策分支确认" })).toBeVisible();
+  await page.getByRole("button", { name: "确认同政策事件反事实" }).click();
+  await page.getByRole("button", { name: "运行至 Y2_Q2" }).click();
+  await expect(page.getByRole("heading", { name: "事件实验台" })).toBeVisible({ timeout: 60_000 });
+  await capture(page, testInfo, "12-event-lab");
+  await page.getByLabel("情景模板").selectOption("oil_price_rise");
+  await page.getByLabel("事件强度").selectOption("high");
+  await page.getByRole("button", { name: "批准并锁定事件" }).click();
+  await page.getByRole("button", { name: "执行交互并生成比较" }).click();
+  await expect(page.getByRole("heading", { name: "无事件基线 / 事件情景" })).toBeVisible({ timeout: 60_000 });
+  await capture(page, testInfo, "13-event-counterfactual-compare");
+  await expect(page.getByText("事件有无", { exact: true })).toBeVisible();
+  await expect(page.getByText("是", { exact: true }).first()).toBeVisible();
   const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
   const viewportWidth = await page.evaluate(() => window.innerWidth);
   expect(scrollWidth).toBe(viewportWidth);
@@ -156,6 +181,6 @@ test("cache miss exposes deterministic fallback scope", async ({ page }, testInf
   expect(response.ok()).toBeTruthy();
   await page.reload();
   await expect(page.getByText("确定性 Fallback 已接管")).toBeVisible();
-  await expect(page.getByText(/31 个省级主体 · 0 家车企/)).toBeVisible();
+  await expect(page.getByText(/常规省级 31 · 事件交互 0 · 车企 0/)).toBeVisible();
   await capture(page, testInfo, "11-fallback");
 });

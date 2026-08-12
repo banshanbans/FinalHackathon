@@ -17,6 +17,7 @@ from simulation.models.province import (
     ProvinceProfile,
     ProvinceState,
 )
+from simulation.models.scenario import EventScenario, ProvinceEventResponse, ProvinceEventSignal
 from simulation.models.world import ComparisonResult, NationalMetrics, WorldState
 
 
@@ -72,6 +73,37 @@ class LLMProvider(Protocol):
         prompt_version: str,
         model_version: str,
     ) -> ProvinceFeedback: ...
+
+    async def generate_province_event_signal(
+        self,
+        *,
+        profile: ProvinceProfile,
+        persona: ProvinceDecisionPersona,
+        state: ProvinceState,
+        current_action: ProvinceAction,
+        scenario: EventScenario,
+        exposure: float,
+        related: list[NetworkEdge],
+        seed: int,
+        prompt_version: str,
+        model_version: str,
+    ) -> ProvinceEventSignal: ...
+
+    async def generate_province_event_response(
+        self,
+        *,
+        profile: ProvinceProfile,
+        persona: ProvinceDecisionPersona,
+        state: ProvinceState,
+        current_action: ProvinceAction,
+        scenario: EventScenario,
+        own_signal: ProvinceEventSignal,
+        peer_signals: dict[str, ProvinceEventSignal],
+        related: list[NetworkEdge],
+        seed: int,
+        prompt_version: str,
+        model_version: str,
+    ) -> ProvinceEventResponse: ...
 
     async def generate_intervention_proposals(
         self,

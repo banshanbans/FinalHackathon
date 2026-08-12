@@ -1,10 +1,18 @@
 # PolicyScope / 政策涟漪
 
-PolicyScope V3.0 是面向中央层面政策统筹人员的“新能源汽车补贴与产业布局多智能体推演台”。中央用户调整西部/中部/东部汽车以旧换新补贴的中央承担比例，31 个省级 Agent 在地方财政空间内配置三类补贴，10 家真实头部车企的模拟 Agent 再根据需求、供应链和经营基线选择销售投入与产能布局行动。
+PolicyScope V3.1 是面向中央层面政策统筹人员的“新能源汽车补贴、产业布局与事件协同多智能体推演台”。V3.0 两年同源推演保持冻结；V3.1 新增冻结事件情景、31 省两轮信号/响应和双向协作传播。
 
 > 研判口径：结果为当前数据、政策参数与机制版本下的模拟指数，用于方案比较，不代表现实政府或企业的未来决定。
 
-## 重要状态说明
+## V3.1 当前能力
+
+- 实验创建时选择“政策干预”或“事件反事实”，两个模式都从同一首年不可变 Checkpoint 派生双分支。
+- 两分支完成 Y2_Q2 后，用户从 5 个冻结模板与 3 档强度中批准一次事件；未审批不能进入 Y2_Q3。
+- 事件分支依次运行 31 省首轮信号、冻结授权 Peer 响应和双向协作匹配，再由确定性环境结算。
+- 政策模式证明“只有比例不同、事件相同”；事件模式证明“政策相同、只有事件有无不同”。
+- API 版本为 0.5.0，World/Comparison/Event 为 v5，机制版本为 `nev-policy-env-v2`。
+
+## V3.0 冻结基线
 
 V3.0 已完成从 V2.1 历史基线到新能源汽车政策域的全量迁移：
 
@@ -65,7 +73,7 @@ V3.0 使用 2025 年汽车以旧换新政策作为参考基线：
 
 - 根据冻结 Profile、Persona、地方财政空间、WTP、电池供应链距离和 Peer Policy 配置地方支持。
 - 三类地方工具为消费端、固定成本、可变成本补贴，份额必须合计为 100%。
-- Peer 响应只做跟进、差异化或维持，P0 不实现自由省际合作。
+- 常规 Q1 Peer 响应保持跟进、差异化或维持；V3.1 的 Y2_Q3 事件覆盖层新增受冻结网络约束的 `coordinate`，不提供自由群聊。
 
 ### 10 家真实头部车企模拟 Agent
 
@@ -183,14 +191,16 @@ make dev-api
 make dev-web
 ```
 
+`make dev-api` 会显式锁定 `POLICYSCOPE_RUN_MODE=fake`；本地打开始终使用确定性 Mock Provider，不会调用线上模型。
+
 前端：[http://localhost:5173/experiments/new](http://localhost:5173/experiments/new)
 后端健康检查：[http://localhost:8000/api/health](http://localhost:8000/api/health)
 
 运行模式：
 
-- `fake`：确定性测试 Provider。
+- `fake`：确定性 Mock Provider，为本地启动的强制模式。
 - `cache`：V3.0 默认演示缓存；预生成场景可 157/157 命中。
-- `live`：兼容结构化模型 Provider，失败时显式回退并记录范围。
+- `live`：线上部署模式，兼容结构化模型 Provider，失败时显式回退并记录范围。部署环境必须配置 `POLICYSCOPE_LLM_API_KEY`，并使用 `make start-api`（内部锁定 `POLICYSCOPE_RUN_MODE=live`）启动。
 
 ## 验证状态
 
@@ -205,9 +215,10 @@ make dev-web
 
 ## 文档导航
 
-- [V3.0 产品需求文档](./PRD_省域政策多智能体推演平台.md)
-- [V3.0 详细开发计划](./DEVELOPMENT_PLAN.md)
-- [V3.0 正式前端规范](./STITCH_FRONTEND_SPEC.md)
+- [V3.1 产品需求文档](./PRD_省域政策多智能体推演平台.md)
+- [V3.1 详细开发计划](./DEVELOPMENT_PLAN.md)
+- [V3.1 正式前端规范](./STITCH_FRONTEND_SPEC.md)
+- [ADR-310：事件驱动省际协同](./ADR-310-event-driven-interprovincial-coordination.md)
 - [Design QA 状态](./design-qa.md)
 - [开发 Agent 约束](./AGENTS.md)
 - [设计令牌与地图语义](./stitch_policyscope/policyscope/DESIGN.md)
@@ -215,4 +226,6 @@ make dev-web
 
 ## 当前唯一下一步
 
-V3.0 P0 已冻结。后续仅在用户批准新的产品范围、数据版本或机制版本后开始下一轮开发。
+V3.0 继续冻结；V3.1 M21–M28 已完成。下一步按 [V3.1 省级数据采集清单](./docs/data/PROVINCE_PROFILE_DATA_REQUIREMENTS_V3_1.md) 启动 M29，补齐 31 省真实经济/产业/政策事实、真实节点与物流、省际产业链关系、四类事件敏感度原始输入和 10 家车企冻结基线。
+
+V3.1 验证证据：30 个缓存场景生成 2047 个语义去重对象；政策模式连续三轮 281/281 命中，事件模式连续三轮 219/219 命中；两种完整流程均通过 1536×1024、1440×900、1280 画布与无水平滚动检查。当前派生敏感度仍按 `proxy` / `scenario_assumption` 使用，不能标记为真实 `verified` 数据。

@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import Field, JsonValue
 
 from simulation.models.action import MechanismContribution
@@ -10,7 +12,7 @@ from simulation.models.central import (
     CentralSubsidyDirective,
     PolicyFieldChange,
 )
-from simulation.models.common import BranchKind, ExperimentStatus, Phase, RunMode
+from simulation.models.common import BranchKind, ComparisonMode, ExperimentStatus, Phase, RunMode
 from simulation.models.policy import PolicySchema
 from simulation.models.province import (
     ProvinceAction,
@@ -18,6 +20,13 @@ from simulation.models.province import (
     ProvinceFeedback,
     ProvinceProfile,
     ProvinceState,
+)
+from simulation.models.scenario import (
+    CoordinationMatch,
+    EventScenario,
+    EventScenarioDiff,
+    ProvinceEventResponse,
+    ProvinceEventSignal,
 )
 
 
@@ -48,11 +57,11 @@ class VersionInfo(DomainModel):
     mechanism: str
     prompt: str
     model: str
-    app: str = "0.4.0"
+    app: str = "0.5.0"
 
 
 class WorldState(DomainModel):
-    schema_version: str = "world-state-v4"
+    schema_version: str = "world-state-v5"
     experiment_id: str
     branch_id: str = "control"
     branch_kind: BranchKind = BranchKind.CONTROL
@@ -60,6 +69,7 @@ class WorldState(DomainModel):
     phase: Phase = Phase.SETUP
     status: ExperimentStatus = ExperimentStatus.AWAITING_APPROVAL
     run_mode: RunMode = RunMode.FAKE
+    comparison_mode: ComparisonMode = ComparisonMode.POLICY_INTERVENTION
     policy: PolicySchema
     directive: CentralSubsidyDirective
     national_metrics: NationalMetrics = Field(default_factory=NationalMetrics)
@@ -75,6 +85,14 @@ class WorldState(DomainModel):
     automaker_action_lineage: dict[str, list[AutomakerAction]] = Field(default_factory=dict)
     contributions: dict[str, MechanismContribution] = Field(default_factory=dict)
     fixed_variable_thresholds: dict[str, JsonValue] = Field(default_factory=dict)
+    approved_event_scenario: EventScenario | None = None
+    event_applied: bool = False
+    scenario_application_branch_ids: list[str] = Field(default_factory=list)
+    event_exposure_by_province: dict[str, float] = Field(default_factory=dict)
+    province_event_signals: dict[str, ProvinceEventSignal] = Field(default_factory=dict)
+    province_event_responses: dict[str, ProvinceEventResponse] = Field(default_factory=dict)
+    coordination_matches: list[CoordinationMatch] = Field(default_factory=list)
+    fallback_event_provinces: list[str] = Field(default_factory=list)
     fallback_provinces: list[str] = Field(default_factory=list)
     fallback_automakers: list[str] = Field(default_factory=list)
     intervention_proposals: list[CentralInterventionProposal] = Field(default_factory=list)
@@ -124,17 +142,37 @@ class AutomakerStrategyTransition(DomainModel):
     facility_changes: list[StrategyFieldChange] = Field(default_factory=list)
 
 
+class ActiveDifferenceProof(DomainModel):
+    comparison_mode: ComparisonMode
+    checkpoint_id: str
+    same_policy: bool
+    same_event: bool
+    active_difference: Literal["policy", "event"]
+
+
+class ProvinceEventTransition(DomainModel):
+    province_code: str = Field(pattern=r"^\d{2}$")
+    control_response_id: str | None = None
+    treatment_response_id: str | None = None
+    control_mode: str | None = None
+    treatment_mode: str | None = None
+
+
 class ComparisonResult(DomainModel):
-    schema_version: str = "comparison-v4"
+    schema_version: str = "comparison-v5"
     experiment_id: str
     checkpoint_id: str
     control_branch_id: str
     treatment_branch_id: str
+    comparison_mode: ComparisonMode
+    active_difference_proof: ActiveDifferenceProof
     policy_diff: list[PolicyFieldChange]
+    event_diff: EventScenarioDiff
     delta_gap: float
     national_metrics: dict[str, MetricDelta]
     province_strategy_transitions: list[ProvinceStrategyTransition]
     automaker_strategy_transitions: list[AutomakerStrategyTransition]
+    province_event_transitions: list[ProvinceEventTransition]
     province_deltas: list[ProvinceDelta]
     mechanism_totals: dict[str, float]
     top_improved: list[str]
@@ -164,6 +202,10 @@ class ProvinceAgentBranchSnapshot(DomainModel):
     feedback: ProvinceFeedback | None = None
     automakers: list[ProvinceAutomakerEvidence] = Field(default_factory=list)
     mechanism_summary: dict[str, float] = Field(default_factory=dict)
+    event_exposure: float | None = Field(default=None, ge=0, le=1)
+    event_signal: ProvinceEventSignal | None = None
+    event_response: ProvinceEventResponse | None = None
+    coordination_matches: list[CoordinationMatch] = Field(default_factory=list)
     evidence_refs: list[str] = Field(default_factory=list)
 
 

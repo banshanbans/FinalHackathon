@@ -23,6 +23,9 @@ from simulation.models.common import (
     ApprovalStatus,
     AutomakerReasonCode,
     ChannelStrategy,
+    EventPerception,
+    EventPolicyFocus,
+    EventTemplateId,
     ExpectedDirection,
     FacilityActionKind,
     PeerResponseMode,
@@ -50,6 +53,12 @@ from simulation.models.province import (
     ProvinceSignal,
     ProvinceState,
     SubsidyMix,
+)
+from simulation.models.scenario import (
+    EventScenario,
+    ProvinceEventResponse,
+    ProvinceEventSignal,
+    SubsidyMixDelta,
 )
 from simulation.models.world import ComparisonResult, NationalMetrics, WorldState
 
@@ -358,6 +367,138 @@ class FakeLLMProvider:
                 f"action:{current_action.action_id}",
             ],
             summary="首年复盘聚合财政、需求与车企响应信号，形成次年调整意向。",
+            run_mode=RunMode(self.run_mode),
+        )
+
+    async def generate_province_event_signal(
+        self,
+        *,
+        profile: ProvinceProfile,
+        persona: ProvinceDecisionPersona,
+        state: ProvinceState,
+        current_action: ProvinceAction,
+        scenario: EventScenario,
+        exposure: float,
+        related: list[NetworkEdge],
+        seed: int,
+        prompt_version: str,
+        model_version: str,
+    ) -> ProvinceEventSignal:
+        del state, current_action, seed, prompt_version, model_version
+        focus = {
+            EventTemplateId.BATTERY_NODE_UPGRADE_SICHUAN: (
+                EventPolicyFocus.SUPPLY_CHAIN_COORDINATION
+            ),
+            EventTemplateId.INTELLIGENT_DRIVING_UPGRADE: EventPolicyFocus.REGULATORY_PILOT,
+            EventTemplateId.L3_ENTERPRISE_LIABILITY_INCREASE: EventPolicyFocus.REGULATORY_PILOT,
+            EventTemplateId.OIL_PRICE_RISE: EventPolicyFocus.CONSUMER_SUPPORT,
+            EventTemplateId.OIL_PRICE_FALL: EventPolicyFocus.FISCAL_RESERVE,
+        }[scenario.template_id]
+        perception = (
+            EventPerception.OPPORTUNITY
+            if scenario.template_id is not EventTemplateId.L3_ENTERPRISE_LIABILITY_INCREASE
+            and scenario.template_id is not EventTemplateId.OIL_PRICE_FALL
+            else EventPerception.MIXED
+        )
+        peers = [edge.target for edge in sorted(related, key=lambda item: -item.weight)[:2]]
+        return ProvinceEventSignal(
+            signal_id=_stable_id(
+                f"event_signal_{profile.province_code}",
+                {"scenario": scenario.scenario_id, "exposure": exposure, "focus": focus.value},
+            ),
+            scenario_id=scenario.scenario_id,
+            province_code=profile.province_code,
+            exposure=round(exposure, 4),
+            perception=perception,
+            policy_focus=focus,
+            proposed_peer_codes=peers,
+            evidence_refs=[f"scenario:{scenario.scenario_id}", f"profile:{profile.province_code}"],
+            summary="结合事件暴露、产业条件与稳定画像发布省际可观察政策信号。",
+            run_mode=RunMode(self.run_mode),
+        )
+
+    async def generate_province_event_response(
+        self,
+        *,
+        profile: ProvinceProfile,
+        persona: ProvinceDecisionPersona,
+        state: ProvinceState,
+        current_action: ProvinceAction,
+        scenario: EventScenario,
+        own_signal: ProvinceEventSignal,
+        peer_signals: dict[str, ProvinceEventSignal],
+        related: list[NetworkEdge],
+        seed: int,
+        prompt_version: str,
+        model_version: str,
+    ) -> ProvinceEventResponse:
+        del state, seed, prompt_version, model_version
+        allowed = [edge.target for edge in sorted(related, key=lambda item: -item.weight)]
+        observed = {code: peer_signals[code] for code in allowed if code in peer_signals}
+        coordination_candidates = [
+            code
+            for code, signal in observed.items()
+            if profile.province_code in signal.proposed_peer_codes
+            or code in own_signal.proposed_peer_codes
+        ]
+        coordinate = persona.axes.supply_chain_coordination >= 0.58 and bool(
+            coordination_candidates
+        )
+        if coordinate:
+            mode = PeerResponseMode.COORDINATE
+        elif persona.axes.peer_response_sensitivity >= 0.60:
+            mode = PeerResponseMode.FOLLOW
+        elif persona.axes.industry_attraction >= 0.62:
+            mode = PeerResponseMode.DIFFERENTIATE
+        else:
+            mode = PeerResponseMode.HOLD
+        shift = min(0.06, 0.08 * scenario.magnitude)
+        mix = current_action.subsidy_mix
+        delta = SubsidyMixDelta()
+        if own_signal.policy_focus is EventPolicyFocus.CONSUMER_SUPPORT:
+            moved = min(shift, mix.fixed_cost / 2 + mix.variable_cost / 2)
+            delta = SubsidyMixDelta(consumer=moved, fixed_cost=-moved / 2, variable_cost=-moved / 2)
+        elif own_signal.policy_focus is EventPolicyFocus.FIXED_COST_SUPPORT:
+            moved = min(shift, mix.consumer / 2 + mix.variable_cost / 2)
+            delta = SubsidyMixDelta(consumer=-moved / 2, fixed_cost=moved, variable_cost=-moved / 2)
+        elif own_signal.policy_focus in {
+            EventPolicyFocus.VARIABLE_COST_SUPPORT,
+            EventPolicyFocus.SUPPLY_CHAIN_COORDINATION,
+        }:
+            moved = min(shift, mix.consumer / 2 + mix.fixed_cost / 2)
+            delta = SubsidyMixDelta(consumer=-moved / 2, fixed_cost=-moved / 2, variable_cost=moved)
+        peer_codes = list(observed)
+        return ProvinceEventResponse(
+            response_id=_stable_id(
+                f"event_response_{profile.province_code}",
+                {
+                    "scenario": scenario.scenario_id,
+                    "signal": own_signal.signal_id,
+                    "peers": [item.signal_id for item in observed.values()],
+                    "mode": mode.value,
+                },
+            ),
+            scenario_id=scenario.scenario_id,
+            province_code=profile.province_code,
+            observed_signal_ids=[observed[code].signal_id for code in peer_codes],
+            observed_peer_codes=peer_codes,
+            response_mode=mode,
+            policy_focus=own_signal.policy_focus,
+            response_intensity=round(
+                _clamp(
+                    0.35
+                    + 0.45 * own_signal.exposure
+                    + 0.20 * persona.axes.peer_response_sensitivity
+                ),
+                4,
+            ),
+            subsidy_mix_delta=delta,
+            coordination_target_codes=coordination_candidates[:1] if coordinate else [],
+            evidence_refs=[
+                f"scenario:{scenario.scenario_id}",
+                f"interaction:{own_signal.signal_id}",
+            ],
+            summary="读取冻结 Peer 信号后形成有限响应；最终结果由确定性环境统一传播。",
             run_mode=RunMode(self.run_mode),
         )
 

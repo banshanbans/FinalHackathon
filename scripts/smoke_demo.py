@@ -19,7 +19,7 @@ async def run(assert_complete: bool) -> None:
     requested_mode = RunMode(os.getenv("POLICYSCOPE_RUN_MODE", "fake"))
     fallback = FakeLLMProvider()
     provider = (
-        CachedLLMProvider(Path("runtime/cache/default"), fallback, write_through=True)
+        CachedLLMProvider(Path("runtime/cache/v3_1"), fallback, write_through=True)
         if requested_mode is RunMode.CACHE
         else fallback
     )
@@ -27,11 +27,14 @@ async def run(assert_complete: bool) -> None:
     result = await adapter.run_full_demo(
         ExperimentConfig(
             objective=(
-                "比较三档中央承担比例变化对地方财政空间、新能源汽车需求"
-                "与真实头部车企模拟布局的影响。"
+                "比较冻结中央政策与事件情景对地方财政空间、新能源汽车需求和产业布局的模拟影响。"
             ),
             run_mode=requested_mode,
-            model_version=f"{requested_mode.value}-nev-v1",
+            model_version=(
+                "cache-nev-v2"
+                if requested_mode is RunMode.CACHE
+                else f"{requested_mode.value}-nev-v2"
+            ),
         )
     )
     control = await adapter.get_state(result.experiment_id, result.control_branch_id)
@@ -56,6 +59,9 @@ async def run(assert_complete: bool) -> None:
         "six_metric_count": len(result.national_metrics),
         "province_strategy_transition_count": len(result.province_strategy_transitions),
         "automaker_strategy_transition_count": len(result.automaker_strategy_transitions),
+        "event_transition_count": len(result.province_event_transitions),
+        "comparison_mode": result.comparison_mode.value,
+        "active_difference": result.active_difference_proof.active_difference,
         "audit_record_count": len(audit.records),
         "audit_chain_valid": adapter.replay.verify_audit_chain(result.experiment_id),
         "final_action_modes": dict(sorted(action_modes.items())),
@@ -65,13 +71,14 @@ async def run(assert_complete: bool) -> None:
     }
     print(json.dumps(summary, ensure_ascii=False, indent=2))
     if assert_complete:
-        assert summary["schema_version"] == "comparison-v4"
+        assert summary["schema_version"] == "comparison-v5"
         assert summary["province_count"] == 31
         assert summary["automaker_count"] == 10
         assert summary["control_phase"] == Phase.Y2_Q4.value
         assert summary["treatment_phase"] == Phase.Y2_Q4.value
         assert summary["province_strategy_transition_count"] == 31
         assert summary["automaker_strategy_transition_count"] == 10
+        assert summary["event_transition_count"] == 31
         assert summary["six_metric_count"] == 6
         assert summary["audit_record_count"] > 0
         assert summary["audit_chain_valid"] is True
@@ -79,7 +86,7 @@ async def run(assert_complete: bool) -> None:
         assert summary["elapsed_seconds"] < 20
         if requested_mode is RunMode.CACHE:
             assert summary["final_action_modes"].get("fallback", 0) == 0
-            assert summary["cache_hits"] == 157
+            assert summary["cache_hits"] == 281
             assert summary["cache_misses"] == 0
 
 
