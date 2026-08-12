@@ -4,7 +4,7 @@ PY := $(VENV)/bin/python
 PIP := $(VENV)/bin/pip
 NPM_CACHE := $(CURDIR)/.cache/npm
 
-.PHONY: setup setup-backend setup-web dev dev-api dev-web test test-sim test-api lint validate-data precompute demo smoke spike-agentsociety clean
+.PHONY: setup setup-backend setup-web dev dev-api dev-web test test-sim test-api test-e2e capture-v21 lint validate-data precompute demo smoke spike-agentsociety clean
 
 setup: setup-backend setup-web
 
@@ -35,6 +35,12 @@ test-sim:
 
 test-api:
 	$(PY) -m pytest apps/api/tests
+
+test-e2e:
+	npm --prefix apps/web run test:e2e
+
+capture-v21:
+	npm --prefix apps/web run test:e2e:capture
 
 lint:
 	$(VENV)/bin/ruff check simulation apps/api scripts

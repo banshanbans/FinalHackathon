@@ -1,0 +1,39 @@
+{
+  "schema_version": "province-action-v3",
+  "action_id": "province_31_T4_8b1deaf3ca1b",
+  "previous_action_id": "province_31_T1_35f5a12f9bda",
+  "province_code": "31",
+  "phase": "T4",
+  "primary_goal": "digital_upgrade",
+  "decision_posture": "proactive",
+  "target_enterprise_groups": [
+    "technology_sme",
+    "export_manufacturer"
+  ],
+  "interprovincial_strategy": "collaborate",
+  "target_province_codes": [
+    "32",
+    "33"
+  ],
+  "implementation_intensity": 0.7552,
+  "local_match_ratio": 0.5202,
+  "instrument_mix": {
+    "direct_subsidy": 0.295352,
+    "interest_subsidy": 0.38169,
+    "financing_guarantee": 0.322958
+  },
+  "sme_preference": 0.8224,
+  "regional_delivery_focus": 0.4796,
+  "technology_mix": {
+    "digital": 0.4384,
+    "green": 0.2616,
+    "general": 0.3
+  },
+  "requested_central_support": 0.1045,
+  "reason_codes": [
+    "MANUFACTURING_BASE"
+  ],
+  "public_summary": "结合制造基础与融资约束配置补贴、贴息和担保工具。",
+  "run_mode": "fallback",
+  "fallback_used": true
+}

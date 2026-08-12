@@ -1,0 +1,39 @@
+{
+  "schema_version": "province-action-v3",
+  "action_id": "province_65_T4_02dc21ae6b88",
+  "previous_action_id": "province_65_T1_2cea8469da72",
+  "province_code": "65",
+  "phase": "T4",
+  "primary_goal": "green_equipment_renewal",
+  "decision_posture": "balanced",
+  "target_enterprise_groups": [
+    "high_energy_industrial"
+  ],
+  "interprovincial_strategy": "independent",
+  "target_province_codes": [],
+  "implementation_intensity": 0.5651,
+  "local_match_ratio": 0.354,
+  "instrument_mix": {
+    "direct_subsidy": 0.267687,
+    "interest_subsidy": 0.39175,
+    "financing_guarantee": 0.340563
+  },
+  "sme_preference": 0.7907,
+  "regional_delivery_focus": 0.6556,
+  "technology_mix": {
+    "digital": 0.36,
+    "green": 0.34,
+    "general": 0.3
+  },
+  "requested_central_support": 0.5985,
+  "reason_codes": [
+    "MANUFACTURING_BASE",
+    "FINANCING_GAP",
+    "FISCAL_CONSTRAINT",
+    "GREEN_TRANSITION",
+    "CENTRAL_SUPPORT_REQUEST"
+  ],
+  "public_summary": "结合制造基础与融资约束配置补贴、贴息和担保工具。",
+  "run_mode": "fallback",
+  "fallback_used": true
+}

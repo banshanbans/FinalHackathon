@@ -1,0 +1,59 @@
+{
+  "schema_version": "province-feedback-v3",
+  "feedback_id": "feedback_44_93b6b1df98f4",
+  "province_code": "44",
+  "phase": "T3",
+  "strategy_assessment": "constrained",
+  "enterprise_signals": [
+    {
+      "cohort_type": "traditional_sme",
+      "signal_type": "participation_barrier",
+      "severity": "medium",
+      "evidence_refs": [
+        "enterprise:44:traditional_sme:action:T2"
+      ]
+    },
+    {
+      "cohort_type": "technology_sme",
+      "signal_type": "participation_barrier",
+      "severity": "medium",
+      "evidence_refs": [
+        "enterprise:44:technology_sme:action:T2"
+      ]
+    }
+  ],
+  "priority_enterprise_groups": [
+    "traditional_sme",
+    "technology_sme"
+  ],
+  "key_constraints": [
+    "employment_pressure",
+    "transition_pressure"
+  ],
+  "adjustment_intents": [
+    {
+      "path": "instrument_mix.financing_guarantee",
+      "direction": "increase",
+      "reason_code": "FINANCING_GAP"
+    },
+    {
+      "path": "sme_preference",
+      "direction": "increase",
+      "reason_code": "SME_ACCESS_PRIORITY"
+    }
+  ],
+  "requested_support_type": "credit_support",
+  "requested_central_support": 0.2058,
+  "reason_codes": [
+    "MANUFACTURING_BASE",
+    "FINANCING_GAP",
+    "SME_ACCESS_PRIORITY"
+  ],
+  "evidence_refs": [
+    "metric:44:sme_financing_accessibility_index:T2",
+    "enterprise:44:traditional_sme:action:T2"
+  ],
+  "public_summary": "地方反馈显示企业参与存在分化，融资约束集中在中小企业群体。",
+  "run_mode": "fallback",
+  "fallback_used": true
+}

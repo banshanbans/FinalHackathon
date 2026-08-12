@@ -42,6 +42,7 @@ class CachedLLMProvider:
         self.cache_dir = cache_dir
         self.fallback = fallback
         self.write_through = write_through
+        self.accessed_cache_files: set[Path] = set()
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
     @staticmethod
@@ -58,6 +59,7 @@ class CachedLLMProvider:
         generate: Callable[[], Awaitable[ModelT]],
     ) -> ModelT:
         path = self.cache_dir / f"{self._key(kind, payload)}.json"
+        self.accessed_cache_files.add(path)
         if path.exists():
             cached = model_type.model_validate_json(path.read_text(encoding="utf-8"))
             if isinstance(cached, (ProvinceAction, ProvinceFeedback)):
@@ -266,13 +268,17 @@ class CachedLLMProvider:
             "policy": policy.model_dump(mode="json"),
             "metrics": metrics.model_dump(mode="json"),
             "states": {code: state.model_dump(mode="json") for code, state in states.items()},
-            "feedback": {code: item.model_dump(mode="json") for code, item in feedback.items()},
+            "feedback": {
+                code: item.model_dump(mode="json", exclude={"run_mode", "fallback_used"})
+                for code, item in feedback.items()
+            },
             "enterprise_actions": {
                 key: item.model_dump(mode="json") for key, item in enterprise_actions.items()
             },
         }
         key = self._key("central_intervention_v2", payload)
         path = self.cache_dir / f"{key}.json"
+        self.accessed_cache_files.add(path)
         if path.exists():
             raw = json.loads(path.read_text(encoding="utf-8"))
             return [CentralInterventionProposal.model_validate(item) for item in raw]

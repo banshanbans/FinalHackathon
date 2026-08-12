@@ -1,0 +1,120 @@
+{
+  "schema_version": "enterprise-action-batch-v2",
+  "batch_id": "batch_61_T4_5426a018dc34",
+  "province_code": "61",
+  "phase": "T4",
+  "actions": [
+    {
+      "schema_version": "enterprise-action-v2",
+      "action_id": "enterprise_61:export_manufacturer_T4_8c6e76e306dc",
+      "enterprise_id": "61:export_manufacturer",
+      "province_code": "61",
+      "archetype": "export_manufacturer",
+      "phase": "T4",
+      "participation": "conditional",
+      "upgrade_type": "digital",
+      "financing_choice": "interest_subsidy",
+      "investment_intensity": 0.5902,
+      "requested_support": 0.3578,
+      "reason_codes": [
+        "POLICY_MATCH",
+        "CREDIT_ACCESS"
+      ],
+      "public_summary": "在当前支持与融资条件下参与设备更新。"
+    },
+    {
+      "schema_version": "enterprise-action-v2",
+      "action_id": "enterprise_61:high_energy_industrial_T4_71e4a175d37b",
+      "enterprise_id": "61:high_energy_industrial",
+      "province_code": "61",
+      "archetype": "high_energy_industrial",
+      "phase": "T4",
+      "participation": "conditional",
+      "upgrade_type": "green",
+      "financing_choice": "interest_subsidy",
+      "investment_intensity": 0.5928,
+      "requested_support": 0.4039,
+      "reason_codes": [
+        "POLICY_MATCH",
+        "CREDIT_ACCESS",
+        "GREEN_COMPLIANCE"
+      ],
+      "public_summary": "在当前支持与融资条件下参与设备更新。"
+    },
+    {
+      "schema_version": "enterprise-action-v2",
+      "action_id": "enterprise_61:large_private_T4_971211c9b919",
+      "enterprise_id": "61:large_private",
+      "province_code": "61",
+      "archetype": "large_private",
+      "phase": "T4",
+      "participation": "participate",
+      "upgrade_type": "digital",
+      "financing_choice": "interest_subsidy",
+      "investment_intensity": 0.606,
+      "requested_support": 0.2962,
+      "reason_codes": [
+        "POLICY_MATCH",
+        "CREDIT_ACCESS"
+      ],
+      "public_summary": "在当前支持与融资条件下参与设备更新。"
+    },
+    {
+      "schema_version": "enterprise-action-v2",
+      "action_id": "enterprise_61:large_state_owned_T4_263601c08ab3",
+      "enterprise_id": "61:large_state_owned",
+      "province_code": "61",
+      "archetype": "large_state_owned",
+      "phase": "T4",
+      "participation": "participate",
+      "upgrade_type": "digital",
+      "financing_choice": "self_funded",
+      "investment_intensity": 0.626,
+      "requested_support": 0.2297,
+      "reason_codes": [
+        "POLICY_MATCH"
+      ],
+      "public_summary": "在当前支持与融资条件下参与设备更新。"
+    },
+    {
+      "schema_version": "enterprise-action-v2",
+      "action_id": "enterprise_61:technology_sme_T4_419797fa746a",
+      "enterprise_id": "61:technology_sme",
+      "province_code": "61",
+      "archetype": "technology_sme",
+      "phase": "T4",
+      "participation": "conditional",
+      "upgrade_type": "digital",
+      "financing_choice": "interest_subsidy",
+      "investment_intensity": 0.5899,
+      "requested_support": 0.4287,
+      "reason_codes": [
+        "POLICY_MATCH",
+        "CREDIT_ACCESS"
+      ],
+      "public_summary": "在当前支持与融资条件下参与设备更新。"
+    },
+    {
+      "schema_version": "enterprise-action-v2",
+      "action_id": "enterprise_61:traditional_sme_T4_dd16676c39a1",
+      "enterprise_id": "61:traditional_sme",
+      "province_code": "61",
+      "archetype": "traditional_sme",
+      "phase": "T4",
+      "participation": "conditional",
+      "upgrade_type": "general",
+      "financing_choice": "guarantee_loan",
+      "investment_intensity": 0.5937,
+      "requested_support": 0.5718,
+      "reason_codes": [
+        "POLICY_MATCH",
+        "CASH_FLOW_CONSTRAINT",
+        "GUARANTEE_NEEDED"
+      ],
+      "public_summary": "在当前支持与融资条件下参与设备更新。"
+    }
+  ],
+  "run_mode": "fallback",
+  "fallback_used": true,
+  "fallback_reason": "cache_miss"
+}
