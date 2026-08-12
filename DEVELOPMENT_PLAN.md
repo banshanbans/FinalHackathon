@@ -1,15 +1,15 @@
-# PolicyScope V2 详细开发计划
+# PolicyScope V2.1“省级 Agent 主决策”详细开发计划
 
 > 对应产品文档：[PRD_省域政策多智能体推演平台.md](./PRD_省域政策多智能体推演平台.md)  
 > 前端规范：[STITCH_FRONTEND_SPEC.md](./STITCH_FRONTEND_SPEC.md)  
-> 计划版本：V2.0（已批准实施版）  
+> 计划版本：V2.1（文档评审版）
 > 更新日期：2026-08-12  
-> 目标周期：从 V2 文档获批起 48 小时  
-> 当前门禁：V2 原地迁移、产品 QA 与比赛版地图上线检查已完成
+> 目标周期：V2 基线已完成；V2.1 工期从文档获得用户批准后开始
+> 当前门禁：只允许更新 V2.1 文档；Schema、代码、数据、缓存与前端迁移尚未获准启动
 
 ---
 
-## 1. 最终交付目标
+## 1. V2.1 最终交付目标
 
 48 小时结束时，应存在一个可在本机稳定运行和演示的 Web 产品，完整跑通：
 
@@ -17,24 +17,27 @@
 国务院层面用户设定制造业设备更新目标
   → 中央政策研判 Agent 生成结构化政策
   → 用户批准
-  → 31 个省级 Agent 选择地方政策工具
-  → 31 个批量企业决策返回 186 个企业群体 Action
+  → 确定性冻结 31 个省级 Agent 的实验决策画像
+  → 31 个省级 Agent 选择地方工具、目标企业和省际策略
+  → 31 个批量企业决策返回 186 个市场反馈 Action
   → 确定性环境计算省企结果
-  → T3 中央 Agent 提出干预
+  → T3 省级 Agent 复盘并提出调整意向
+  → 中央 Agent 基于省级与企业证据提出干预
   → 用户批准或拒绝
   → 同一不可变检查点生成 Control / Treatment
-  → T5 比较企业行为迁移、地区差异、财政压力和机制贡献
+  → T5 先比较省级策略迁移，再比较企业行为、地区差异和机制贡献
 ```
 
 完成标准不是“页面看起来像 Stitch”，而是：
 
 - 国务院用户视角在产品中明确且一致。
-- 31 个省级 Agent 和 186 个企业群体 Agent 都有结构化、可追溯的输出。
+- 31 个省级 Agent 都有稳定决策画像、结构化地方决策、省际策略、T3 调整意向和跨分支行动谱系。
+- 186 个企业群体 Agent 作为市场反馈层保持结构化、完整、可追溯。
 - LLM 只选择策略，结果由确定性环境计算。
 - 企业批量输出失败时可修复一次，再失败进入显式 fallback。
 - 用户未审批前中央建议不能改变 WorldState。
 - Control/Treatment 来自同一 T3 Checkpoint。
-- 四个核心路由和两个抽屉真实可操作。
+- 五个核心路由和证据抽屉真实可操作，旧省份 query 深链兼容跳转。
 - 正式前端达到 Stitch 视觉规范，且修复已知语义和交互问题。
 - 默认场景支持离线 Cache/Fallback。
 
@@ -93,39 +96,47 @@ V1 已冻结在 Git 提交 `12456a3`，用于原地迁移的回滚，不再建�
 
 ---
 
-## 3. 不可破坏的 V2 产品契约
+## 3. 不可破坏的 V2.1 产品契约
 
 ### C-01 用户是国务院层面政策统筹人员
 
 中央 Agent 是研判助手，不代表现实国务院。所有中央政策发布和干预必须由用户审批。
 
-### C-02 企业 Agent 是 P0 主体
+### C-02 省级 Agent 是地方主决策主体
 
-每省固定六类企业群体，31 省必须形成 186 个独立 Action。企业群体代表合成类型，不代表现实公司。
+31 个省级 Agent 必须依据稳定、确定性生成的实验决策画像，形成目标、决策姿态、地方工具、目标企业群体和结构化省际策略。企业 Agent 不能覆盖省级决策主线。
 
-### C-03 Agent 只选择策略
+### C-03 企业 Agent 是市场反馈层
+
+每省固定六类企业群体，31 省必须形成 186 个独立 Action。企业群体用于验证地方政策在不同市场约束下的响应，不代表现实公司。
+
+### C-04 Agent 只选择策略
 
 中央、省级和企业 Agent 均不得写入最终指标或生成现实经济预测。
 
-### C-04 环境计算确定且可解释
+### C-05 环境计算确定且可解释
 
 相同 Policy、Profile、State、Action、版本和 seed 必须生成相同下一状态及机制贡献。
 
-### C-05 审批不可绕过
+### C-06 审批不可绕过
 
 未经批准的建议不得创建 Treatment；API 和服务层必须再次校验，不能只依赖前端按钮。
 
-### C-06 A/B 同源且隔离
+### C-07 A/B 同源且隔离
 
 Control/Treatment 共享父检查点、数据版本、机制版本、Prompt/模型版本、seed 规则和剩余阶段数；唯一主动差异是批准的政策字段。
 
-### C-07 默认演示可离线
+### C-08 默认演示可离线
 
 中央、省级和企业批量 Action 均应预生成缓存。Fallback 必须可见并进入 Replay。
 
-### C-08 Stitch 是视觉基准，不是运行时
+### C-09 Stitch 是视觉基准，不是运行时
 
 正式前端在现有 React 工程中实现。不得 iframe 静态 HTML、依赖 Tailwind CDN 或用截图冒充地图和组件。
+
+### C-10 决策画像稳定且 T3 不修改政策
+
+`ProvinceDecisionPersona` 只由冻结 Profile、Top-K 网络和版本化规则生成，在一个实验及其所有分支中保持不变。T3 `ProvinceFeedback` 只能记录复盘、调整意向和中央支持请求，不得改写 Policy、ProvinceAction、WorldState 或父 Checkpoint。
 
 ---
 
@@ -152,7 +163,9 @@ React Web
 
 ---
 
-## 5. V2 核心接口
+## 5. V2.1 核心接口
+
+版本迁移规则：中央 Policy、中央指令和企业领域对象继续使用 V2；`ProvinceProfile`、`ProvinceAction`、`ProvinceFeedback`、`WorldState`、`ComparisonResult` 和 `EventEnvelope` 分别升级为 `province-profile-v3`、`province-action-v3`、`province-feedback-v3`、`world-state-v3`、`comparison-v3` 和 `event-v3`。新增 `province-persona-v1`。
 
 ### 5.1 LLMProvider
 
@@ -161,9 +174,12 @@ class LLMProvider(Protocol):
     async def generate_central_directive(...) -> CentralPolicyDirective: ...
     async def generate_province_action(...) -> ProvinceAction: ...
     async def generate_enterprise_actions_batch(...) -> EnterpriseActionBatch: ...
+    async def generate_province_feedback(...) -> ProvinceFeedback: ...
     async def generate_intervention_proposals(...) -> list[CentralInterventionProposal]: ...
     async def generate_central_review(...) -> CentralReview: ...
 ```
+
+省级 Action 输入必须包含 `ProvinceDecisionPersona`、上一 Action、当前 Profile/State、中央 Policy 和 Top-K 邻省摘要；T3 Feedback 还必须包含结构化企业反馈和环境证据。Persona 由确定性服务生成，不进入 LLMProvider。
 
 `EnterpriseActionBatch` 必须：
 
@@ -206,17 +222,36 @@ apply_approved_intervention
 snapshot / restore
 ```
 
+增加 `build_province_personas`、`validate_interprovincial_targets` 和 `calculate_province_strategy_transitions`。Persona 生成不得依赖 seed 或模型；相同 Profile/Network/method version 必须得到相同结果。
+
 ### 5.4 EventEnvelope
 
-沿用统一 Envelope，新增企业事件：
+升级到 `event-v3`，沿用统一 Envelope、单调 Event ID、`Last-Event-ID` 与去重语义：
 
 ```text
+province.persona.ready
+province.decision.started
+province.decision.completed
+province.decision.fallback
+province.adjustment_intent.completed
+province.strategy.changed
 enterprise.batch.started
 enterprise.decision.completed
 enterprise.decision.fallback
 enterprise.aggregate.updated
 province.feedback.completed
 ```
+
+### 5.5 REST 与详情 DTO
+
+保留现有 `/api` 路径，新增：
+
+```text
+GET /api/experiments/{id}/provinces/{province_code}
+GET /api/meta/province-persona-types
+```
+
+`ProvinceAgentDetail` 返回 Profile、Persona、当前 State、按分支排列的 Action lineage、T3 Feedback、六类企业反馈摘要、机制贡献和 Evidence refs。旧 `?province=41` 只作为前端兼容入口，不新增旧式抽屉 DTO。
 
 ---
 
@@ -247,9 +282,10 @@ simulation/
   services/
 
 data/
-  province_profiles_v2.json
-  enterprise_archetypes_v1.json
-  enterprise_groups_v1.json
+  province_profiles_v3.json
+  province_personas_v1.json
+  enterprise_archetypes_v2.json
+  enterprise_groups_v2.json
   provenance_v2.json
   scenarios/equipment_renewal_default.json
 
@@ -270,40 +306,42 @@ apps/web/src/
 - 每省六类企业群体由版本化原型与省级 Profile 合成。
 - 生成脚本必须显式 seed，生成结果提交前运行完整性验证。
 - `verified/proxy/demo` 继续是类别，不转换为百分比置信度。
+- `province-profile-v3` 补充研发能力、就业压力和合作倾向；Persona 派生结果必须记录 Profile、Network 和 method version。
+- Persona 源 Profile 为 `demo` 时标记 `demo`，其余一律标记 `proxy`；不得标记为现实省级政府性格。
+- 三省验收夹具固定为：河南普惠扩散型、广东技术跃迁型、山西绿色转型型。夹具只验证画像公式，不硬编码环境结果。
 
 ---
 
 ## 7. 任务依赖图
 
 ```text
-DOC-200 V2 文档批准
-  → FOUND-200 运行命令与基线修复
-  → MODEL-200 Policy/Enterprise/World V2 Schema
-       ├─ DATA-200 省级与企业群体数据
-       ├─ AI-200 企业批量 Provider
-       └─ SIM-200 设备更新确定性机制
-             → SIM-201 河南纵向闭环
-             → SIM-202 31省×6企业扩展
-             → SIM-203 T0–T5 与同源分支
-                   → API-200 DTO/SSE/Replay
-                   → WEB-200 Stitch 路由与组件
-                         → WEB-201 地图/抽屉/A-B
-                               → QA-200 E2E + 视觉 QA
-                               → RELEASE-200 冻结
+DOC-210 V2.1 文档评审
+  → ADR-210 省级 Persona/Action/Feedback/World/Event 契约冻结
+       → MODEL-210 省级 V3 Schema 与 Persona 生成规则
+            ├─ DATA-210 Profile v3、provenance 与 31 省 Persona
+            ├─ AI-210 省级 Action/Feedback Provider、缓存与 fallback
+            └─ SIM-210 T0–T5 省级行动谱系与策略迁移
+                   → API-210 V3 DTO、详情接口、SSE 与 Replay
+                         → WEB-210 Live 省级优先层级
+                         → WEB-211 独立省级 Agent 详情页
+                         → WEB-212 Intervention/Compare 省级策略优先
+                               → QA-210 领域/API/E2E
+                               → QA-211 V2.1 Design QA
+                               → RELEASE-210 V2.1 冻结
 ```
 
 关键路径：
 
 ```text
-DOC-200 → FOUND-200 → MODEL-200 → SIM-200 → SIM-201
-→ SIM-203 → API-200 → WEB-200 → WEB-201 → QA-200
+DOC-210 → ADR-210 → MODEL-210 → DATA/AI/SIM-210
+→ API-210 → WEB-210/211/212 → QA-210 → QA-211 → RELEASE-210
 ```
 
 ---
 
-## 8. 48 小时里程碑
+## 8. 里程碑
 
-时间从 V2 文档获得用户批准时开始计算。
+M0–M7 是已经完成的 V2 历史基线，继续保留以证明当前代码事实；不得把其中的完成状态套用于 V2.1。V2.1 从 M8 开始，只有 DOC-210 获得用户批准后才解除代码门禁。
 
 ### M0：契约冻结与基线修复（H0–H2）
 
@@ -460,18 +498,77 @@ DOC-200 → FOUND-200 → MODEL-200 → SIM-200 → SIM-201
 - 只修主流程、数据正确性、合规表达和明显视觉阻断。
 - 不增加产品角色、政策场景和新页面。
 
+### M8：V2.1 文档评审与契约冻结
+
+| ID | 工作 | 状态 | 依赖 |
+|---|---|---|---|
+| DOC-210 | 同步 PRD、计划、AGENTS、Stitch、README 与 Design QA 状态 | Complete | V2 基线 |
+| ADR-210 | 用户批准 Persona、V3 DTO、阶段与第五路由 | Complete | DOC-210 |
+
+退出条件：六份文档对角色层级、Schema 版本、调用预算、阶段、路由和“V2.1 未实现”状态完全一致；用户明确批准后才能修改代码。
+
+### M9：省级领域模型与数据
+
+| ID | 工作 | 状态 | 依赖 |
+|---|---|---|---|
+| MODEL-210 | `ProvinceProfile v3` 与 `ProvinceDecisionPersona` | Pending | ADR-210 |
+| MODEL-211 | `ProvinceAction/Feedback v3` 与枚举约束 | Pending | MODEL-210 |
+| MODEL-212 | `WorldState/Comparison/Event v3` | Pending | MODEL-211 |
+| DATA-210 | Profile v3 字段与 provenance | Pending | MODEL-210 |
+| DATA-211 | 百分位 Persona 生成、三省夹具与 31 省验证 | Pending | DATA-210 |
+
+退出条件：31/31 Persona 确定、可追溯；河南/广东/山西主类型正确；同一输入重复生成完全一致；质量只为 `proxy/demo`。
+
+### M10：省级 Agent、阶段与 API
+
+| ID | 工作 | 状态 | 依赖 |
+|---|---|---|---|
+| AI-210 | Fake/Cache/Live 省级 Action/Feedback V3 | Pending | MODEL-211, DATA-211 |
+| AI-211 | 一次修复、整省 fallback 与缓存键升级 | Pending | AI-210 |
+| SIM-210 | T0 Persona 冻结、T1 决策、T3 非变更意向、T4 谱系 | Pending | MODEL-212, AI-211 |
+| SIM-211 | 省级策略迁移与省级优先 Comparison | Pending | SIM-210 |
+| API-210 | V3 DTO、Persona 元数据与省级详情接口 | Pending | SIM-211 |
+| API-211 | Event v3、SSE 恢复、Replay 与 Evidence | Pending | API-210 |
+
+退出条件：省际目标只能来自 Top-K；独立推进无目标省；T3 不修改 Policy/Action/Checkpoint；T4 引用上一 Action；调用预算仍为中央 3、省级约 124、企业约 93。
+
+### M11：五路由 Stitch 前端
+
+| ID | 工作 | 状态 | 依赖 |
+|---|---|---|---|
+| WEB-210 | Live 改为省级策略优先，默认地方执行强度 | Pending | API-210 |
+| WEB-211 | `/experiments/:id/provinces/:provinceCode` 独立详情页 | Pending | WEB-210 |
+| WEB-212 | 旧 `?province=` 兼容导航与 Evidence 深链 | Pending | WEB-211 |
+| WEB-213 | Intervention 省级证据优先 | Pending | API-211 |
+| WEB-214 | Compare 省级策略迁移优先 | Pending | SIM-211, WEB-210 |
+
+退出条件：五路由均受状态门禁保护；地图、行动流、审批和 A/B 先呈现省级策略；企业反馈保持 31×6 完整且位于第二层。
+
+### M12：V2.1 QA 与冻结
+
+| ID | 工作 | 状态 | 依赖 |
+|---|---|---|---|
+| QA-210 | 领域、Agent、分支、API/SSE 和数据门禁 | Pending | M10 |
+| QA-211 | 五路由 E2E、禁止文案与可访问性 | Pending | M11 |
+| QA-212 | 1440×900 / 1280 V2.1 Design QA | Pending | QA-211 |
+| RELEASE-210 | Cache 三次全流程并冻结 V2.1 | Pending | QA-210, QA-212 |
+
+退出条件：`make test`、`make lint`、`make validate-data`、`make smoke` 全部通过；Cache 完整流程连续三次；`design-qa.md` 的 V2.1 结果由 `pending implementation` 更新为 `passed`。
+
 ---
 
-## 9. P0 Backlog
+## 9. Backlog
 
-### 9.1 文档与底座
+### 9.1 V2 已完成基线
+
+#### 文档与底座
 
 - [x] DOC-200 用户批准 V2 文档组
 - [x] FOUND-200 修复统一命令
 - [x] FOUND-201 记录 V1 基线
 - [x] ADR-200 冻结 V2 Schema/API/Event
 
-### 9.2 领域与数据
+#### 领域与数据
 
 - [x] MODEL-200 PolicySchema V2
 - [x] MODEL-201 企业领域模型
@@ -479,7 +576,7 @@ DOC-200 → FOUND-200 → MODEL-200 → SIM-200 → SIM-201
 - [x] DATA-200 企业原型与 provenance
 - [x] DATA-201 31×6 完整数据
 
-### 9.3 Agent 与环境
+#### Agent 与环境
 
 - [x] AI-200 Fake/Cached 企业批量 Provider
 - [x] AI-201 企业 Agent、修复与 fallback
@@ -493,7 +590,7 @@ DOC-200 → FOUND-200 → MODEL-200 → SIM-200 → SIM-201
 - [x] SIM-205 分支隔离
 - [x] SIM-206 A/B 与企业迁移
 
-### 9.4 API 与存储
+#### API 与存储
 
 - [x] API-200 V2 REST DTO
 - [x] API-201 企业元数据
@@ -501,7 +598,7 @@ DOC-200 → FOUND-200 → MODEL-200 → SIM-200 → SIM-201
 - [x] API-203 审批和错误码
 - [x] STORE-200 V2 Replay
 
-### 9.5 Stitch 前端
+#### Stitch 前端
 
 - [x] WEB-200 Design Token 与 AppShell
 - [x] WEB-201 四路由门禁
@@ -511,7 +608,7 @@ DOC-200 → FOUND-200 → MODEL-200 → SIM-200 → SIM-201
 - [x] WEB-205 干预审批页
 - [x] WEB-206 A/B 对照页
 
-### 9.6 QA 与冻结
+#### QA 与冻结
 
 - [x] QA-200 31×6 Smoke
 - [x] QA-201 E2E/可访问性
@@ -519,6 +616,19 @@ DOC-200 → FOUND-200 → MODEL-200 → SIM-200 → SIM-201
 - [x] QA-203 最终验收
 - [x] DEMO-200 三次连续运行
 - [x] RELEASE-200 产品冻结
+
+### 9.2 V2.1 当前 Backlog
+
+- [ ] DOC-210 用户评审本次 V2.1 文档组
+- [ ] ADR-210 冻结省级 V3 公共契约
+- [ ] MODEL-210/211/212 省级 Persona、Action、Feedback、World、Comparison、Event
+- [ ] DATA-210/211 Profile v3、31 省 Persona、三省验收夹具和 provenance
+- [ ] AI-210/211 省级 Provider、修复、fallback 和缓存
+- [ ] SIM-210/211 T0–T5 行动谱系与省级策略迁移
+- [ ] API-210/211 V3 DTO、省级详情、SSE、Replay 和 Evidence
+- [ ] WEB-210–214 五路由省级优先体验
+- [ ] QA-210–212 全流程、可访问性与 V2.1 Design QA
+- [ ] RELEASE-210 V2.1 冻结
 
 ---
 
@@ -529,16 +639,18 @@ DOC-200 → FOUND-200 → MODEL-200 → SIM-200 → SIM-201
 ```text
 /experiments/new
 /experiments/:id/live
+/experiments/:id/provinces/:provinceCode
 /experiments/:id/intervention
 /experiments/:id/compare
 ```
 
-抽屉由查询参数深链：
+证据抽屉由查询参数深链：
 
 ```text
-?province=41
 ?evidence=<evidence-ref>
 ```
+
+旧 `?province=41` 必须兼容并导航到 `/experiments/:id/provinces/41`，不得继续作为正式详情容器。
 
 ### 10.2 视觉来源映射
 
@@ -546,7 +658,7 @@ DOC-200 → FOUND-200 → MODEL-200 → SIM-200 → SIM-201
 |---|---|
 | 中央政策设定 | `_1/screen.png` |
 | 全国实时推演 | `_2/screen.png` |
-| 省企详情抽屉 | `_3/screen.png` 的内容层级 |
+| 独立省级 Agent 详情页 | `_3/screen.png` 的卡片密度与三栏结构；内容改为 Persona、地方决策、省际策略、行动谱系、企业反馈 |
 | T3 干预审批 | `_4/screen.png` |
 | A/B 对照 | `a_b/screen.png` |
 
@@ -566,6 +678,11 @@ DOC-200 → FOUND-200 → MODEL-200 → SIM-200 → SIM-201
 
 ### 11.1 领域测试
 
+- 六项 Persona 公式、31 省百分位、并列平均排名和固定类型优先级。
+- Persona 确定性、主/辅助类型、两项约束和 `proxy/demo` 质量。
+- 河南普惠扩散型、广东技术跃迁型、山西绿色转型型。
+- 省际策略/目标组合、Top-K 引用和 T4 `previous_action_id`。
+- T3 调整意向字段白名单、最多三项且不修改状态。
 - Policy 工具结构和技术结构权重。
 - EnterpriseAction 枚举、组合和数值范围。
 - 每省六类企业唯一性。
@@ -576,6 +693,8 @@ DOC-200 → FOUND-200 → MODEL-200 → SIM-200 → SIM-201
 ### 11.2 Agent 测试
 
 - Fake Provider 合法输出。
+- 省级 Action/Feedback 合法输出、一次修复与整省 fallback。
+- 省级缓存键包含 Persona、上一行动、Top-K、企业反馈和完整版本。
 - 一次返回六类企业。
 - 缺类、重复类、Schema 外字段被拒绝。
 - 第一次失败修复一次。
@@ -588,16 +707,21 @@ DOC-200 → FOUND-200 → MODEL-200 → SIM-200 → SIM-201
 - 未审批干预拒绝。
 - Control/Treatment 父检查点一致。
 - 创建 Treatment 不改变 Control。
-- EventEnvelope V2 兼容。
+- 两分支共享 Persona 和父 T3 Checkpoint，省级 Action lineage 各自隔离。
+- `ProvinceAgentDetail`、Persona 元数据和 31 省非法代码错误。
+- EventEnvelope V3、策略迁移事件和 V2.1 Replay 完整性。
 - Last-Event-ID 去重。
 - Replay 可恢复企业 Action。
 
 ### 11.4 前端测试
 
-- 四路由状态门禁。
+- 五路由状态门禁和旧 `?province=` 兼容导航。
 - 中央政策非法参数不能审批。
 - 31 省可点击且当前阶段正确。
-- 河南抽屉显示六类企业。
+- Live 默认地图为地方执行强度，省级策略指标和企业/环境指标分组切换。
+- 河南省级详情页先显示普惠扩散型画像、地方决策和省际策略，再显示六类企业反馈。
+- 干预页先显示省级目标、中央支持请求和调整意向。
+- A/B 先显示省级策略迁移，再显示企业迁移。
 - 数据质量显示类别而非伪置信度。
 - 预期方向显示“待验证”。
 - 未审批不能创建 Treatment。
@@ -612,12 +736,12 @@ DOC-200 → FOUND-200 → MODEL-200 → SIM-200 → SIM-201
 打开中央政策页
 → 生成并批准政策
 → 运行 T1–T3
-→ 从地图打开河南省企详情
-→ 验证六类企业和传统 SME 观望告警
+→ 从地图进入河南省级 Agent 详情
+→ 验证普惠扩散型画像、地方决策、省际策略、T3 调整意向和六类企业反馈
 → 打开中央研判
 → 审批干预
 → 运行 Control/Treatment 到 T5
-→ 查看双地图、企业迁移和证据抽屉
+→ 查看地方执行双地图、省级策略迁移、企业迁移和证据抽屉
 ```
 
 ### 11.6 视觉 QA
@@ -672,7 +796,7 @@ M0 先修复脚本导入路径，再把 V2 验证接入相同命令。不得为�
 4. 复杂筛选器。
 5. Live 企业展示，保留透明 Cache/Fallback。
 
-不可砍掉：国务院用户、31 省、六类企业、结构化企业 Action、确定性环境、审批、同源 A/B、企业迁移、Stitch 四路由、免责声明。
+不可砍掉：国务院用户、31 个省级 Persona、地方决策与省际策略、T3 调整意向、独立省级详情页、六类企业反馈、确定性环境、审批、同源 A/B、省级与企业迁移、Stitch 五路由、免责声明。
 
 ---
 
@@ -689,14 +813,19 @@ M0 先修复脚本导入路径，再把 V2 验证接入相同命令。不得为�
 | M5 Stitch 前端 | Complete | 四路由、两抽屉、真实 API/SSE 和本地地图完成 |
 | M6 可靠性/视觉 QA | Complete | Cache/Fake、两条浏览器 E2E 与 `design-qa.md` passed |
 | M7 冻结 | Complete | 依赖、机制、默认缓存和产品边界冻结 |
+| M8 V2.1 文档门禁 | Complete | 六份文档与公共契约已获用户批准 |
+| M9 V2.1 Schema/数据 | In progress | 文档门禁已解除，开始领域与数据迁移 |
+| M10 V2.1 Agent/API | Not started | 等待 M9 |
+| M11 五路由前端 | Not started | 等待 M10 |
+| M12 V2.1 QA/冻结 | Not started | 等待 M11 |
 
 ### 当前唯一下一任务
 
-保持默认 Cache 演示配置和比赛版冻结；地图可直接随比赛 Web 产品上线。
+实施 M9：完成省级 V3 领域模型、确定性 Persona、31 省数据快照与三省验收夹具；V2 比赛版和地图上线决定保持不变。
 
 ---
 
-## 15. V2 Definition of Done
+## 15. V2 已完成 Definition of Done
 
 - [x] V2 文档组获得用户批准。
 - [x] 1 个中央 Agent、31 个省级 Agent、186 个企业群体 Agent 有合法输出或显式 fallback。
@@ -712,3 +841,18 @@ M0 先修复脚本导入路径，再把 V2 验证接入相同命令。不得为�
 - [x] 三次连续产品运行成功。
 - [x] 数据质量、版本、seed、证据和免责声明可见。
 - [x] README 与实际运行方式一致。
+
+## 16. V2.1 Definition of Done
+
+- [x] V2.1 文档组获得用户批准。
+- [ ] 31 个稳定、可追溯的 `province-persona-v1` 生成并通过三省夹具。
+- [ ] `province-action-v3`、`province-feedback-v3`、`world-state-v3`、`comparison-v3` 和 `event-v3` 接通全部调用方。
+- [ ] T3 调整意向不修改 Policy、Action、WorldState 或父 Checkpoint。
+- [ ] T4 省级 Action 谱系和同源分支隔离可追溯。
+- [ ] 省际目标严格限定为 Top-K，独立策略没有目标省份。
+- [ ] 五个正式路由、证据抽屉和旧省份 query 兼容导航真实可用。
+- [ ] Live 默认地方执行强度；Intervention 和 Compare 均先省级策略、后企业反馈。
+- [ ] 31×6 企业完整性、Cache/Fallback、审批与环境唯一权威保持不变。
+- [ ] `make test`、`make lint`、`make validate-data`、`make smoke` 通过。
+- [ ] Cache 完整流程连续三次通过。
+- [ ] `design-qa.md` 的 V2.1 `final result` 为 `passed`。

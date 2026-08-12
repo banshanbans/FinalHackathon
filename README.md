@@ -1,10 +1,10 @@
 # PolicyScope / 政策涟漪
 
-PolicyScope V2 是面向国务院层面政策统筹人员的“制造业设备更新政企互动智能体推演台”。它用于观察中央政策、地方工具与企业行动如何相互作用，并通过同源方案推演呈现政策收益、区域差异与财政代价。
+PolicyScope 是面向国务院层面政策统筹人员的“制造业设备更新政企互动智能体推演台”。V2 已交付中央政策、31 省、186 个企业群体、确定性环境和同源 A/B；V2.1 将主线升级为“省级 Agent 主决策、企业 Agent 作市场反馈”。
 
 > 研判口径：结果为当前数据与机制参数下的模拟指数，用于政策方案比较。
 
-## 已交付的 V2 闭环
+## V2 已交付基线
 
 ```text
 中央用户设定制造业设备更新目标
@@ -33,7 +33,28 @@ PolicyScope V2 是面向国务院层面政策统筹人员的“制造业设备�
 
 详细完成状态见 [开发计划](./DEVELOPMENT_PLAN.md) 和 [Design QA](./design-qa.md)。
 
+## V2.1 已批准契约（实施中）
+
+```text
+国务院用户设定政策
+  → 冻结31个省级 Agent 的实验决策画像
+  → 省级 Agent 制定地方工具、目标企业和省际策略
+  → 186个企业群体反馈地方政策
+  → 省级 Agent 在T3复盘并提出不改变政策的调整意向
+  → 中央 Agent 建议、用户审批
+  → T5先比较省级策略迁移，再比较企业行为和机制结果
+```
+
+- “省份拟人化”被定义为数据派生、稳定、可解释的实验决策画像，不是角色扮演或现实政府性格。
+- 新增独立省级详情路由 `/experiments/:id/provinces/:provinceCode`；河南、广东、山西分别用于普惠扩散、技术跃迁、绿色转型三种画像验收。
+- Live 默认地图将改为地方执行强度；Intervention 和 Compare 将先呈现省级策略，再呈现企业反馈。
+- 新增 `province-persona-v1`；省级契约升级为 `province-profile-v3`、`province-action-v3`、`province-feedback-v3`，投影契约升级为 `world-state-v3`、`comparison-v3`、`event-v3`；中央 Policy 和企业领域对象继续使用 V2。
+
+V2.1 文档契约已经用户批准，代码、数据、缓存、API、前端和 QA 正按 M9–M12 迁移；当前 V2 产品在迁移完成前继续作为可运行基线。
+
 ## 产品路由
+
+当前 V2 已实现：
 
 - `/experiments/new`：中央目标、结构化政策参数与人工批准。
 - `/experiments/:id/live`：31 省地图、六项全国指标、行动流和 T0–T5 时间轴。
@@ -41,6 +62,11 @@ PolicyScope V2 是面向国务院层面政策统筹人员的“制造业设备�
 - `/experiments/:id/compare`：双地图、企业行动迁移、地区排行、机制归因与中央复盘。
 - `?province=41`：河南省企详情，展示六类企业的独立行动。
 - `?evidence=method`：数据质量、版本、seed、父检查点和证据记录。
+
+V2.1 待实现：
+
+- `/experiments/:id/provinces/:provinceCode`：省级 Agent 决策画像、目标约束、地方决策、省际策略、调整意向、行动谱系、企业反馈和机制结果。
+- 旧 `?province=41` 将兼容导航到 `/experiments/:id/provinces/41`。
 
 Stitch 的 `code.html` 只用于布局参考；正式产品是 React、真实 API、SSE 和本地资源实现，没有 iframe、假导航或运行时 CDN。
 
@@ -88,7 +114,7 @@ make smoke
 make demo
 ```
 
-V2 冻结门禁要求：
+V2 冻结门禁结果：
 
 - Python 测试、Web 测试、Ruff、ESLint 和生产构建通过。
 - 31 个省级行政区、186 个企业群体、provenance 和标准地图完整性通过。
@@ -108,9 +134,9 @@ V2 冻结门禁要求：
 
 ## 文档导航
 
-- [V2 产品需求文档](./PRD_省域政策多智能体推演平台.md)
-- [V2 详细开发计划](./DEVELOPMENT_PLAN.md)
-- [Stitch 正式前端规范](./STITCH_FRONTEND_SPEC.md)
+- [V2.1 产品需求文档](./PRD_省域政策多智能体推演平台.md)
+- [V2.1 详细开发计划](./DEVELOPMENT_PLAN.md)
+- [V2.1 Stitch 正式前端规范](./STITCH_FRONTEND_SPEC.md)
 - [Design QA 结果](./design-qa.md)
 - [开发 Agent 约束](./AGENTS.md)
 - [地图资源与合规记录](./apps/web/src/assets/maps/README.md)
