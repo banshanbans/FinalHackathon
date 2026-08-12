@@ -1,12 +1,12 @@
-# PolicyScope V2 Stitch Design QA
+# PolicyScope V2 / V2.1 Stitch Design QA
 
 ## V2.1 status
 
 > Contract: “省级 Agent 主决策、企业 Agent 作市场反馈”
-> Status: **implementation in progress**
-> V2.1 final result: **pending implementation**
+> Status: **implementation complete; verification paused**
+> V2.1 final result: **pending verification**
 
-V2.1 将新增独立省级 Agent 详情路由，并重排 Live、Intervention 和 Compare 的信息层级。文档契约已经批准，代码与视觉迁移正在实施；在生成并比较 V2.1 截图前，本文件后续的 V2 `passed` 只证明历史基线，不代表 V2.1 已通过。
+V2.1 独立省级 Agent 详情路由以及 Live、Intervention 和 Compare 的省级优先信息层级已实现。按用户要求，Playwright E2E 与截图比较当前暂停；本文件后续的 V2 `passed` 只证明历史基线，不代表 V2.1 已通过。
 
 V2.1 视觉门禁至少包括：
 

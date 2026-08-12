@@ -33,7 +33,7 @@ PolicyScope 是面向国务院层面政策统筹人员的“制造业设备更�
 
 详细完成状态见 [开发计划](./DEVELOPMENT_PLAN.md) 和 [Design QA](./design-qa.md)。
 
-## V2.1 已批准契约（实施中）
+## V2.1 省级 Agent 强化（已实现，待最终验证）
 
 ```text
 国务院用户设定政策
@@ -47,26 +47,22 @@ PolicyScope 是面向国务院层面政策统筹人员的“制造业设备更�
 
 - “省份拟人化”被定义为数据派生、稳定、可解释的实验决策画像，不是角色扮演或现实政府性格。
 - 新增独立省级详情路由 `/experiments/:id/provinces/:provinceCode`；河南、广东、山西分别用于普惠扩散、技术跃迁、绿色转型三种画像验收。
-- Live 默认地图将改为地方执行强度；Intervention 和 Compare 将先呈现省级策略，再呈现企业反馈。
+- Live 默认地图为地方执行强度；Intervention 和 Compare 先呈现省级策略，再呈现企业反馈。
 - 新增 `province-persona-v1`；省级契约升级为 `province-profile-v3`、`province-action-v3`、`province-feedback-v3`，投影契约升级为 `world-state-v3`、`comparison-v3`、`event-v3`；中央 Policy 和企业领域对象继续使用 V2。
 
-V2.1 文档契约已经用户批准，代码、数据、缓存、API、前端和 QA 正按 M9–M12 迁移；当前 V2 产品在迁移完成前继续作为可运行基线。
+V2.1 的领域、数据、Provider、T0–T5 编排、API/SSE 与五路由 React 前端已实现。默认 Cache 场景通过 `runtime/cache/default/v21_manifest.json` 锁定 220 个精选产物；历史 V2 缓存保留但不命中 V3 省级契约。最终 E2E、连续三次 Cache 和截图 Design QA 按用户要求暂停，因此 V2.1 尚未标记为最终验收通过。
 
 ## 产品路由
 
-当前 V2 已实现：
+当前正式产品已实现：
 
 - `/experiments/new`：中央目标、结构化政策参数与人工批准。
-- `/experiments/:id/live`：31 省地图、六项全国指标、行动流和 T0–T5 时间轴。
-- `/experiments/:id/intervention`：证据 → AI 建议 → 人类审批。
-- `/experiments/:id/compare`：双地图、企业行动迁移、地区排行、机制归因与中央复盘。
-- `?province=41`：河南省企详情，展示六类企业的独立行动。
+- `/experiments/:id/live`：31 省决策与企业反馈，默认地图指标为地方执行强度。
+- `/experiments/:id/provinces/:provinceCode`：决策画像、目标约束、地方决策、省际策略、T3 意向、行动谱系、六类企业证据与机制结果。
+- `/experiments/:id/intervention`：省级证据 → 中央 Agent 建议 → 用户审批。
+- `/experiments/:id/compare`：地方执行双地图、省级策略迁移、企业行为迁移、机制归因与中央复盘。
+- `?province=41`：兼容入口，自动导航到正式省级路由并保留 `branch/evidence` 参数。
 - `?evidence=method`：数据质量、版本、seed、父检查点和证据记录。
-
-V2.1 待实现：
-
-- `/experiments/:id/provinces/:provinceCode`：省级 Agent 决策画像、目标约束、地方决策、省际策略、调整意向、行动谱系、企业反馈和机制结果。
-- 旧 `?province=41` 将兼容导航到 `/experiments/:id/provinces/41`。
 
 Stitch 的 `code.html` 只用于布局参考；正式产品是 React、真实 API、SSE 和本地资源实现，没有 iframe、假导航或运行时 CDN。
 

@@ -2,10 +2,10 @@
 
 > 对应产品文档：[PRD_省域政策多智能体推演平台.md](./PRD_省域政策多智能体推演平台.md)  
 > 前端规范：[STITCH_FRONTEND_SPEC.md](./STITCH_FRONTEND_SPEC.md)  
-> 计划版本：V2.1（文档评审版）
+> 计划版本：V2.1（实现完成，验证待恢复）
 > 更新日期：2026-08-12  
 > 目标周期：V2 基线已完成；V2.1 工期从文档获得用户批准后开始
-> 当前门禁：只允许更新 V2.1 文档；Schema、代码、数据、缓存与前端迁移尚未获准启动
+> 当前门禁：M9–M11 已实现；用户要求暂停测试与截图 QA，M12 保持未完成
 
 ---
 
@@ -511,11 +511,11 @@ M0–M7 是已经完成的 V2 历史基线，继续保留以证明当前代码�
 
 | ID | 工作 | 状态 | 依赖 |
 |---|---|---|---|
-| MODEL-210 | `ProvinceProfile v3` 与 `ProvinceDecisionPersona` | Pending | ADR-210 |
-| MODEL-211 | `ProvinceAction/Feedback v3` 与枚举约束 | Pending | MODEL-210 |
-| MODEL-212 | `WorldState/Comparison/Event v3` | Pending | MODEL-211 |
-| DATA-210 | Profile v3 字段与 provenance | Pending | MODEL-210 |
-| DATA-211 | 百分位 Persona 生成、三省夹具与 31 省验证 | Pending | DATA-210 |
+| MODEL-210 | `ProvinceProfile v3` 与 `ProvinceDecisionPersona` | Complete | ADR-210 |
+| MODEL-211 | `ProvinceAction/Feedback v3` 与枚举约束 | Complete | MODEL-210 |
+| MODEL-212 | `WorldState/Comparison/Event v3` | Complete | MODEL-211 |
+| DATA-210 | Profile v3 字段与 provenance | Complete | MODEL-210 |
+| DATA-211 | 百分位 Persona 生成、三省夹具与 31 省验证 | Complete | DATA-210 |
 
 退出条件：31/31 Persona 确定、可追溯；河南/广东/山西主类型正确；同一输入重复生成完全一致；质量只为 `proxy/demo`。
 
@@ -523,12 +523,12 @@ M0–M7 是已经完成的 V2 历史基线，继续保留以证明当前代码�
 
 | ID | 工作 | 状态 | 依赖 |
 |---|---|---|---|
-| AI-210 | Fake/Cache/Live 省级 Action/Feedback V3 | Pending | MODEL-211, DATA-211 |
-| AI-211 | 一次修复、整省 fallback 与缓存键升级 | Pending | AI-210 |
-| SIM-210 | T0 Persona 冻结、T1 决策、T3 非变更意向、T4 谱系 | Pending | MODEL-212, AI-211 |
-| SIM-211 | 省级策略迁移与省级优先 Comparison | Pending | SIM-210 |
-| API-210 | V3 DTO、Persona 元数据与省级详情接口 | Pending | SIM-211 |
-| API-211 | Event v3、SSE 恢复、Replay 与 Evidence | Pending | API-210 |
+| AI-210 | Fake/Cache/Live 省级 Action/Feedback V3 | Complete | MODEL-211, DATA-211 |
+| AI-211 | 一次修复、整省 fallback 与缓存键升级 | Complete | AI-210 |
+| SIM-210 | T0 Persona 冻结、T1 决策、T3 非变更意向、T4 谱系 | Complete | MODEL-212, AI-211 |
+| SIM-211 | 省级策略迁移与省级优先 Comparison | Complete | SIM-210 |
+| API-210 | V3 DTO、Persona 元数据与省级详情接口 | Complete | SIM-211 |
+| API-211 | Event v3、SSE 恢复、Replay 与 Evidence | Complete | API-210 |
 
 退出条件：省际目标只能来自 Top-K；独立推进无目标省；T3 不修改 Policy/Action/Checkpoint；T4 引用上一 Action；调用预算仍为中央 3、省级约 124、企业约 93。
 
@@ -536,11 +536,11 @@ M0–M7 是已经完成的 V2 历史基线，继续保留以证明当前代码�
 
 | ID | 工作 | 状态 | 依赖 |
 |---|---|---|---|
-| WEB-210 | Live 改为省级策略优先，默认地方执行强度 | Pending | API-210 |
-| WEB-211 | `/experiments/:id/provinces/:provinceCode` 独立详情页 | Pending | WEB-210 |
-| WEB-212 | 旧 `?province=` 兼容导航与 Evidence 深链 | Pending | WEB-211 |
-| WEB-213 | Intervention 省级证据优先 | Pending | API-211 |
-| WEB-214 | Compare 省级策略迁移优先 | Pending | SIM-211, WEB-210 |
+| WEB-210 | Live 改为省级策略优先，默认地方执行强度 | Complete | API-210 |
+| WEB-211 | `/experiments/:id/provinces/:provinceCode` 独立详情页 | Complete | WEB-210 |
+| WEB-212 | 旧 `?province=` 兼容导航与 Evidence 深链 | Complete | WEB-211 |
+| WEB-213 | Intervention 省级证据优先 | Complete | API-211 |
+| WEB-214 | Compare 省级策略迁移优先 | Complete | SIM-211, WEB-210 |
 
 退出条件：五路由均受状态门禁保护；地图、行动流、审批和 A/B 先呈现省级策略；企业反馈保持 31×6 完整且位于第二层。
 
@@ -548,12 +548,12 @@ M0–M7 是已经完成的 V2 历史基线，继续保留以证明当前代码�
 
 | ID | 工作 | 状态 | 依赖 |
 |---|---|---|---|
-| QA-210 | 领域、Agent、分支、API/SSE 和数据门禁 | Pending | M10 |
-| QA-211 | 五路由 E2E、禁止文案与可访问性 | Pending | M11 |
+| QA-210 | 领域、Agent、分支、API/SSE 和数据门禁 | Paused | M10 |
+| QA-211 | 五路由 E2E、禁止文案与可访问性 | Paused | M11 |
 | QA-212 | 1440×900 / 1280 V2.1 Design QA | Pending | QA-211 |
 | RELEASE-210 | Cache 三次全流程并冻结 V2.1 | Pending | QA-210, QA-212 |
 
-退出条件：`make test`、`make lint`、`make validate-data`、`make smoke` 全部通过；Cache 完整流程连续三次；`design-qa.md` 的 V2.1 结果由 `pending implementation` 更新为 `passed`。
+退出条件：`make test`、`make lint`、`make validate-data`、`make smoke` 全部通过；Cache 完整流程连续三次；`design-qa.md` 的 V2.1 结果由 `pending verification` 更新为 `passed`。
 
 ---
 
@@ -619,14 +619,14 @@ M0–M7 是已经完成的 V2 历史基线，继续保留以证明当前代码�
 
 ### 9.2 V2.1 当前 Backlog
 
-- [ ] DOC-210 用户评审本次 V2.1 文档组
-- [ ] ADR-210 冻结省级 V3 公共契约
-- [ ] MODEL-210/211/212 省级 Persona、Action、Feedback、World、Comparison、Event
-- [ ] DATA-210/211 Profile v3、31 省 Persona、三省验收夹具和 provenance
-- [ ] AI-210/211 省级 Provider、修复、fallback 和缓存
-- [ ] SIM-210/211 T0–T5 行动谱系与省级策略迁移
-- [ ] API-210/211 V3 DTO、省级详情、SSE、Replay 和 Evidence
-- [ ] WEB-210–214 五路由省级优先体验
+- [x] DOC-210 用户评审本次 V2.1 文档组
+- [x] ADR-210 冻结省级 V3 公共契约
+- [x] MODEL-210/211/212 省级 Persona、Action、Feedback、World、Comparison、Event
+- [x] DATA-210/211 Profile v3、31 省 Persona、三省验收夹具和 provenance
+- [x] AI-210/211 省级 Provider、修复、fallback 和缓存
+- [x] SIM-210/211 T0–T5 行动谱系与省级策略迁移
+- [x] API-210/211 V3 DTO、省级详情、SSE、Replay 和 Evidence
+- [x] WEB-210–214 五路由省级优先体验
 - [ ] QA-210–212 全流程、可访问性与 V2.1 Design QA
 - [ ] RELEASE-210 V2.1 冻结
 
@@ -814,14 +814,14 @@ M0 先修复脚本导入路径，再把 V2 验证接入相同命令。不得为�
 | M6 可靠性/视觉 QA | Complete | Cache/Fake、两条浏览器 E2E 与 `design-qa.md` passed |
 | M7 冻结 | Complete | 依赖、机制、默认缓存和产品边界冻结 |
 | M8 V2.1 文档门禁 | Complete | 六份文档与公共契约已获用户批准 |
-| M9 V2.1 Schema/数据 | In progress | 文档门禁已解除，开始领域与数据迁移 |
-| M10 V2.1 Agent/API | Not started | 等待 M9 |
-| M11 五路由前端 | Not started | 等待 M10 |
-| M12 V2.1 QA/冻结 | Not started | 等待 M11 |
+| M9 V2.1 Schema/数据 | Complete | V3 领域、数据快照、Persona 与 provenance 已实现 |
+| M10 V2.1 Agent/API | Complete | 三 Provider、T0–T5、详情 API、SSE/Replay 与省级迁移已实现 |
+| M11 五路由前端 | Complete | URL 权威加载、省级详情、Live/Intervention/Compare 省级优先已实现 |
+| M12 V2.1 QA/冻结 | Paused | 用户要求暂不运行测试；E2E、Cache 三次和 Design QA 待恢复 |
 
 ### 当前唯一下一任务
 
-实施 M9：完成省级 V3 领域模型、确定性 Persona、31 省数据快照与三省验收夹具；V2 比赛版和地图上线决定保持不变。
+待用户恢复验证后完成 M12：全量门禁、两条 E2E、连续三次 Cache 与 1440×900/1280 截图 QA。V2 比赛版和地图上线决定保持不变。
 
 ---
 
@@ -845,14 +845,14 @@ M0 先修复脚本导入路径，再把 V2 验证接入相同命令。不得为�
 ## 16. V2.1 Definition of Done
 
 - [x] V2.1 文档组获得用户批准。
-- [ ] 31 个稳定、可追溯的 `province-persona-v1` 生成并通过三省夹具。
-- [ ] `province-action-v3`、`province-feedback-v3`、`world-state-v3`、`comparison-v3` 和 `event-v3` 接通全部调用方。
-- [ ] T3 调整意向不修改 Policy、Action、WorldState 或父 Checkpoint。
-- [ ] T4 省级 Action 谱系和同源分支隔离可追溯。
-- [ ] 省际目标严格限定为 Top-K，独立策略没有目标省份。
-- [ ] 五个正式路由、证据抽屉和旧省份 query 兼容导航真实可用。
-- [ ] Live 默认地方执行强度；Intervention 和 Compare 均先省级策略、后企业反馈。
-- [ ] 31×6 企业完整性、Cache/Fallback、审批与环境唯一权威保持不变。
+- [x] 31 个稳定、可追溯的 `province-persona-v1` 生成并通过三省夹具。
+- [x] `province-action-v3`、`province-feedback-v3`、`world-state-v3`、`comparison-v3` 和 `event-v3` 接通全部调用方。
+- [x] T3 调整意向不修改 Policy、Action、WorldState 或父 Checkpoint。
+- [x] T4 省级 Action 谱系和同源分支隔离可追溯。
+- [x] 省际目标严格限定为 Top-K，独立策略没有目标省份。
+- [x] 五个正式路由、证据抽屉和旧省份 query 兼容导航真实可用。
+- [x] Live 默认地方执行强度；Intervention 和 Compare 均先省级策略、后企业反馈。
+- [x] 31×6 企业完整性、Cache/Fallback、审批与环境唯一权威保持不变。
 - [ ] `make test`、`make lint`、`make validate-data`、`make smoke` 通过。
 - [ ] Cache 完整流程连续三次通过。
 - [ ] `design-qa.md` 的 V2.1 `final result` 为 `passed`。

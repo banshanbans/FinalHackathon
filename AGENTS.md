@@ -18,8 +18,8 @@
 - Stitch 四路由、河南省企抽屉、证据抽屉和本地标准地图衍生 SVG 已交付，`design-qa.md` 为 `passed`。
 - 全国地图已完成省域映射修正、几何签名和 31 省完整性校验；根据用户确认的比赛发布规则，比赛版可直接上线。
 - V2.1 PRD、开发计划、Agent 约束和 Stitch 规范已获用户批准，代码迁移门禁已解除。
-- V2.1 的 Persona、V3 DTO、Agent、仿真、API、五路由前端和 Design QA 尚未实现；不得沿用 V2 的通过结论。
-- 当前实施阶段为 M9，先完成省级 V3 领域模型与确定性 Persona，再进入 Agent/API 和五路由前端。
+- V2.1 的 Persona、V3 DTO、Agent、仿真、API/SSE、默认缓存与五路由前端已实现；最终 E2E、连续三次 Cache 与 Design QA 尚未完成，不得沿用 V2 的通过结论。
+- 当前阶段为 M12 验证待恢复；用户已明确要求暂不运行测试，不得提前将 V2.1 `design-qa.md` 标记为 `passed`。
 
 如果用户在后续回合明确改变门禁，以用户最新要求为准，并在同一变更中同步所有受影响文档。
 
@@ -509,7 +509,7 @@ make demo
 make smoke
 ```
 
-V2 冻结基线的 `make test`、`make lint`、`make validate-data`、`make smoke` 和连续三次 Cache 产品流程均已实际通过。V2.1 尚未实现或验证；后续任何 Schema、机制、Provider、API、SSE、地图或主流程变更都必须重新运行与风险相称的门禁，不能沿用 V2 结论。
+V2 冻结基线的 `make test`、`make lint`、`make validate-data`、`make smoke` 和连续三次 Cache 产品流程均已实际通过。V2.1 主体已实现，但最终验证门禁未全部完成；恢复 QA 时必须重新运行与风险相称的门禁，不能沿用 V2 结论。
 
 任务完成必须同时满足：
 
@@ -527,4 +527,4 @@ V2.1 完成标准以 `DEVELOPMENT_PLAN.md` 的 V2.1 Definition of Done 为准，
 
 ## 18. 当前唯一下一步
 
-提交 V2.1 文档组供用户评审并停止。用户明确批准前，不修改 Schema、代码、数据、缓存或运行时。V2 比赛版可继续运行，地图上线决定不变；后续地图变更仍须通过来源、省域绑定、几何签名和 31 省完整性校验。
+待用户恢复验证后执行 M12：运行全部门禁、两条 Playwright E2E、连续三次 Cache 流程及 1440×900/1280 截图对照。在此之前保持 `design-qa.md` 为 pending；比赛版地图上线决定不变。
