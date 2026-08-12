@@ -28,6 +28,18 @@ export function AppShell() {
   useEffect(() => {
     window.scrollTo({ left: 0, top: 0, behavior: "auto" });
   }, [location.pathname]);
+  useEffect(() => {
+    const provinceCode = new URLSearchParams(location.search).get("province");
+    const experimentId = location.pathname.match(/^\/experiments\/([^/]+)\//)?.[1];
+    if (!provinceCode || !experimentId) return;
+    const params = new URLSearchParams(location.search);
+    params.delete("province");
+    const query = params.toString();
+    navigate(
+      `/experiments/${experimentId}/provinces/${provinceCode}${query ? `?${query}` : ""}`,
+      { replace: true },
+    );
+  }, [location.pathname, location.search, navigate]);
 
   const openEvidence = () => {
     if (!flow.world) return;

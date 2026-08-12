@@ -44,6 +44,7 @@ export function ProvinceMap({
   onSelect,
   compact = false,
   metricLabel = "企业参与指数",
+  emptyMessage,
 }: {
   profiles: ProvinceProfile[];
   values: Record<string, number>;
@@ -51,6 +52,7 @@ export function ProvinceMap({
   onSelect?: (provinceCode: string) => void;
   compact?: boolean;
   metricLabel?: string;
+  emptyMessage?: string;
 }) {
   const [mapState, setMapState] = useState<"loading" | "ready" | "error">("loading");
   useEffect(() => {
@@ -67,6 +69,7 @@ export function ProvinceMap({
     [profiles],
   );
   const selectedName = profiles.find((item) => item.province_code === selectedCode)?.short_name;
+  const hasValues = Object.keys(values).length > 0;
   const data = useMemo(
     () => [
       ...profiles.map((profile) => ({
@@ -99,6 +102,7 @@ export function ProvinceMap({
         textStyle: { color: "#172033", fontFamily: "Inter, Noto Sans SC" },
         formatter: (params: { name: string; value?: number }) => {
           if (EXCLUDED_NAMES.has(params.name)) return `${params.name}<br/>不进入本次 31 省计算`;
+          if (!hasValues) return `<strong>${params.name}</strong><br/>等待省级决策`;
           return `<strong>${params.name}</strong><br/>${metricLabel} ${Number(params.value ?? 0).toFixed(1)} / 100`;
         },
       },
@@ -148,7 +152,7 @@ export function ProvinceMap({
         },
       ],
     }),
-    [compact, data, metricLabel, selectedName],
+    [compact, data, hasValues, metricLabel, selectedName],
   );
 
   if (mapState === "loading") {
@@ -173,6 +177,7 @@ export function ProvinceMap({
           },
         }}
       />
+      {!hasValues && <div className="map-empty-layer"><IconMessage message={emptyMessage ?? "等待省级决策"} /></div>}
       {!compact && (
         <div className="province-keyboard-list" aria-label="31 个省级行政区">
           {profiles.map((profile) => (
@@ -193,4 +198,8 @@ export function ProvinceMap({
       </p>
     </div>
   );
+}
+
+function IconMessage({ message }: { message: string }) {
+  return <div><span className="material-symbols-rounded" aria-hidden="true">hourglass_empty</span><strong>{message}</strong><small>地方行动提交后将显示全国分布</small></div>;
 }

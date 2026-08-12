@@ -6,6 +6,7 @@ import { Icon } from "../components/Icon";
 import { PolicyEditor } from "../components/PolicyEditor";
 import { usePolicyScopeContext } from "../context/PolicyScopeContext";
 import type { Policy } from "../types";
+import { PERSONA_TYPE_LABELS, PRIORITY_GOAL_LABELS, STRATEGY_LABELS } from "../utils/display";
 import { policyIsValid } from "../utils/policy";
 
 const FIELD_LABELS: Record<string, string> = {
@@ -53,11 +54,14 @@ export default function InterventionPage() {
   const completeSingle = async () => { await flow.runSingleBranch(); navigate(`/experiments/${world.experiment_id}/compare`); };
 
   return <div className="intervention-page page-stack">
-    <header className="page-heading compact-heading"><div><span className="eyebrow">T3 · 干预决策</span><h1>中央政策干预审批</h1><p>基于地方反馈、企业行动和机制指标，审批政策调整方案。</p></div><span className={`state-pill ${world.intervention_decision ?? "awaiting"}`}>{approvedDecision ? "已批准" : world.intervention_decision === "rejected" ? "已驳回" : "待审批"}</span></header>
+    <header className="page-heading compact-heading"><div><span className="eyebrow">T3 · 干预决策</span><h1>中央政策干预审批</h1><p>先审视 31 省目标、调整意向与中央支持请求，再以企业信号与机制结果作为佐证。</p></div><span className={`state-pill ${world.intervention_decision ?? "awaiting"}`}>{approvedDecision ? "已批准" : world.intervention_decision === "rejected" ? "已驳回" : "待审批"}</span></header>
     <div className="intervention-columns">
       <section className="card evidence-column">
-        <div className="column-number">01</div><span className="source-label environment">执行证据</span><h2>关键问题</h2><p>汇总 T3 省级反馈与机制测算结果。</p>
-        <div className="evidence-kpis"><div><span>传统制造中小企业观望</span><strong>{Object.values(world.enterprise_actions).filter((item) => item.archetype === "traditional_sme" && item.participation === "wait").length}</strong><small>个省级群体</small></div><div><span>地方请求支持</span><strong>{Object.values(world.province_feedback).filter((item) => item.requested_central_support >= .6).length}</strong><small>个省份</small></div><div><span>规则接管</span><strong>{world.fallback_provinces.length}</strong><small>个省份</small></div></div>
+        <div className="column-number">01</div><span className="source-label model">省级 Agent 复盘</span><h2>地方决策证据</h2><p>汇总省级目标分布、省际策略、调整意向与中央支持请求。</p>
+        <div className="province-evidence-block"><strong>主要目标分布</strong>{Object.entries(Object.values(world.province_actions).reduce<Record<string, number>>((counts, action) => ({ ...counts, [action.primary_goal]: (counts[action.primary_goal] ?? 0) + 1 }), {})).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([goal, count]) => <div key={goal}><span>{PRIORITY_GOAL_LABELS[goal as keyof typeof PRIORITY_GOAL_LABELS]}</span><b>{count} 省</b></div>)}</div>
+        <div className="province-evidence-block"><strong>省际策略</strong>{Object.entries(Object.values(world.province_actions).reduce<Record<string, number>>((counts, action) => ({ ...counts, [action.interprovincial_strategy]: (counts[action.interprovincial_strategy] ?? 0) + 1 }), {})).map(([strategy, count]) => <div key={strategy}><span>{STRATEGY_LABELS[strategy as keyof typeof STRATEGY_LABELS]}</span><b>{count} 省</b></div>)}</div>
+        <div className="evidence-kpis"><div><span>提交工具调整意向</span><strong>{Object.values(world.province_feedback).filter((item) => item.adjustment_intents.length > 0).length}</strong><small>个省份</small></div><div><span>高强度中央支持请求</span><strong>{Object.values(world.province_feedback).filter((item) => item.requested_central_support >= .6).length}</strong><small>个省份</small></div><div><span>企业群体观望</span><strong>{Object.values(world.enterprise_actions).filter((item) => item.participation === "wait").length}</strong><small>个群体信号</small></div></div>
+        <div className="province-drill-list">{["41", "44", "14"].map((code) => <button key={code} onClick={() => navigate(`/experiments/${world.experiment_id}/provinces/${code}?branch=control`)} type="button"><span><strong>{world.province_profiles[code].name}</strong><small>{PERSONA_TYPE_LABELS[world.province_personas[code].primary_type]}</small></span><Icon name="arrow_forward" /></button>)}</div>
         <div className="evidence-list-buttons">{proposal.evidence_refs.map((ref) => <button key={ref} onClick={() => openEvidence(ref)} type="button"><Icon name="description" /><span><strong>{ref}</strong><small>查看证据详情</small></span><Icon name="open_in_new" /></button>)}</div>
         <button className="text-button" onClick={() => openEvidence("method")} type="button"><Icon name="science" />查看方法、版本与父检查点</button>
       </section>

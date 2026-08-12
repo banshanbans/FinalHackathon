@@ -5,6 +5,8 @@ import type {
   EnterpriseArchetypeDefinition,
   EvidenceRecord,
   Policy,
+  ProvinceAgentDetail,
+  ProvincePersonaTypeDefinition,
   ProvinceProfile,
   RunMode,
   WorldState,
@@ -70,6 +72,9 @@ export const policyScopeApi = {
   listEnterpriseArchetypes: () =>
     request<EnterpriseArchetypeDefinition[]>("/meta/enterprise-archetypes"),
 
+  listProvincePersonaTypes: () =>
+    request<ProvincePersonaTypeDefinition[]>("/meta/province-persona-types"),
+
   defaultPolicy: () => request<Policy>("/meta/default-policy"),
 
   createExperiment: (objective: string, runMode: RunMode) =>
@@ -82,6 +87,11 @@ export const policyScopeApi = {
   getState: (experimentId: string, branchId = "control") =>
     request<WorldState>(
       `/experiments/${experimentId}/state?branch_id=${encodeURIComponent(branchId)}`,
+    ),
+
+  getProvinceDetail: (experimentId: string, provinceCode: string) =>
+    request<ProvinceAgentDetail>(
+      `/experiments/${experimentId}/provinces/${encodeURIComponent(provinceCode)}`,
     ),
 
   approveDirective: (experimentId: string, policy: Policy) =>

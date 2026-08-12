@@ -2,6 +2,33 @@ export type Phase = "T0" | "T1" | "T2" | "T3" | "T4" | "T5";
 export type RunMode = "live" | "cache" | "fake" | "fallback";
 export type DataQuality = "verified" | "proxy" | "demo";
 export type Participation = "participate" | "conditional" | "wait" | "decline";
+export type ProvincePersonaType =
+  | "execution_driven"
+  | "fiscally_prudent"
+  | "inclusive_diffusion"
+  | "technology_leap"
+  | "green_transition"
+  | "regional_collaboration";
+export type ProvincePriorityGoal =
+  | "equipment_renewal"
+  | "fiscal_sustainability"
+  | "sme_financing_access"
+  | "digital_upgrade"
+  | "green_equipment_renewal"
+  | "cross_regional_coordination";
+export type ProvinceConstraint =
+  | "fiscal_gap"
+  | "financing_gap"
+  | "transition_pressure"
+  | "weak_digital_base"
+  | "employment_pressure"
+  | "industrial_concentration";
+export type DecisionPosture = "proactive" | "balanced" | "cautious";
+export type InterprovincialStrategy =
+  | "collaborate"
+  | "benchmark"
+  | "compete"
+  | "independent";
 export type EnterpriseArchetype =
   | "large_state_owned"
   | "large_private"
@@ -46,6 +73,7 @@ export interface CentralDirective {
 }
 
 export interface ProvinceProfile {
+  schema_version: "province-profile-v3";
   province_code: string;
   name: string;
   short_name: string;
@@ -60,8 +88,43 @@ export interface ProvinceProfile {
   credit_access: number;
   transition_pressure: number;
   fiscal_conservatism: number;
+  rd_capacity: number;
+  employment_pressure: number;
+  cooperation_tendency: number;
   data_quality: DataQuality;
   source_year: number;
+}
+
+export interface ProvincePersonaAxes {
+  execution_drive: number;
+  fiscal_prudence: number;
+  sme_inclusiveness: number;
+  technology_ambition: number;
+  green_priority: number;
+  cooperation_orientation: number;
+}
+
+export interface ProvinceDecisionPersona {
+  schema_version: "province-persona-v1";
+  province_code: string;
+  axes: ProvincePersonaAxes;
+  primary_type: ProvincePersonaType;
+  secondary_type: ProvincePersonaType | null;
+  priority_goals: ProvincePriorityGoal[];
+  key_constraints: ProvinceConstraint[];
+  profile_version: string;
+  network_version: string;
+  method_version: string;
+  data_quality: "proxy" | "demo";
+  public_summary: string;
+}
+
+export interface ProvincePersonaTypeDefinition {
+  type: ProvincePersonaType;
+  display_name: string;
+  axis: keyof ProvincePersonaAxes;
+  priority_goal: ProvincePriorityGoal;
+  visible_label: "本次实验决策画像";
 }
 
 export interface ProvinceState {
@@ -76,9 +139,16 @@ export interface ProvinceState {
 }
 
 export interface ProvinceAction {
+  schema_version: "province-action-v3";
   action_id: string;
+  previous_action_id: string | null;
   province_code: string;
   phase: Phase;
+  primary_goal: ProvincePriorityGoal;
+  decision_posture: DecisionPosture;
+  target_enterprise_groups: EnterpriseArchetype[];
+  interprovincial_strategy: InterprovincialStrategy;
+  target_province_codes: string[];
   implementation_intensity: number;
   local_match_ratio: number;
   instrument_mix: InstrumentMix;
@@ -92,12 +162,40 @@ export interface ProvinceAction {
   fallback_used: boolean;
 }
 
+export interface EnterpriseSignal {
+  cohort_type: EnterpriseArchetype;
+  signal_type:
+    | "participation_barrier"
+    | "financing_constraint"
+    | "upgrade_mismatch"
+    | "support_demand";
+  severity: "low" | "medium" | "high";
+  evidence_refs: string[];
+}
+
+export interface AdjustmentIntent {
+  path: string;
+  direction: "increase" | "decrease" | "hold";
+  reason_code: string;
+}
+
 export interface ProvinceFeedback {
+  schema_version: "province-feedback-v3";
   feedback_id: string;
   province_code: string;
   phase: "T3";
-  implementation_assessment: string;
-  priority_enterprise_groups: string[];
+  strategy_assessment: "effective" | "mixed" | "constrained";
+  enterprise_signals: EnterpriseSignal[];
+  priority_enterprise_groups: EnterpriseArchetype[];
+  key_constraints: ProvinceConstraint[];
+  adjustment_intents: AdjustmentIntent[];
+  requested_support_type:
+    | "none"
+    | "fiscal_space"
+    | "credit_support"
+    | "guarantee_capacity"
+    | "technical_service"
+    | "regional_coordination";
   requested_central_support: number;
   reason_codes: string[];
   evidence_refs: string[];
@@ -237,7 +335,7 @@ export interface CentralReview {
 }
 
 export interface WorldState {
-  schema_version: "world-state-v2";
+  schema_version: "world-state-v3";
   experiment_id: string;
   branch_id: string;
   parent_checkpoint_id: string | null;
@@ -255,8 +353,10 @@ export interface WorldState {
   directive: CentralDirective;
   national_metrics: NationalMetrics;
   province_profiles: Record<string, ProvinceProfile>;
+  province_personas: Record<string, ProvinceDecisionPersona>;
   province_states: Record<string, ProvinceState>;
   province_actions: Record<string, ProvinceAction>;
+  province_action_lineage: Record<string, ProvinceAction[]>;
   province_feedback: Record<string, ProvinceFeedback>;
   enterprise_profiles: Record<string, EnterpriseGroupProfile>;
   enterprise_states: Record<string, EnterpriseGroupState>;
@@ -302,13 +402,14 @@ export interface ProvinceDelta {
 }
 
 export interface ComparisonResult {
-  schema_version: "comparison-v2";
+  schema_version: "comparison-v3";
   experiment_id: string;
   checkpoint_id: string;
   control_branch_id: string;
   treatment_branch_id: string;
   policy_diff: PolicyFieldChange[];
   national_metrics: Record<NationalMetricKey, MetricDelta>;
+  province_strategy_transitions: ProvinceStrategyTransition[];
   province_deltas: ProvinceDelta[];
   action_migrations: Array<{
     from_participation: Participation;
@@ -325,6 +426,56 @@ export interface ComparisonResult {
   top_improved: string[];
   top_pressured: string[];
   central_review: CentralReview | null;
+}
+
+export interface ProvinceStrategyTransition {
+  province_code: string;
+  province_name: string;
+  persona_primary_type: ProvincePersonaType;
+  control_action_id: string;
+  treatment_action_id: string;
+  changed: boolean;
+  changes: Array<{
+    path: string;
+    from_value: unknown;
+    to_value: unknown;
+  }>;
+}
+
+export interface ProvinceNeighbor {
+  province_code: string;
+  province_name: string;
+  weight: number;
+}
+
+export interface ProvinceEnterpriseEvidence {
+  profile: EnterpriseGroupProfile;
+  state: EnterpriseGroupState | null;
+  action: EnterpriseAction | null;
+  contribution: MechanismContribution | null;
+}
+
+export interface ProvinceAgentBranchSnapshot {
+  branch_id: string;
+  branch_kind: "control" | "treatment";
+  phase: Phase;
+  state: ProvinceState;
+  current_action: ProvinceAction | null;
+  action_lineage: ProvinceAction[];
+  feedback: ProvinceFeedback | null;
+  enterprise_groups: ProvinceEnterpriseEvidence[];
+  mechanism_summary: Record<string, number>;
+  evidence_refs: string[];
+}
+
+export interface ProvinceAgentDetail {
+  schema_version: "province-agent-detail-v1";
+  experiment_id: string;
+  province_code: string;
+  profile: ProvinceProfile;
+  persona: ProvinceDecisionPersona;
+  top_k_neighbors: ProvinceNeighbor[];
+  branches: Partial<Record<"control" | "treatment", ProvinceAgentBranchSnapshot>>;
 }
 
 export interface EvidenceRecord {
@@ -354,6 +505,6 @@ export interface SimulationEvent {
   branch_id: string;
   phase: Phase;
   timestamp: string;
-  schema_version: "event-v2";
+  schema_version: "event-v3";
   payload: Record<string, unknown>;
 }

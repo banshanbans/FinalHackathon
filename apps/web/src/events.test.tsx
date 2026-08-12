@@ -13,7 +13,7 @@ function provinceEvent(type: string, eventId: string): SimulationEvent {
     branch_id: "control",
     phase: "T1",
     timestamp: "2026-08-12T00:00:00Z",
-    schema_version: "event-v2",
+    schema_version: "event-v3",
     payload: { province_code: "41" },
   };
 }
@@ -25,6 +25,9 @@ describe("province decision event contract", () => {
         "province.decision.started",
         "province.decision.completed",
         "province.decision.fallback",
+        "province.persona.ready",
+        "province.adjustment_intent.completed",
+        "province.strategy.changed",
       ]),
     );
     expect(SIMULATION_EVENT_TYPES).not.toEqual(

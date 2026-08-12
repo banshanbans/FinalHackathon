@@ -1,5 +1,6 @@
 export const SIMULATION_EVENT_TYPES = [
   "experiment.started",
+  "province.persona.ready",
   "central.directive.completed",
   "central.directive.approved",
   "phase.started",
@@ -11,6 +12,8 @@ export const SIMULATION_EVENT_TYPES = [
   "enterprise.batch.fallback",
   "enterprise.aggregate.updated",
   "province.feedback.completed",
+  "province.adjustment_intent.completed",
+  "province.strategy.changed",
   "environment.updated",
   "world_state.updated",
   "central.intervention.proposed",
@@ -24,6 +27,7 @@ export const SIMULATION_EVENT_TYPES = [
 
 export const EVENT_LABELS: Record<string, string> = {
   "experiment.started": "推演已创建",
+  "province.persona.ready": "省级决策画像已冻结",
   "central.directive.completed": "中央草案已生成",
   "central.directive.approved": "中央指令已审批",
   "phase.started": "阶段开始",
@@ -36,6 +40,8 @@ export const EVENT_LABELS: Record<string, string> = {
   "enterprise.batch.fallback": "整省企业响应已降级",
   "enterprise.aggregate.updated": "企业群体指标已聚合",
   "province.feedback.completed": "地方反馈已形成",
+  "province.adjustment_intent.completed": "地方调整意向已形成",
+  "province.strategy.changed": "省级策略迁移已记录",
   "environment.updated": "环境完成结算",
   "world_state.updated": "权威状态已提交",
   "central.intervention.proposed": "中央研判建议已生成",

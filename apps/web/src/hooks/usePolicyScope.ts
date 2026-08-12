@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 
 import { ApiError, policyScopeApi } from "../api/client";
 import { SIMULATION_EVENT_TYPES } from "../events";
@@ -13,9 +14,15 @@ import type {
   WorldState,
 } from "../types";
 
-const ACTIVE_EXPERIMENT_KEY = "policyscope.active-experiment.v2";
+const RECENT_EXPERIMENT_KEY = "policyscope.recent-experiment.v3";
+
+function experimentIdFromPath(pathname: string) {
+  return pathname.match(/^\/experiments\/([^/]+)\//)?.[1] ?? null;
+}
 
 export function usePolicyScope() {
+  const location = useLocation();
+  const routeExperimentId = experimentIdFromPath(location.pathname);
   const [world, setWorld] = useState<WorldState | null>(null);
   const [control, setControl] = useState<WorldState | null>(null);
   const [treatment, setTreatment] = useState<WorldState | null>(null);
@@ -38,6 +45,11 @@ export function usePolicyScope() {
     queryFn: policyScopeApi.listEnterpriseArchetypes,
     staleTime: Number.POSITIVE_INFINITY,
   });
+  const personaTypesQuery = useQuery({
+    queryKey: ["province-persona-types-v1"],
+    queryFn: policyScopeApi.listProvincePersonaTypes,
+    staleTime: Number.POSITIVE_INFINITY,
+  });
   const defaultPolicyQuery = useQuery({
     queryKey: ["default-policy-v2"],
     queryFn: policyScopeApi.defaultPolicy,
@@ -50,17 +62,34 @@ export function usePolicyScope() {
   });
 
   useEffect(() => {
-    const experimentId = localStorage.getItem(ACTIVE_EXPERIMENT_KEY);
-    if (!experimentId) {
+    if (!routeExperimentId) {
       setHydrating(false);
       return;
     }
+    if (world?.experiment_id === routeExperimentId) {
+      localStorage.setItem(RECENT_EXPERIMENT_KEY, routeExperimentId);
+      setHydrating(false);
+      return;
+    }
+    setHydrating(true);
+    setError(null);
+    setControl(null);
+    setTreatment(null);
+    setBranch(null);
+    setIntervention(null);
+    setComparison(null);
     policyScopeApi
-      .getState(experimentId)
-      .then(setWorld)
-      .catch(() => localStorage.removeItem(ACTIVE_EXPERIMENT_KEY))
+      .getState(routeExperimentId)
+      .then((next) => {
+        localStorage.setItem(RECENT_EXPERIMENT_KEY, routeExperimentId);
+        setWorld(next);
+      })
+      .catch((reason: unknown) => {
+        setWorld(null);
+        setError(reason instanceof Error ? reason.message : "推演加载失败");
+      })
       .finally(() => setHydrating(false));
-  }, []);
+  }, [routeExperimentId, world?.experiment_id]);
 
   useEffect(() => {
     if (!world?.experiment_id || world.status === "completed") return;
@@ -93,7 +122,7 @@ export function usePolicyScope() {
   const createDraft = (objective: string, runMode: RunMode) =>
     execute("中央研判智能体正在生成政策草案…", async () => {
       const next = await policyScopeApi.createExperiment(objective, runMode);
-      localStorage.setItem(ACTIVE_EXPERIMENT_KEY, next.experiment_id);
+      localStorage.setItem(RECENT_EXPERIMENT_KEY, next.experiment_id);
       seenEvents.current.clear();
       setEvents([]);
       setWorld(next);
@@ -214,7 +243,7 @@ export function usePolicyScope() {
     }), [execute, world]);
 
   const resetExperiment = () => {
-    localStorage.removeItem(ACTIVE_EXPERIMENT_KEY);
+    localStorage.removeItem(RECENT_EXPERIMENT_KEY);
     seenEvents.current.clear();
     setEvents([]);
     setWorld(null);
@@ -229,11 +258,18 @@ export function usePolicyScope() {
   return {
     profiles: profilesQuery.data ?? [],
     archetypes: archetypesQuery.data ?? [],
+    personaTypes: personaTypesQuery.data ?? [],
     defaultPolicy: defaultPolicyQuery.data ?? null,
     metadataLoading:
-      profilesQuery.isLoading || archetypesQuery.isLoading || defaultPolicyQuery.isLoading,
+      profilesQuery.isLoading
+      || archetypesQuery.isLoading
+      || personaTypesQuery.isLoading
+      || defaultPolicyQuery.isLoading,
     metadataError:
-      profilesQuery.error ?? archetypesQuery.error ?? defaultPolicyQuery.error,
+      profilesQuery.error
+      ?? archetypesQuery.error
+      ?? personaTypesQuery.error
+      ?? defaultPolicyQuery.error,
     configuredRunMode: healthQuery.data?.run_mode ?? "cache",
     world,
     control,
