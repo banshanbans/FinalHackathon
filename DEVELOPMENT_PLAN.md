@@ -1,10 +1,10 @@
-# PolicyScope V3.2 产品旅程与 Fake Agent 重构开发计划
+# 13110 V3.2 产品旅程与 Fake Agent 重构开发计划
 
 > 对应 PRD：[PRD_省域政策多智能体推演平台.md](./PRD_省域政策多智能体推演平台.md)
 > 前端规范：[STITCH_FRONTEND_SPEC.md](./STITCH_FRONTEND_SPEC.md)
-> 计划版本：V3.2 M34（季度事件驱动实现完成，Luna 冻结待 Key）
+> 计划版本：V3.2 M35（Presentation 因果舞台重建）
 > 更新日期：2026-08-13
-> 当前门禁：M34 Schema、季度运行时、互动市场、季度环境、API/SSE、年度时间轴、三类 E2E、缓存与四画布 QA 必须全部通过；真实 Luna Provider 缓存仍需 API Key，不得宣称已冻结
+> 当前门禁：只以 `apps/presentation` 为产品界面，完成强类型展示投影、因果链、博弈层、分支隔离、字段泄漏扫描、三类 E2E 和四画布 Design QA
 
 ---
 
@@ -896,3 +896,18 @@ M34 保持 M32 七轮、308 次调用和 `world-state-v9` 不变。所有备选�
 实施顺序固定为：文档与 Schema → 旧实验 410/季度持久化 → Inbox/消息/调度屏障 → Provider 与季度环境 → REST/SSE → Presentation 与工作台 → 独立缓存和总验收。旧 `exp_m32_*` 只保留文件，不做转换或删除。
 
 2026-08-13 验收记录：`make test`（71 Python + 5 Web）、`make test-sim`（63）、`make test-api`（8）、`make lint`、`make validate-data`、`make test-e2e`（5）、`make test-e2e-presentation`（7）和 `make verify-cache-m34` 均通过；活动 M34 文件禁止文案扫描无命中。因当前环境未配置 Luna API Key，未生成或伪造 `v3_2_m34_luna`。
+
+## 28. M35：Presentation Narrative & Game Layer Rebuild
+
+状态：Implementation active（2026-08-13）。用户已选定“因果舞台”视觉稿；普通 Web 前端不进入本里程碑。
+
+| 子项 | 状态 | 退出条件 |
+|---|---|---|
+| M35.0 契约与视觉目标 | Complete | ADR-370、PRD、计划、AGENTS、前端规范与 Presentation 规范一致；选定视觉稿进入仓库证据 |
+| M35.1 Presentation View Model | Complete | Frame v4 提供逐分支 Story、六段链、主体前缀、事件影响、共享域和稳定 Spotlight；原始运行时字段不进入主舞台 |
+| M35.2 因果舞台 | Complete | 顶部问题、左侧六段链、中央世界地图、右侧博弈台、底部四季度章节轨按视觉目标落地 |
+| M35.3 Game Layer 与动画 | Complete | Province/Automaker/Event 关系可绘制；提议、反报价、回应、达成/拒绝与结算按因果节拍播放，低动效可用 |
+| M35.4 A/B 与探索 | Complete | Control/Treatment 严格隔离，同域 A/B、差值、主体/事件探索和 Evidence 下钻一致 |
+| M35.5 验收与启动 | Complete | Projection/DOM 单测、三类 E2E、字段泄漏扫描、1920/2560/3840/SVG QA 和 10 秒可理解性通过；API 与 Presentation 保持启动 |
+
+实施顺序固定为：文档与视觉目标 → 后端强类型投影 → 前端显示映射 → 因果舞台 → Game Layer/动画 → A/B/Evidence → 专项验收与启动。M34 Orchestrator、消息权限、季度环境、Checkpoint、Comparison 和缓存不得为展示方便而修改。

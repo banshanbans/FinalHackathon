@@ -84,13 +84,16 @@ def test_m34_quarter_api_idempotency_interactions_and_presentation(tmp_path) -> 
 
         timeline = client.get(f"/api/experiments/{experiment_id}/presentation/timeline")
         assert timeline.status_code == 200
-        assert timeline.json()["schema_version"] == "presentation-timeline-v3"
+        assert timeline.json()["schema_version"] == "presentation-timeline-v4"
+        assert timeline.json()["shared_scale"]["difference_bound"] > 0
         settlement = next(item for item in timeline.json()["nodes"] if item["kind"] == "settlement")
         frame = client.get(
             f"/api/experiments/{experiment_id}/presentation/frames/{settlement['node_id']}"
         )
         assert frame.status_code == 200
-        assert frame.json()["schema_version"] == "presentation-frame-v3"
+        assert frame.json()["schema_version"] == "presentation-frame-v4"
+        assert set(frame.json()["branches"]) == {"control", "treatment"}
+        assert frame.json()["question"]
         assert frame.json()["disclaimer"].startswith("模拟季度")
 
 

@@ -1,5 +1,5 @@
 ---
-name: PolicyScope
+name: 13110
 version: V3.1-implemented
 status: implemented-design-qa-passed
 colors:
@@ -271,3 +271,12 @@ The Presentation Hall is a separate full-screen surface, not a dark theme applie
 - Every timeline surface includes the Chinese notice “模拟季度与互动顺序，不代表现实响应日期”.
 - The map spotlights one to three server-selected interactions per wave. Additional relations remain queryable without increasing the national map line density.
 - Legacy seven-round labels may appear only in historical records and must not be mixed into `v3_2_m34` screens.
+
+## M35 13110 Causal Stage Addendum
+
+- The public product name is `13110`. PolicyScope remains only in code packages and historical version provenance.
+- The selected “Causal Stage” visual is the implementation source of truth: a compact top HUD, six-step causal spine, subdued national map, branch-isolated game panel, and one-year Q1–Q4 timeline.
+- Story is the default layer. Explore and Evidence are progressive disclosures rather than competing dashboard columns.
+- Wave and event frames reveal relation paths only when the matching causal beat becomes active; a replayed frame never reveals its own future quarter settlement.
+- Annual and quarterly result frames use the same absolute color domain for both branches. Difference mode uses a fixed symmetric domain and never displays a single-branch Spotlight.
+- All visible subjects, actions, responses and states use Chinese business labels. Raw IDs, schema names and snake_case stay out of the main stage DOM.

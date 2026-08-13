@@ -1,6 +1,6 @@
 # AGENTS.md
 
-本文件适用于当前目录及全部子目录，用于约束参与 PolicyScope V3.2 的 Codex、自动化开发 Agent 和人工开发者。
+本文件适用于当前目录及全部子目录，用于约束参与 13110（代码与历史版本沿用 PolicyScope 命名）V3.2 的 Codex、自动化开发 Agent 和人工开发者。
 
 ---
 
@@ -526,7 +526,7 @@ payload
 
 ### 13.1 正式实现
 
-- 品牌统一为“PolicyScope / 政策涟漪”。
+- 当前对外产品名统一为“13110”；`PolicyScope` 仅保留为代码包、历史文档和版本谱系标识，不得继续出现在 Presentation 主舞台品牌位。
 - 保持浅色现代制度工作台、12 栅格、Inter + Noto Sans SC、蓝/青/靛语义色。
 - 中国地图是主分析画布，不再以六张 KPI 卡作为页面主体。
 - 正式前端继续使用 React、React Router、API hooks、SSE 和本地资源。
@@ -758,7 +758,7 @@ V3 实现期间按里程碑运行与风险相称的检查；不得用局部通�
 
 ## 20. 当前唯一下一步
 
-用户已于 2026-08-13 批准并完成 M34 季度事件驱动升级实现。`v3_2_m34`、`exp_m34_*`、四季度 Tick、授权 Inbox、最多三波互动、季度确定性结算、年度同源 A/B、工作台、Presentation、Fake 三次缓存、正式 E2E 和四画布 QA 已通过。旧 `exp_m32_*` 只保留磁盘文件，所有运行与展示接口返回 `410 LEGACY_V32_RUNTIME_UNSUPPORTED`。当前唯一冻结门禁是使用真实 Luna Provider 生成并验证独立 `v3_2_m34_luna` 缓存；当前环境没有 API Key，禁止把明示 `fallback` 的 Fake 输出标记为 Luna。
+用户于 2026-08-13 重新打开 Presentation 产品验收，并选定 M35“因果舞台”作为正式视觉目标。M35 已完成专项测试、正式 E2E、字段泄漏扫描、四分辨率视觉 QA 与本地启动，当前等待用户验收；普通 `apps/web` 仍不属于本轮产品界面。M34 季度运行时和权威结果保持冻结，后续只能在新的用户要求或明确回归下修改 Presentation View Model、展示映射、分支隔离、语义地图层或因果动画。完整契约见 `ADR-370-m35-presentation-causal-stage.md`。
 
 ## 21. 已批准的后续省级数据验收方向
 
@@ -863,3 +863,15 @@ M29 v2 已将 177 项需求纳入验收；但当前 Fake 省级与车企基线�
 - 中央 Agent 只在实验前政策解读和 Q4 后年度复盘各调用一次，季度内不能改变政策或 World。
 - Live/Cache Prompt 禁止包含确定性候选行动；确定性输出只作 Fake、cache miss、模型、Schema 或资源失败的显式 fallback。
 - 活动版本为 `experiment-design-v2`、`event-plan-v2`、`baseline-snapshot-v3`、`tick-checkpoint-v1`、`authorized-inbox-v1`、`interaction-message-v1`、`agent-tick-decision-v1`、`interaction-session-v1`、`interaction-market-v1`、`branch-v9`、`world-state-v10`、`comparison-v10`、`event-v10`、`runtime-snapshot-v2`、`presentation-frame-v3` 和 `presentation-timeline-v3`。
+
+## 29. M35 Presentation 因果舞台契约
+
+- M35 只修改独立 `apps/presentation` 与其只读投影；普通 Web 前端不进入设计、实现或验收。
+- 用户已选定 `outputs/m35-presentation-design/causal-stage-reference.png` 为正式视觉目标。主舞台固定为顶部决策问题、左侧六段因果链、中央低饱和世界地图、右侧主体博弈台和底部四季度章节轨。
+- 主叙事必须按“关注 → 观察 → 决策 → 行动 → 回应 → 结算”展示结构化事实；不得展示或推断思维链。
+- 主舞台只消费强类型 Presentation View Model；不得直接显示 `sender_id`、`recipient_ids`、`transaction_state`、消息机器码、裸主体 ID、snake_case、Wave 码、Schema、Checkpoint 或哈希。
+- 主体引用统一为 `province:`、`automaker:`、`event:` 与 `environment:` 前缀；后端负责展示名、主体类型、消息、状态、阶段和机制的中文映射。
+- Control/Treatment 互动、消息、Spotlight 和关系线必须逐分支隔离。差值视图只显示后端冻结的分歧，不得合并两分支互动。
+- 同一指标跨季度使用年度共享域；同步 A/B 使用同域。互动帧地图降饱和，提议/反报价/达成/拒绝分别使用琥珀实线、紫色虚线、青色粗线和红灰淡出并附文字。
+- 事件必须形成 `Event → Province/Automaker → Decision → Settlement` 可见链。动画只编排权威事实，顺序固定为 FOCUS→OBSERVE→DECIDE→ACTION→RESPONSE→SETTLE。
+- 核心验收是首次观看者 10 秒内可回答当前季度、谁行动、为什么、对谁、如何回应及世界影响；构建或截图成功不能替代该验收。

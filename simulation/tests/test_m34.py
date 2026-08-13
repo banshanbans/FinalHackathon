@@ -216,7 +216,7 @@ async def test_full_year_has_four_checkpoints_resource_conservation_and_comparis
     assert comparison.same_event is True
     assert comparison.active_difference == "policy"
     timeline = await orchestrator.get_presentation_timeline(world.experiment_id)
-    assert timeline.schema_version == "presentation-timeline-v3"
+    assert timeline.schema_version == "presentation-timeline-v4"
     assert {item.tick for item in timeline.nodes if item.kind == "settlement"} == set(MacroTick)
 
 

@@ -760,7 +760,7 @@ export function PresentationApp() {
       <div className="stage-vignette" />
 
       <header className="top-hud glass-bar" aria-hidden={introActive}>
-        <div className="brand-lockup"><span className="brand-mark"><Sparkle weight="fill" /></span><div><strong>PolicyScope</strong><small>政策涟漪 · 全国全景推演</small></div></div>
+        <div className="brand-lockup"><span className="brand-mark"><Sparkle weight="fill" /></span><div><strong>13110</strong><small>新能源汽车政策全景推演</small></div></div>
         <nav className="segmented-control" aria-label="演示模式">
           {timeline.available_modes.map((item) => <button className={mode === item ? "active" : ""} key={item} onClick={() => { setLiveFrameQueue([]); setMode(item); }} type="button">{modeLabel(item)}</button>)}
         </nav>

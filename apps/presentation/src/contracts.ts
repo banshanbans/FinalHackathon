@@ -41,6 +41,8 @@ export interface PresentationOverlayRecord {
   label: string;
   style_semantic: "policy" | "evidence" | "event" | "competition" | "coordination" | "neutral";
   evidence_refs: string[];
+  relation_semantic?: "proposal" | "counteroffer" | "accepted" | "settled" | "rejected" | "deferred" | "invalid" | "event_impact";
+  line_style?: "solid" | "dashed" | "thick" | "faded" | "pulse";
 }
 
 export type BranchRole = "control" | "treatment";

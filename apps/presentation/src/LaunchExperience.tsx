@@ -214,7 +214,7 @@ export function LaunchExperience({
       <div className="entry-vignette" />
       <header className="entry-brand">
         <Sparkle weight="fill" />
-        <span><b>PolicyScope</b><small>政策涟漪 · 全国政策全景推演厅</small></span>
+        <span><b>13110</b><small>新能源汽车政策全景推演厅</small></span>
       </header>
       {!introActive && !showConfiguration ? (
         <div className="entry-ready" aria-live="polite">

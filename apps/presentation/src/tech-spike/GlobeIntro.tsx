@@ -211,13 +211,13 @@ export function GlobeIntro({
 
   return (
     <section
-      aria-label="PolicyScope 地球开场"
+      aria-label="13110 地球开场"
       className={`globe-intro phase-${phase}`}
       data-phase={phase}
     >
       <div className="globe-map" ref={containerRef} />
       <div className="globe-copy" aria-live="polite">
-        <span>PolicyScope / 政策涟漪</span>
+        <span>13110</span>
         <h1>从新能源汽车补贴<br />进入全国政策<br />全景推演厅</h1>
         <p>{phase === "approach" || phase === "handoff" ? "正在锁定中国省域政策网络" : "正在建立全球情景视角"}</p>
       </div>

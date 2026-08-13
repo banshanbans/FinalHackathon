@@ -598,3 +598,154 @@ class PresentationFrameV3(FrozenDomainModel):
     event_plan_ids: list[str] = Field(default_factory=list, max_length=3)
     evidence_refs: list[str] = Field(default_factory=list)
     source_hash: str
+
+
+class PresentationSubjectV4(FrozenDomainModel):
+    subject_ref: str = Field(pattern=r"^(province|automaker|event|environment):.+$")
+    subject_type: Literal["province", "automaker", "event", "environment"]
+    subject_id: str
+    display_name: str = Field(min_length=1, max_length=120)
+
+
+class PresentationCausalBeatV4(FrozenDomainModel):
+    beat: Literal["focus", "observe", "decide", "action", "response", "settle"]
+    label: str
+    headline: str
+    detail: str
+    status: Literal["completed", "active", "pending", "not_applicable"]
+
+
+class PresentationActionV4(FrozenDomainModel):
+    kind: str
+    label: str
+    summary: str
+    state: str
+    state_label: str
+    message_id: str | None = None
+
+
+class PresentationSettlementV4(FrozenDomainModel):
+    contributed: bool
+    contribution: float = Field(ge=0, le=1)
+    result_summary: str
+
+
+class PresentationSpotlightV4(FrozenDomainModel):
+    spotlight_id: str
+    branch_id: Literal["control", "treatment"]
+    tick: MacroTick
+    wave: InteractionWave
+    session_id: str
+    actor: PresentationSubjectV4
+    counterpart: PresentationSubjectV4
+    objective: str
+    strongest_constraint: str
+    observed_facts: list[str] = Field(default_factory=list, max_length=6)
+    engagement_label: str
+    decision_summary: str
+    alternatives: list[str] = Field(default_factory=list, max_length=4)
+    opportunity_costs: list[str] = Field(default_factory=list, max_length=4)
+    reconsideration_conditions: list[str] = Field(default_factory=list, max_length=4)
+    action: PresentationActionV4
+    response: PresentationActionV4 | None = None
+    settlement: PresentationSettlementV4
+    beats: list[PresentationCausalBeatV4] = Field(min_length=6, max_length=6)
+    fallback: bool = False
+    evidence_refs: list[str] = Field(default_factory=list, max_length=24)
+
+
+class PresentationGameEdgeV4(FrozenDomainModel):
+    edge_id: str
+    branch_id: Literal["control", "treatment"]
+    source: PresentationSubjectV4
+    target: PresentationSubjectV4
+    relation: Literal[
+        "proposal",
+        "counteroffer",
+        "accepted",
+        "settled",
+        "rejected",
+        "deferred",
+        "invalid",
+        "event_impact",
+    ]
+    relation_label: str
+    line_style: Literal["solid", "dashed", "thick", "faded", "pulse"]
+    weight: float = Field(ge=0, le=1)
+    summary: str
+    session_id: str | None = None
+    evidence_refs: list[str] = Field(default_factory=list, max_length=12)
+
+
+class PresentationBranchProvinceValueV4(FrozenDomainModel):
+    province_code: str = Field(pattern=r"^\d{2}$")
+    value: float | None = Field(default=None, ge=0, le=100)
+
+
+class PresentationBranchViewV4(FrozenDomainModel):
+    branch_id: Literal["control", "treatment"]
+    label: str
+    tick: MacroTick | None = None
+    national_metrics: NationalMetrics
+    province_values: list[PresentationBranchProvinceValueV4]
+    game_edges: list[PresentationGameEdgeV4] = Field(default_factory=list)
+    spotlights: list[PresentationSpotlightV4] = Field(default_factory=list, max_length=3)
+    fallback_count: int = Field(default=0, ge=0)
+
+
+class PresentationDivergenceV4(FrozenDomainModel):
+    divergence_id: str
+    participants: list[PresentationSubjectV4] = Field(min_length=2, max_length=2)
+    control_state_label: str
+    treatment_state_label: str
+    summary: str
+
+
+class PresentationSharedScaleV4(FrozenDomainModel):
+    metric_id: str
+    absolute_min: float
+    absolute_max: float
+    difference_bound: float = Field(gt=0)
+    low_label: str
+    midpoint_label: str
+    high_label: str
+
+
+class PresentationFrameV4(FrozenDomainModel):
+    schema_version: Literal["presentation-frame-v4"] = "presentation-frame-v4"
+    frame_id: str
+    experiment_id: str
+    sequence: int = Field(ge=0)
+    kind: Literal["policy", "event", "wave", "settlement", "comparison"]
+    tick: MacroTick | None = None
+    wave: InteractionWave | None = None
+    chapter_label: str
+    question: str
+    title: str
+    summary: str
+    wave_label: str | None = None
+    branches: dict[Literal["control", "treatment"], PresentationBranchViewV4]
+    divergences: list[PresentationDivergenceV4] = Field(default_factory=list, max_length=12)
+    shared_scale: PresentationSharedScaleV4
+    event_plan_ids: list[str] = Field(default_factory=list, max_length=3)
+    disclaimer: Literal["模拟季度与互动顺序，不代表现实响应日期"] = (
+        "模拟季度与互动顺序，不代表现实响应日期"
+    )
+    evidence_refs: list[str] = Field(default_factory=list)
+    source_hash: str
+
+
+class PresentationTimelineV4(FrozenDomainModel):
+    schema_version: Literal["presentation-timeline-v4"] = "presentation-timeline-v4"
+    experiment_id: str
+    product_version: Literal["v3_2_m34"] = "v3_2_m34"
+    status: V32ExperimentStatus
+    current_node_id: str
+    nodes: list[PresentationTimelineNodeV3]
+    completed_ticks: list[MacroTick]
+    shared_scale: PresentationSharedScaleV4
+    disclaimer: Literal["模拟季度与互动顺序，不代表现实响应日期"] = (
+        "模拟季度与互动顺序，不代表现实响应日期"
+    )
+    source_world_hash: str
+    generated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

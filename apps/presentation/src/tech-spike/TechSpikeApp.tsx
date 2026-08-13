@@ -171,7 +171,7 @@ export function TechSpikeApp() {
     <main className={`tech-spike ${reducedMotion ? "reduced-motion" : ""}`}>
       <header aria-hidden={introActive} className="top-hud">
         <div>
-          <strong>PolicyScope</strong>
+          <strong>13110</strong>
           <span>全景推演厅 · M33.3 开场镜头</span>
         </div>
         <nav aria-label="展示模式">

@@ -5,7 +5,7 @@ import * as maplibregl from "maplibre-gl";
 import maplibreWorkerUrl from "../node_modules/maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import type { PresentationCamera, PresentationMapFrame, PresentationOverlayKind } from "./contracts";
+import type { PresentationCamera, PresentationMapFrame, PresentationOverlayKind, PresentationOverlayRecord } from "./contracts";
 import { visualScaleForFrame } from "./mapScale";
 import type { PresentationVisualScale } from "./mapScale";
 import type { PresentationMapCollection } from "./tech-spike/types";
@@ -24,6 +24,8 @@ interface ArcRecord {
   target: [number, number];
   kind: PresentationOverlayKind;
   weight: number;
+  relation: NonNullable<PresentationOverlayRecord["relation_semantic"]>;
+  lineStyle: NonNullable<PresentationOverlayRecord["line_style"]>;
 }
 
 interface EventPoint {
@@ -53,7 +55,7 @@ const AUTOMAKER_NODES: Record<string, SubjectNode> = Object.fromEntries(
   ].map(([id, label], index) => [id, {
     id,
     label: `${label} · 模拟`,
-    position: [129, 49 - index * 3] as [number, number],
+    position: [130.5, 47 - index * 2.4] as [number, number],
   }]),
 );
 
@@ -64,6 +66,17 @@ const ARC_COLORS: Record<PresentationOverlayKind, [number, number, number, numbe
   topk: [143, 125, 255, 220],
   event: [244, 173, 87, 230],
   automaker: [68, 194, 220, 220],
+};
+
+const RELATION_COLORS: Record<NonNullable<PresentationOverlayRecord["relation_semantic"]>, [number, number, number, number]> = {
+  proposal: [244, 184, 95, 242],
+  counteroffer: [168, 130, 255, 238],
+  accepted: [76, 224, 213, 242],
+  settled: [76, 224, 213, 255],
+  rejected: [170, 94, 105, 124],
+  deferred: [177, 142, 224, 170],
+  invalid: [148, 92, 101, 105],
+  event_impact: [246, 170, 76, 232],
 };
 
 maplibregl.setWorkerUrl(maplibreWorkerUrl);
@@ -173,6 +186,14 @@ export function PresentationMap({
       collection.features
         .filter((item) => item.properties.included_in_simulation)
         .map((item) => [item.properties.province_code, featureCenter(item)]),
+    ),
+    [collection],
+  );
+  const provinceNames = useMemo(
+    () => new Map(
+      collection.features
+        .filter((item) => item.properties.included_in_simulation)
+        .map((item) => [item.properties.province_code, item.properties.name]),
     ),
     [collection],
   );
@@ -435,13 +456,33 @@ export function PresentationMap({
           ? AUTOMAKER_NODES[targetAutomaker]?.position
           : undefined;
       if (!sourceCenter || !targetCenter) return [];
-      return [{ id: record.overlay_id, source: sourceCenter, target: targetCenter, kind: record.kind, weight: record.weight ?? 0.5 }];
+      return [{
+        id: record.overlay_id,
+        source: sourceCenter,
+        target: targetCenter,
+        kind: record.kind,
+        weight: record.weight ?? 0.5,
+        relation: record.relation_semantic ?? "proposal",
+        lineStyle: record.line_style ?? "solid",
+      }];
     });
-    const subjectNodes = Array.from(new Set(frame.overlay_records.flatMap((record) => [
-      record.source_subject.startsWith("automaker:") ? record.source_subject.slice(10) : null,
-      record.target_subject?.startsWith("automaker:") ? record.target_subject.slice(10) : null,
-    ]).filter((value): value is string => Boolean(value))))
-      .flatMap((automakerId) => AUTOMAKER_NODES[automakerId] ? [AUTOMAKER_NODES[automakerId]!] : []);
+    const subjectRefs = Array.from(new Set(frame.overlay_records.flatMap((record) => [
+      record.source_subject,
+      record.target_subject,
+    ]).filter((value): value is string => Boolean(value))));
+    const subjectNodes = subjectRefs.flatMap<SubjectNode>((subjectRef) => {
+      if (subjectRef.startsWith("automaker:")) {
+        const automakerId = subjectRef.slice(10);
+        return AUTOMAKER_NODES[automakerId] ? [AUTOMAKER_NODES[automakerId]!] : [];
+      }
+      if (subjectRef.startsWith("province:")) {
+        const code = subjectRef.slice(9);
+        const position = centers.get(code);
+        if (!position) return [];
+        return [{ id: code, label: provinceNames.get(code) ?? code, position }];
+      }
+      return [];
+    });
     const eventPoints = frame.overlay_records.flatMap<EventPoint>((record) => {
       if (record.kind !== "event" || !record.source_subject.startsWith("event:")) return [];
       const targetCode = record.target_subject?.startsWith("province:")
@@ -460,9 +501,9 @@ export function PresentationMap({
           data: arcs,
           getSourcePosition: (item) => item.source,
           getTargetPosition: (item) => item.target,
-          getSourceColor: (item) => ARC_COLORS[item.kind],
-          getTargetColor: (item) => ARC_COLORS[item.kind],
-          getWidth: (item) => 1.2 + item.weight * 2.3,
+          getSourceColor: (item) => RELATION_COLORS[item.relation] ?? ARC_COLORS[item.kind],
+          getTargetColor: (item) => RELATION_COLORS[item.relation] ?? ARC_COLORS[item.kind],
+          getWidth: (item) => item.lineStyle === "thick" ? 4.2 + item.weight * 2 : 1.2 + item.weight * 2.3,
           greatCircle: true,
           widthMinPixels: 1.5,
           widthMaxPixels: 5,
@@ -485,12 +526,12 @@ export function PresentationMap({
           id: `presentation-automaker-nodes-${frame.frame_id}`,
           data: subjectNodes,
           getPosition: (item) => item.position,
-          getRadius: 20_000,
+          getRadius: 24_000,
           getFillColor: frame.branch_role === "control" ? [42, 51, 116, 0] : [36, 187, 207, 205],
           getLineColor: frame.branch_role === "control" ? [132, 145, 255, 240] : [168, 239, 246, 235],
           lineWidthMinPixels: 1.5,
-          radiusMinPixels: 5,
-          radiusMaxPixels: 9,
+          radiusMinPixels: 6,
+          radiusMaxPixels: 10,
           stroked: true,
           pickable: false,
         }),
@@ -500,16 +541,18 @@ export function PresentationMap({
           getPosition: (item) => item.position,
           getText: (item) => item.label,
           getColor: [215, 244, 248, 230],
-          getSize: 11,
-          getPixelOffset: [9, 0],
-          getTextAnchor: "start",
+          getSize: 13,
+          getPixelOffset: (item) => item.id.length === 2 ? [9, 0] : [-9, 0],
+          getTextAnchor: (item) => item.id.length === 2 ? "start" : "end",
           getAlignmentBaseline: "center",
+          fontFamily: "Noto Sans SC",
+          characterSet: "auto",
           billboard: true,
           pickable: false,
         }),
       ],
     });
-  }, [centers, collection, frame, mapReady, reducedMotion, visualScale]);
+  }, [centers, collection, frame, mapReady, provinceNames, reducedMotion, visualScale]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -542,5 +585,5 @@ export function PresentationMap({
     });
   }, [cameraSync]);
 
-  return <div aria-label={ariaLabel} className={`presentation-map branch-${frame.branch_role}`} data-selected-code={selectedCode ?? undefined} ref={containerRef} />;
+  return <div aria-label={ariaLabel} className={`presentation-map branch-${frame.branch_role}`} data-overlay-count={frame.overlay_records.length} data-selected-code={selectedCode ?? undefined} ref={containerRef} />;
 }

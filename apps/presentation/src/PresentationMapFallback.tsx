@@ -67,7 +67,7 @@ export function PresentationMapFallback({ collection, frame, selectedCode, onSel
     record.source_subject.startsWith("automaker:") ? record.source_subject.slice(10) : null,
     record.target_subject?.startsWith("automaker:") ? record.target_subject.slice(10) : null,
   ]).filter((value): value is string => Boolean(value))));
-  return <div aria-label={ariaLabel} className={`presentation-map fallback-map branch-${frame.branch_role}`} data-selected-code={selectedCode ?? ""}>
+  return <div aria-label={ariaLabel} className={`presentation-map fallback-map branch-${frame.branch_role}`} data-overlay-count={frame.overlay_records.length} data-selected-code={selectedCode ?? ""}>
     <svg role="img" viewBox="0 0 1000 720">
       <title>中国全国版图兼容地图；31 省参与推演，港澳台仅作版图展示</title>
       {collection.features.map((feature) => {
@@ -116,7 +116,7 @@ export function PresentationMapFallback({ collection, frame, selectedCode, onSel
               ? projectPoint(AUTOMAKER_NODES[targetAutomaker].position)
               : null;
           if (!source || !target) return [];
-          return <line className={`overlay-${record.kind}`} key={record.overlay_id} x1={source[0]} x2={target[0]} y1={source[1]} y2={target[1]} />;
+          return <line className={`overlay-${record.kind} relation-${record.relation_semantic ?? "proposal"}`} key={record.overlay_id} x1={source[0]} x2={target[0]} y1={source[1]} y2={target[1]} />;
         })}
         {frame.overlay_records.some((record) => record.kind === "event") ? <circle className="event-pulse" cx={eventCenter[0]} cy={eventCenter[1]} r="11" /> : null}
         {activeAutomakerIds.flatMap((automakerId) => {

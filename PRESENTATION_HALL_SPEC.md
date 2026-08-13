@@ -1,4 +1,4 @@
-# PolicyScope 全景推演厅产品与交互契约
+# 13110 全景推演厅产品与交互契约
 
 > 状态：M34 季度运行时升级实施中；旧七轮投影仅作历史记录
 > 版本：Presentation Hall V3 / M34
@@ -8,7 +8,7 @@
 
 ## 1. 决策摘要
 
-PolicyScope 新增独立全屏前端“全景推演厅”。旧 `apps/web` 继续作为只读迁移基线和故障回退，不在原 SaaS 壳层内换皮。
+13110 使用独立全屏前端“全景推演厅”。旧 `apps/web` 继续作为只读迁移基线和故障回退，不在原 SaaS 壳层内换皮。
 
 全景推演厅必须在一个演示屏中完成：
 
@@ -62,7 +62,7 @@ PolicyScope 新增独立全屏前端“全景推演厅”。旧 `apps/web` 继�
 
 ### 4.1 顶部 HUD
 
-- 左：PolicyScope、实验名称、实验类型。
+- 左：13110、实验名称、实验类型。
 - 中：`实时推演 / 章节回放 / 结果对照`。
 - 右：分支、连接状态、播放、全屏、设置和一键复位。
 - 不设置传统侧边导航，不展示页面级面包屑。
@@ -505,3 +505,50 @@ M34 本期只开放 Live 和 Compare。M33 的 `presentation-summary-v1` 继续�
 - 事件节点按 `scheduled_tick/release_wave` 放置；相同时点形成批次，按稳定 ID 展示但并行结算。
 - 每个有互动的 Wave 选择 1–3 个后端稳定关键互动作为地图 Spotlight，其余在互动 Sheet 中按类别和状态下钻。
 - 根入口支持 0–3 个事件；主操作为“运行 Q1 / 下一季度”。Live 只能到最后完整 Checkpoint，断线时不显示半波结果。
+
+## 15. M35 / Presentation V4 因果舞台
+
+`presentation-frame-v4` 是 M34 权威季度事实的只读展示投影。它不替换 `world-state-v10`、`interaction-market-v1` 或 `comparison-v10`，但它是 `apps/presentation` 主舞台唯一允许消费的帧对象。
+
+### 15.1 Frame V4
+
+```text
+frame_id / experiment_id / sequence / kind / tick / wave
+chapter { id, label, question }
+branch_views {
+  control {
+    map_projection / province_values / metric_summary
+    interactions[] / spotlight / event_impacts[]
+  }
+  treatment { ... }
+}
+comparison_view { shared_scale, divergences[], spotlight }
+display_metadata { disclaimer, data_mode, fallback_count }
+evidence_refs / source_hash
+```
+
+`spotlight` 固定包含：
+
+```text
+actor / counterpart
+focus { objective, strongest_constraint }
+observe { facts[], attended_messages[] }
+decide { engagement, decision_summary, alternatives[], opportunity_costs[], reconsideration[] }
+action { message_kind, summary, state }
+response { actor, summary, state } | pending
+settle { contributed, contribution, result_summary }
+fallback
+```
+
+主体引用必须是 `province:`、`automaker:`、`event:` 或 `environment:` 前缀，并同时携带用户展示名。所有互动、消息、决策和事件在投影前按分支、季度、Wave 与权限过滤。
+
+### 15.2 前端消费边界
+
+- 主舞台不得再并行请求互动市场后自行组装因果；完整互动市场只服务 Evidence 下钻。
+- 不得把 `frame.interactions` 的两分支合并后交给任一单分支地图。
+- 不得使用运行时数组顺序表达先后；逻辑序号和 `reply_to_message_id` 决定消息链，Wave 内结算仍视为批次。
+- 时间轴可保留逻辑 Wave 锚点，但用户文案使用“首次行动 / 条件回应 / 协议收敛”。
+
+### 15.3 Design QA
+
+源真相为 `outputs/m35-presentation-design/causal-stage-reference.png`。QA 必须比较同一 16:9 视口和同一互动状态，检查字体、布局、色彩、地图层级、主体节点、关系线、六段链、右侧博弈台、季度轨和全部用户文案。没有浏览器截图、主交互验证、console 检查和字段泄漏扫描时，`design-qa.md` 只能标记 `blocked`。

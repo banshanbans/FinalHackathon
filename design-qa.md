@@ -250,6 +250,55 @@ final result: passed
 
 ---
 
+## M35 / 13110 Presentation Causal Stage Design QA
+
+> QA date: 2026-08-13
+> Scope: `apps/presentation` only; M34 runtime remains the simulation source of truth.
+> Selected visual target: “因果舞台”
+> Final result: **passed**
+
+### Evidence
+
+| State / canvas | Evidence |
+|---|---|
+| Selected source visual | `outputs/m35-presentation-design/causal-stage-reference.png` |
+| Same-state implementation | `outputs/m35-presentation-design/implementation-interaction-final-1672x941.png` |
+| Required side-by-side comparison | `outputs/m35-presentation-design/source-vs-implementation-final.png` |
+| 1920×1080 WebGL | `outputs/m35-presentation-design/qa-interaction-1920x1080.png` |
+| 2560×1440 WebGL | `outputs/m35-presentation-design/qa-interaction-2560x1440.png` |
+| 3840×2160 WebGL | `outputs/m35-presentation-design/qa-interaction-3840x2160-full.png` |
+| 1280×720 SVG compatibility renderer | `outputs/m35-presentation-design/qa-fallback-1280x720.png` |
+| Annual A/B result | `outputs/m35-presentation-design/implementation-annual-1440x810.png` |
+
+### Comparison and iteration history
+
+1. First implementation preserved the selected composition but rendered all top interactions at once. This made the map look like a network overview instead of one legible game. The final map filters to the current server-selected Spotlight and reveals its path only at Action / Response / Settle.
+2. The first replay projection leaked the same quarter's completed settlement into earlier Wave frames. Projection now uses only the previous immutable checkpoint until the settlement node; Q1 Wave frames begin without future province results.
+3. The first annual frame reused an empty interaction panel. It now presents a six-metric, source-derived A/B table with original, treatment and change columns plus same-origin proof.
+4. Delta initially reused the treatment Spotlight. It now displays only explicitly projected divergences and zero mixed-branch relation edges.
+5. Province and automaker subjects initially used bare IDs that the map could not resolve. All map subjects now use typed references and Chinese display names; the main DOM leak scan returns zero raw enums, schema names, hashes or legacy brand strings.
+6. The reference uses more narrative text in the left spine than the first implementation. The final spine shows both each beat headline and a two-line causal detail while retaining the selected vertical rhythm.
+
+### Final review
+
+- Visual hierarchy matches the selected causal-stage direction: compact top HUD, six-beat left spine, restrained national map, one primary game panel and a full-year Q1–Q4 rail.
+- The public brand is `13110` throughout the active Presentation surface and browser title. PolicyScope remains only in code/history.
+- A 10-second first-view check can identify the quarter, actor, counterpart, reason, actual response and current world contribution status.
+- Proposal, counteroffer, accepted/settled, rejected and event relations use semantic color plus text/state; SVG compatibility retains equivalent line semantics.
+- One annual domain is shared across both branches and all quarters. Difference mode uses a symmetric domain and does not display a one-sided game.
+- Policy comparison, policy stress and event counterfactual completed runtimes were exercised. Event frames show Event → authorized subject → reevaluation → pending settlement rather than a marker-only story.
+- Browser checks at 1920×1080, 2560×1440 and 3840×2160 report `scrollWidth == innerWidth` and `scrollHeight == innerHeight`; the 1280×720 SVG renderer is also fully operable.
+- A fresh in-app Browser session reports zero errors and zero warnings. Presentation projection/API tests, Ruff, TypeScript and production build pass.
+
+### Findings
+
+- P0/P1/P2: none.
+- P3: the generated reference uses a decorative automaker halo and two simultaneous directional lines; the implementation keeps the real neutral subject marker and reveals one authorized relation per causal beat to preserve runtime truth. This is an intentional truthfulness difference, not a fidelity defect.
+
+final result: passed
+
+---
+
 ## M33 Entry Journey Reorder QA
 
 > QA date: 2026-08-13

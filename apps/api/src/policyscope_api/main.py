@@ -139,7 +139,7 @@ def create_app(
         await application.state.adapter.close()
 
     application = FastAPI(
-        title="PolicyScope API",
+        title="13110 API",
         version="0.9.0",
         description="PolicyScope V3.2 upfront A/B multi-agent simulation API",
         lifespan=lifespan,

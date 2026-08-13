@@ -3,7 +3,6 @@ import type {
   M34Configuration,
   M34Draft,
   M34Frame,
-  M34InteractionMarket,
   M34Timeline,
   M34World,
   MacroTick,
@@ -91,8 +90,6 @@ export const m34Api = {
     request<M34Timeline>(`/experiments/${experimentId}/presentation/timeline`),
   frame: (experimentId: string, frameId: string) =>
     request<M34Frame>(`/experiments/${experimentId}/presentation/frames/${frameId}`),
-  interactions: (experimentId: string) =>
-    request<M34InteractionMarket>(`/experiments/${experimentId}/interactions`),
   streamUrl: (experimentId: string) => `${API_ROOT}/experiments/${experimentId}/stream`,
   run: (experimentId: string, untilTick: MacroTick) => request<M34World>(
     `/experiments/${experimentId}/run`,
