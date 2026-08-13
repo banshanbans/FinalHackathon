@@ -1,280 +1,135 @@
 from fastapi.testclient import TestClient
 from policyscope_api.main import create_app
+from policyscope_api.settings import Settings
 
-from simulation.m29_data import load_m29_snapshot
+
+def _policy(source: dict, policy_id: str, delta: float = 0) -> dict:
+    return {
+        **source,
+        "policy_id": policy_id,
+        "west_central_share": source["west_central_share"] + delta,
+        "central_central_share": source["central_central_share"] + delta,
+        "east_central_share": source["east_central_share"] + delta,
+    }
 
 
-def test_v32_api_journey_and_legacy_operation_boundary() -> None:
-    with TestClient(create_app()) as client:
-        metadata = client.get("/api/meta/v32/baseline")
-        assert metadata.status_code == 200
-        assert metadata.json()["data_version"] == "nev-m29-2025-v2"
-        assert metadata.json()["quality_counts"] == {
-            "trusted": metadata.json()["counts"]["raw_facts"]
-        }
-        assert metadata.json()["province_count"] == 31
-        assert len(client.get("/api/meta/v32/provinces").json()) == 31
-        assert len(client.get("/api/meta/v32/automakers").json()) == 10
-        event_catalog = client.get("/api/meta/presentation-event-catalog")
-        assert event_catalog.status_code == 200
-        assert event_catalog.json()["schema_version"] == "presentation-event-catalog-v1"
-        assert len(event_catalog.json()["templates"]) == 5
-        assert all(
-            len(item["trigger_points"]) == 3
-            and item["supported_intensities"] == ["low", "medium", "high"]
-            for item in event_catalog.json()["templates"]
-        )
-        created = client.post(
-            "/api/experiments",
-            json={
-                "policy_text": "西部 95%，中部 90%，东部 85%，促进消费与产业布局。",
-                "product_version": "v3_2_m32",
-            },
-        )
-        assert created.status_code == 201
-        state = created.json()
-        assert state["product_version"] == "v3_2_m32"
-        assert state["schema_version"] == "world-state-v9"
+def _prepare(client: TestClient, *, idempotency_key: str = "m34-create") -> dict:
+    created = client.post(
+        "/api/experiments",
+        json={
+            "policy_text": "西部 95%，中部 90%，东部 85%。",
+            "product_version": "v3_2_m34",
+        },
+        headers={"Idempotency-Key": idempotency_key},
+    )
+    assert created.status_code == 201
+    state = created.json()
+    experiment_id = state["experiment_id"]
+    interpretation = {**state["interpretation"], "status": "confirmed"}
+    confirmed = client.put(f"/api/experiments/{experiment_id}/interpretation", json=interpretation)
+    assert confirmed.status_code == 200
+    base_policy = state["interpretation"]["executable_policy"]
+    design = {
+        "schema_version": "experiment-design-v2",
+        "experiment_type": "policy_comparison",
+        "control_policy": _policy(base_policy, "control"),
+        "treatment_policy": _policy(base_policy, "treatment", 0.02),
+        "event_plans": [],
+        "status": "confirmed",
+    }
+    confirmed = client.put(f"/api/experiments/{experiment_id}/design", json=design)
+    assert confirmed.status_code == 200
+    baseline = client.post(
+        f"/api/experiments/{experiment_id}/baseline/confirm",
+        json={"confirm_data_snapshot": True, "expected_data_version": "nev-m29-2025-v2"},
+    )
+    assert baseline.status_code == 200
+    return baseline.json()
+
+
+def test_m34_quarter_api_idempotency_interactions_and_presentation(tmp_path) -> None:
+    with TestClient(create_app(settings=Settings(runtime_dir=tmp_path))) as client:
+        state = _prepare(client)
         experiment_id = state["experiment_id"]
-        interpretation = state["interpretation"]
-        interpretation["status"] = "confirmed"
-        assert (
-            client.put(
-                f"/api/experiments/{experiment_id}/interpretation",
-                json=interpretation,
-            ).status_code
-            == 200
+        headers = {"Idempotency-Key": "run-q1"}
+        first = client.post(
+            f"/api/experiments/{experiment_id}/run",
+            json={"until_tick": "Q1"},
+            headers=headers,
         )
-        design = {
-            "experiment_type": "policy_comparison",
-            "control_policy": {
-                "policy_id": "control",
-                "west_central_share": 0.95,
-                "central_central_share": 0.90,
-                "east_central_share": 0.85,
-            },
-            "treatment_policy": {
-                "policy_id": "treatment",
-                "west_central_share": 0.98,
-                "central_central_share": 0.92,
-                "east_central_share": 0.86,
-            },
-            "event_plan": None,
-        }
-        assert (
-            client.put(f"/api/experiments/{experiment_id}/design", json=design).status_code == 200
+        second = client.post(
+            f"/api/experiments/{experiment_id}/run",
+            json={"until_tick": "Q1"},
+            headers=headers,
         )
-        assert (
-            client.post(
-                f"/api/experiments/{experiment_id}/baseline/confirm",
-                json={
-                    "confirm_data_snapshot": True,
-                    "expected_data_version": metadata.json()["data_version"],
-                },
-            ).status_code
-            == 200
+        assert first.status_code == second.status_code == 200
+        assert first.json() == second.json()
+        assert first.json()["branches"]["control"]["completed_ticks"] == ["Q1"]
+
+        decisions = client.get(
+            f"/api/experiments/{experiment_id}/decision-traces",
+            params={"branch_id": "control", "tick": "Q1", "wave": "wave_0"},
         )
-        run = client.post(f"/api/experiments/{experiment_id}/run", json={})
-        assert run.status_code == 200
-        assert run.json()["status"] == "completed"
-        traces = client.get(f"/api/experiments/{experiment_id}/decision-traces")
-        assert traces.status_code == 200
-        assert len(traces.json()) == 246
-        first_trace = traces.json()[0]
-        evidence = client.get(
-            f"/api/experiments/{experiment_id}/evidence/action:{first_trace['final_action_id']}"
+        assert decisions.status_code == 200
+        assert len(decisions.json()) == 41
+        assert len({item["agent_id"] for item in decisions.json()}) == 41
+
+        interactions = client.get(
+            f"/api/experiments/{experiment_id}/interactions",
+            params={"branch_id": "control", "tick": "Q1"},
         )
-        assert evidence.status_code == 200
-        audit = client.get(f"/api/experiments/{experiment_id}/audit?limit=500")
-        assert audit.status_code == 200
-        assert len(audit.json()["records"]) == 500
-        assert audit.json()["records"][0]["payload"]["decision_trace_id"] == first_trace["trace_id"]
-        market = client.get(f"/api/experiments/{experiment_id}/strategy-market")
-        assert market.status_code == 200
-        assert market.json()["automaker_signal_count"] == 620
-        assert market.json()["proposal_count"] > 0
-        assert market.json()["response_count"] == market.json()["proposal_count"]
-        assert market.json()["schema_version"] == "strategy-market-v3"
-        assert market.json()["enterprise_offer_count"] > 0
-        assert market.json()["enterprise_response_count"] == market.json()["enterprise_offer_count"]
-        assert market.json()["enterprise_matched_count"] <= 50
-        assert market.json()["competition_outcome_count"] > 0
-        assert market.json()["counteroffer_count"] > 0
-        assert market.json()["counteroffer_response_count"] == market.json()["counteroffer_count"]
-        branch_payload = market.json()["branches"]["control"]
-        competition = branch_payload["competition_outcomes"][0]
-        counteroffer = branch_payload["automaker_counter_offers"][0]
-        counterresponse = branch_payload["province_counter_offer_responses"][0]
-        utility = next(iter(branch_payload["province_utilities"].values()))
-        assert (
-            client.get(
-                f"/api/experiments/{experiment_id}/evidence/competition:{competition['outcome_id']}"
-            ).status_code
-            == 200
-        )
-        assert (
-            client.get(
-                f"/api/experiments/{experiment_id}/evidence/topk:{branch_payload['automaker_initial_actions'][competition['automaker_id']]['action_id']}"
-            ).status_code
-            == 200
-        )
-        assert (
-            client.get(
-                f"/api/experiments/{experiment_id}/evidence/counteroffer:{counteroffer['counter_offer_id']}"
-            ).status_code
-            == 200
-        )
-        assert (
-            client.get(
-                f"/api/experiments/{experiment_id}/evidence/counterresponse:{counterresponse['response_id']}"
-            ).status_code
-            == 200
-        )
-        assert (
-            client.get(
-                f"/api/experiments/{experiment_id}/evidence/utility:{utility['utility_id']}"
-            ).status_code
-            == 200
-        )
-        final_actions = [
-            action
-            for branch in market.json()["branches"].values()
-            for action in branch["automaker_final_actions"].values()
-        ]
-        assert all(len(action["province_market_actions"]) == 31 for action in final_actions)
-        assert all("candidate_provinces" not in action for action in final_actions)
-        assert all(
-            {signal["decision"] for signal in action["province_signals"]}
-            <= {"expand", "maintain", "reduce"}
-            for action in final_actions
-        )
-        summary = client.get(f"/api/experiments/{experiment_id}/presentation-summary")
-        assert summary.status_code == 200
-        assert [item["scene"] for item in summary.json()["scenes"]] == [
-            "policy_input",
-            "enterprise_feedback",
-            "province_coordination",
-            "resource_reallocation",
-            "policy_conclusion",
-        ]
-        coordination_refs = summary.json()["scenes"][2]["evidence_refs"]
-        reallocation_refs = summary.json()["scenes"][3]["evidence_refs"]
-        assert set(coordination_refs) & set(reallocation_refs)
-        state_before_projection = client.get(f"/api/experiments/{experiment_id}/state").json()
+        assert interactions.status_code == 200
+        assert interactions.json()["schema_version"] == "interaction-market-v1"
+        assert interactions.json()["fallback_count"] >= 41
+
         timeline = client.get(f"/api/experiments/{experiment_id}/presentation/timeline")
         assert timeline.status_code == 200
-        timeline_payload = timeline.json()
-        assert timeline_payload["schema_version"] == "presentation-timeline-v1"
-        assert timeline_payload["current_frame_id"] == "frame-comparison-result"
-        assert timeline_payload["available_modes"] == ["live", "story", "compare"]
-        assert len(timeline_payload["frames"]) == 10
-        selected_frame_id = "frame-treatment-province_revision"
-        selected_frame = client.get(
-            f"/api/experiments/{experiment_id}/presentation/frames/{selected_frame_id}"
+        assert timeline.json()["schema_version"] == "presentation-timeline-v3"
+        settlement = next(item for item in timeline.json()["nodes"] if item["kind"] == "settlement")
+        frame = client.get(
+            f"/api/experiments/{experiment_id}/presentation/frames/{settlement['node_id']}"
         )
-        assert selected_frame.status_code == 200
-        assert selected_frame.json()["frame_id"] == selected_frame_id
-        assert len(selected_frame.json()["province_values"]) == 31
-        replay_ids = {
-            item["event_id"]
-            for item in client.get(f"/api/experiments/{experiment_id}/replay").json()
-        }
-        assert set(selected_frame.json()["source_event_ids"]) <= replay_ids
-        missing_frame = client.get(
-            f"/api/experiments/{experiment_id}/presentation/frames/not-a-frame"
-        )
-        assert missing_frame.status_code == 404
-        assert missing_frame.json()["detail"]["error_code"] == "PRESENTATION_FRAME_NOT_FOUND"
-        assert (
-            client.get(f"/api/experiments/{experiment_id}/state").json() == state_before_projection
-        )
-        province = client.get(f"/api/experiments/{experiment_id}/provinces/11")
-        assert province.status_code == 200
-        assert province.json()["m29_profile"]["fact_summary"]
-        assert "fiscally_prudent" not in province.json()["persona"]["summary"]
-        assert "talent_cost" not in province.json()["persona"]["summary"]
-        automaker_id = counteroffer["automaker_id"]
-        automaker = client.get(f"/api/experiments/{experiment_id}/automakers/{automaker_id}")
-        assert automaker.status_code == 200
-        for branch in automaker.json()["branches"].values():
-            offer_ids = {item["counter_offer_id"] for item in branch["counter_offers"]}
-            response_offer_ids = {
-                item["counter_offer_id"] for item in branch["counter_offer_responses"]
-            }
-            assert response_offer_ids <= offer_ids
-        compare = client.get(f"/api/experiments/{experiment_id}/compare")
-        assert compare.status_code == 200
-        assert compare.json()["schema_version"] == "comparison-v9"
-        assert 0 <= compare.json()["counteroffer_acceptance_rate"] <= 1
-        incompatible = client.post(
-            f"/api/experiments/{experiment_id}/event-scenario/approve",
-            json={"template_id": "oil_price_rise", "intensity": "medium"},
-        )
-        assert incompatible.status_code == 409
-        assert incompatible.json()["detail"]["error_code"] == "V32_INCOMPATIBLE_OPERATION"
+        assert frame.status_code == 200
+        assert frame.json()["schema_version"] == "presentation-frame-v3"
+        assert frame.json()["disclaimer"].startswith("模拟季度")
 
 
-def test_v32_m29_version_conflict_and_evidence_prefixes() -> None:
-    with TestClient(create_app()) as client:
-        state = client.post(
-            "/api/experiments",
-            json={
-                "policy_text": "西部 95%，中部 90%，东部 85%。",
-                "product_version": "v3_2_m32",
-            },
-        ).json()
+def test_m34_runtime_restores_after_api_restart(tmp_path) -> None:
+    settings = Settings(runtime_dir=tmp_path)
+    with TestClient(create_app(settings=settings)) as first:
+        state = _prepare(first, idempotency_key="restart-create")
         experiment_id = state["experiment_id"]
-        initial_timeline = client.get(f"/api/experiments/{experiment_id}/presentation/timeline")
-        assert initial_timeline.status_code == 200
-        assert [item["frame_id"] for item in initial_timeline.json()["frames"]] == [
-            "frame-setup-policy"
-        ]
-        interpretation = {**state["interpretation"], "status": "confirmed"}
-        client.put(f"/api/experiments/{experiment_id}/interpretation", json=interpretation)
-        client.put(
-            f"/api/experiments/{experiment_id}/design",
-            json={
-                "experiment_type": "policy_comparison",
-                "control_policy": {
-                    "policy_id": "control",
-                    "west_central_share": 0.95,
-                    "central_central_share": 0.90,
-                    "east_central_share": 0.85,
-                },
-                "treatment_policy": {
-                    "policy_id": "treatment",
-                    "west_central_share": 0.98,
-                    "central_central_share": 0.92,
-                    "east_central_share": 0.86,
-                },
-                "event_plan": None,
-            },
-        )
-        conflict = client.post(
-            f"/api/experiments/{experiment_id}/baseline/confirm",
-            json={
-                "confirm_data_snapshot": True,
-                "expected_data_version": "stale-m29-version",
-            },
-        )
-        assert conflict.status_code == 409
-        assert "BASELINE_DATA_VERSION_MISMATCH" in conflict.json()["detail"]["message"]
+        run = first.post(f"/api/experiments/{experiment_id}/run", json={"until_tick": "Q2"})
+        assert run.status_code == 200
+        replay = first.get(f"/api/experiments/{experiment_id}/replay").json()
+    with TestClient(create_app(settings=settings)) as second:
+        restored = second.get(f"/api/experiments/{experiment_id}/state")
+        assert restored.status_code == 200
+        assert restored.json()["branches"]["control"]["completed_ticks"] == ["Q1", "Q2"]
+        assert second.get(f"/api/experiments/{experiment_id}/replay").json() == replay
 
-        profile = client.get("/api/meta/v32/provinces").json()[0]
-        fact_id = profile["fact_refs"][0]
-        feature_id = next(iter(profile["feature_refs"].values()))
-        fact = client.get(f"/api/experiments/{experiment_id}/evidence/fact:{fact_id}")
-        feature = client.get(f"/api/experiments/{experiment_id}/evidence/feature:{feature_id}")
-        snapshot = load_m29_snapshot()
-        relation_id = next(iter(snapshot.relation_facts.values())).relation_id
-        source_id = snapshot.facts[fact_id].source_id
-        relation = client.get(f"/api/experiments/{experiment_id}/evidence/relation:{relation_id}")
-        source = client.get(f"/api/experiments/{experiment_id}/evidence/source:{source_id}")
-        assert fact.status_code == 200 and fact.json()["type"] == "raw_fact"
-        assert feature.status_code == 200 and feature.json()["type"] == "derived_feature"
-        assert relation.status_code == 200 and relation.json()["type"] == "relation_fact"
-        assert source.status_code == 200 and source.json()["type"] == "source_record"
-        assert (
-            client.get(f"/api/experiments/{experiment_id}/evidence/fact:not-found").status_code
-            == 404
+
+def test_legacy_m32_runtime_is_gone_without_deleting_files(tmp_path) -> None:
+    legacy_id = "exp_m32_deadbeef1234"
+    legacy_dir = tmp_path / "v32" / legacy_id
+    legacy_dir.mkdir(parents=True)
+    marker = legacy_dir / "runtime-snapshot.json"
+    marker.write_text('{"legacy": true}', encoding="utf-8")
+    with TestClient(create_app(settings=Settings(runtime_dir=tmp_path))) as client:
+        paths = (
+            f"/api/experiments/{legacy_id}",
+            f"/api/experiments/{legacy_id}/state",
+            f"/api/experiments/{legacy_id}/run",
+            f"/api/experiments/{legacy_id}/presentation/timeline",
+            f"/api/experiments/{legacy_id}/compare",
+            f"/api/experiments/{legacy_id}/replay",
         )
+        for path in paths:
+            response = (
+                client.post(path, json={"until_tick": "Q1"})
+                if path.endswith("/run")
+                else client.get(path)
+            )
+            assert response.status_code == 410
+            assert response.json()["detail"]["error_code"] == "LEGACY_V32_RUNTIME_UNSUPPORTED"
+    assert marker.read_text(encoding="utf-8") == '{"legacy": true}'

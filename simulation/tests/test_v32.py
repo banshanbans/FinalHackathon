@@ -351,11 +351,10 @@ async def test_seven_rounds_have_topk_competition_negotiation_and_traces(
     assert len(frozen) == len(responses) == 2
     assert max(frozen) < min(responses)
     timeline = await orchestrator.get_presentation_timeline(world.experiment_id)
-    assert timeline.schema_version == "presentation-timeline-v1"
+    assert timeline.schema_version == "presentation-timeline-v2"
     assert timeline.current_frame_id == "frame-comparison-result"
-    assert [item.value for item in timeline.available_modes] == ["live", "story", "compare"]
+    assert [item.value for item in timeline.available_modes] == ["live", "compare"]
     assert len(timeline.frames) == 10
-    assert len(timeline.story_chapters) == 5
     assert timeline.event_markers == []
     assert (
         next(
@@ -364,24 +363,89 @@ async def test_seven_rounds_have_topk_competition_negotiation_and_traces(
         == baseline_hash
     )
     replay_ids = {item["event_id"] for item in replay}
+    frames = [
+        await orchestrator.get_presentation_frame(world.experiment_id, item.frame_id)
+        for item in timeline.frames
+    ]
+    round_frames = [item for item in frames if item.frame_id.startswith("frame-round-")]
+    assert all(set(item.branch_projections) == {"control", "treatment"} for item in round_frames)
+    assert all(1 <= len(item.spotlights) <= 3 for item in round_frames)
+    for item in round_frames:
+        actors = [spotlight.focus_subjects[0].subject_id for spotlight in item.spotlights]
+        assert len(actors) == len(set(actors))
+        assert (
+            item.model_dump()
+            == (
+                await orchestrator.get_presentation_frame(world.experiment_id, item.frame_id)
+            ).model_dump()
+        )
+    province_initial = next(
+        item for item in frames if item.frame_id == "frame-round-province_initial"
+    )
+    automaker_initial = next(
+        item for item in frames if item.frame_id == "frame-round-automaker_initial"
+    )
     assert all(
-        source_id in replay_ids
-        for presentation_frame in timeline.frames
-        for source_id in presentation_frame.source_event_ids
+        moment.response_status == "pending"
+        for moment in province_initial.decision_moments
+        if moment.round is SimulationRound.PROVINCE_INITIAL
+    )
+    assert any(
+        moment.actual_responses
+        for moment in automaker_initial.decision_moments
+        if moment.round is SimulationRound.PROVINCE_INITIAL
+    )
+    for item in round_frames:
+        for moment in item.decision_moments:
+            for option in moment.option_evaluations:
+                assert option.score == pytest.approx(
+                    max(
+                        -100,
+                        min(100, sum(component.contribution for component in option.components)),
+                    )
+                )
+                parameters = {
+                    parameter.parameter: parameter.value for parameter in option.parameters
+                }
+                if {
+                    "consumer_share",
+                    "fixed_cost_share",
+                    "variable_cost_share",
+                } <= parameters.keys():
+                    assert parameters["consumer_share"] + parameters[
+                        "fixed_cost_share"
+                    ] + parameters["variable_cost_share"] == pytest.approx(1)
+                    assert parameters["support"] <= parameters["available_budget"] + 1e-6
+                if {"market_total", "market_budget"} <= parameters.keys():
+                    assert parameters["market_total"] <= parameters["market_budget"] + 1e-6
+    assert all(source_id in replay_ids for item in frames for source_id in item.source_event_ids)
+    replay_by_id = {item["event_id"]: item for item in replay}
+    assert all(
+        replay_by_id[source_id]["branch_id"] in {None, projection.branch_id}
+        for item in frames
+        for projection in item.branch_projections.values()
+        for source_id in projection.source_event_ids
     )
     settlement = await orchestrator.get_presentation_frame(
-        world.experiment_id, "frame-treatment-environment_settlement"
+        world.experiment_id, "frame-round-environment_settlement"
     )
-    assert len(settlement.province_values) == 31
-    assert len(settlement.metric_summary) == 6
+    assert set(settlement.branch_projections) == {"control", "treatment"}
+    assert all(len(item.province_values) == 31 for item in settlement.branch_projections.values())
+    assert all(len(item.metric_summary) == 6 for item in settlement.branch_projections.values())
     revision = await orchestrator.get_presentation_frame(
-        world.experiment_id, "frame-treatment-province_revision"
+        world.experiment_id, "frame-round-province_revision"
     )
-    assert any(item.kind.value == "coordination" for item in revision.overlay_records)
+    assert revision.spotlights and revision.divergences
+    assert any(
+        item.kind.value == "coordination"
+        for projection in revision.branch_projections.values()
+        for item in projection.overlay_records
+    )
     comparison_frame = await orchestrator.get_presentation_frame(
         world.experiment_id, "frame-comparison-result"
     )
-    assert comparison_frame.map_projection.mode == "difference"
+    assert comparison_frame.difference_projection is not None
+    assert comparison_frame.difference_projection.map_projection.mode == "difference"
     assert (
         comparison_frame.source_hash
         == (
@@ -480,9 +544,17 @@ async def test_event_counterfactual_redecides_automakers_and_is_deterministic(
     marker = first_timeline.event_markers[0]
     assert marker.template_id == "intelligent_driving_upgrade"
     assert marker.branch_scope == "treatment_only"
-    assert f"frame-event-{marker.event_plan_id}" in {
-        item.frame_id for item in first_timeline.frames
-    }
+    event_frame_id = f"frame-event-{marker.event_plan_id}"
+    assert event_frame_id in {item.frame_id for item in first_timeline.frames}
+    event_frame = await service(tmp_path / "first").get_presentation_frame(
+        first_world.experiment_id, event_frame_id
+    )
+    assert all(
+        item.value == 0 for item in event_frame.branch_projections["control"].province_values
+    )
+    assert any(
+        item.value > 0 for item in event_frame.branch_projections["treatment"].province_values
+    )
 
 
 @pytest.mark.parametrize(
@@ -543,11 +615,22 @@ async def test_presentation_event_matrix_completes_with_frozen_trigger_order(
     event_index = frame_ids.index(event_frame_id)
     boundary_id = {
         EventTriggerPoint.BEFORE_PROVINCE_INITIAL: "frame-baseline-frozen",
-        EventTriggerPoint.AFTER_PROVINCE_INITIAL: "frame-treatment-province_initial",
-        EventTriggerPoint.AFTER_AUTOMAKER_INITIAL: "frame-treatment-automaker_initial",
+        EventTriggerPoint.AFTER_PROVINCE_INITIAL: "frame-round-province_initial",
+        EventTriggerPoint.AFTER_AUTOMAKER_INITIAL: "frame-round-automaker_initial",
     }[trigger_point]
     assert event_index == frame_ids.index(boundary_id) + 1
     assert timeline.event_markers[0].intensity is intensity
+    event_frame = await orchestrator.get_presentation_frame(world.experiment_id, event_frame_id)
+    assert set(event_frame.branch_projections) == {"control", "treatment"}
+    treatment = event_frame.branch_projections["treatment"]
+    assert len(treatment.province_values) == 31
+    exposed_codes = {item.province_code for item in treatment.province_values if item.value > 0}
+    assert exposed_codes == (
+        {"51"}
+        if template_id == "battery_node_upgrade_sichuan"
+        else set(item.province_code for item in treatment.province_values)
+    )
+    assert treatment.key_changes[0].title == "事件情景已冻结"
 
 
 async def test_presentation_event_stream_resumes_strictly_after_last_event_id(
@@ -576,6 +659,70 @@ async def test_presentation_event_stream_resumes_strictly_after_last_event_id(
         )
         == []
     )
+
+
+async def test_runtime_restores_partial_and_completed_experiment_after_restart(
+    tmp_path: Path,
+) -> None:
+    first = service(tmp_path)
+    design = ExperimentDesign(
+        experiment_type=ExperimentType.POLICY_COMPARISON,
+        control_policy=policy("control", (0.95, 0.90, 0.85)),
+        treatment_policy=policy("treatment", (0.98, 0.92, 0.86)),
+    )
+    world = await prepare(
+        first,
+        design,
+    )
+    assert await first.confirm_interpretation(world.experiment_id, world.interpretation) == world
+    assert await first.confirm_design(world.experiment_id, design) == world
+    assert await first.confirm_baseline(world.experiment_id) == world
+    world = await first.run(
+        world.experiment_id,
+        until_round=SimulationRound.PROVINCE_INITIAL,
+    )
+    experiment_id = world.experiment_id
+    before_events = await first.get_events(experiment_id)
+    before_timeline = await first.get_presentation_timeline(experiment_id)
+    snapshot_path = tmp_path / "v32" / experiment_id / "runtime-snapshot.json"
+    replay_path = tmp_path / "v32" / experiment_id / "replay.jsonl"
+    assert snapshot_path.is_file()
+    replay_inode = replay_path.stat().st_ino
+    replay_prefix = replay_path.read_bytes()
+
+    second = service(tmp_path)
+    assert second.has_experiment(experiment_id)
+    restored = await second.get_state(experiment_id)
+    assert restored == world
+    assert await second.get_events(experiment_id) == before_events
+    assert (
+        await second.get_presentation_timeline(experiment_id)
+    ).source_world_hash == before_timeline.source_world_hash
+
+    completed = await second.run(experiment_id)
+    after_events = await second.get_events(experiment_id)
+    assert replay_path.stat().st_ino == replay_inode
+    assert replay_path.read_bytes().startswith(replay_prefix)
+    next_counter = int(after_events[len(before_events)].event_id.rsplit("_", 1)[1])
+    assert next_counter == len(before_events) + 1
+    comparison = await second.get_comparison(experiment_id)
+
+    third = service(tmp_path)
+    assert third.has_experiment(experiment_id)
+    assert await third.get_state(experiment_id) == completed
+    assert await third.get_comparison(experiment_id) == comparison
+    assert await third.get_events(experiment_id) == after_events
+
+
+async def test_runtime_restore_rejects_truncated_snapshot(tmp_path: Path) -> None:
+    first = service(tmp_path)
+    world = await first.create_experiment("西部 95%，中部 90%，东部 85%。")
+    snapshot_path = tmp_path / "v32" / world.experiment_id / "runtime-snapshot.json"
+    snapshot_path.write_text('{"schema_version":', encoding="utf-8")
+
+    restarted = service(tmp_path)
+    with pytest.raises(ValueError, match="RUNTIME_SNAPSHOT_JSON_INVALID"):
+        restarted.has_experiment(world.experiment_id)
 
 
 async def test_completed_experiment_cache_restores_same_five_round_result(tmp_path: Path) -> None:

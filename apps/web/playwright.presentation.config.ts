@@ -10,7 +10,7 @@ export default defineConfig({
   outputDir: "../../output/playwright/presentation-results",
   reporter: [["list"]],
   use: {
-    baseURL: "http://127.0.0.1:4180",
+    baseURL: "http://127.0.0.1:4181",
     colorScheme: "dark",
     locale: "zh-CN",
     screenshot: "only-on-failure",
@@ -37,17 +37,17 @@ export default defineConfig({
   webServer: [
     {
       command:
-        "POLICYSCOPE_RUN_MODE=fake PYTHONPATH=.:apps/api/src .venv/bin/uvicorn policyscope_api.main:app --app-dir apps/api/src --port 8000",
+        "POLICYSCOPE_RUN_MODE=fake PYTHONPATH=.:apps/api/src .venv/bin/uvicorn policyscope_api.main:app --app-dir apps/api/src --port 8001",
       cwd: "../..",
-      url: "http://127.0.0.1:8000/api/health",
-      reuseExistingServer: true,
+      url: "http://127.0.0.1:8001/api/health",
+      reuseExistingServer: false,
       timeout: 120_000,
     },
     {
-      command: "npm run dev -- --host 127.0.0.1 --port 4180",
+      command: "VITE_API_PROXY_TARGET=http://127.0.0.1:8001 npm run dev -- --host 127.0.0.1 --port 4181 --strictPort",
       cwd: "../presentation",
-      url: "http://127.0.0.1:4180",
-      reuseExistingServer: true,
+      url: "http://127.0.0.1:4181",
+      reuseExistingServer: false,
       timeout: 120_000,
     },
   ],

@@ -248,6 +248,51 @@ V2 地图来自自然资源部标准地图 GS(2016)1609，已记录原始校验�
 
 final result: passed
 
+---
+
+## M33 Entry Journey Reorder QA
+
+> QA date: 2026-08-13
+> Scope: root entry globe, nationwide-map handoff, policy/event configuration dialog
+
+### Evidence
+
+- Source visual truth: `/Users/carrey/Desktop/Screenshot 2026-08-13 at 08.15.55.png`（用户在当前对话中提供的 2048×974 参考图；本地名义路径在验收时已不可读取，但对话原图可见）。
+- Implementation intro: `outputs/m33-entry-flow/approach-2048x974.png`.
+- Implementation policy configuration: `outputs/m33-entry-flow/config-policy-final-1280x720.png`.
+- Implementation event configuration: `outputs/m33-entry-flow/config-event-2048x974.png`.
+- Comparison viewport: source and intro implementation both 2048×974 CSS px, device scale factor 1; no density normalization required.
+- State: China approach/highlight phase immediately before nationwide-map handoff; configuration captures use the post-handoff modal state.
+
+### Full-view comparison
+
+The source and implementation captures were reviewed together in the current visual context. Both use a dominant deep-space globe, a left-aligned oversized three-line display heading, a dark navy/teal palette, highlighted China geometry and a Beijing focus point. The implementation intentionally starts with a wider global view, then reaches the source-like China-dominant composition at the recorded approach frame. The product-aligned copy is “从新能源汽车补贴 / 进入全国政策 / 全景推演厅”.
+
+No separate crop was required: the 2048×974 full-view captures keep the headline, China outline, globe rim, Beijing light point and progress rail large enough for direct inspection. The configuration dialog was separately captured because it is a new interaction state described by the user rather than present in the source screenshot.
+
+### Required fidelity surfaces
+
+- Fonts and typography: Inter Variable + Noto Sans SC Variable remain local; the heading weight, negative tracking, line height and three-line wrapping preserve the source hierarchy without truncation.
+- Spacing and layout: headline begins at the same left visual axis, globe remains the dominant right-side object, and the configuration dialog stays inside 1280×720 and 2048×974 without document scrolling.
+- Colors and tokens: near-black space, slate land, teal China highlight and warm Beijing focus remain consistent with the source and existing GovSim tokens.
+- Image quality and assets: globe and geography use local MapLibre/Natural Earth/validated national geometry; no screenshot map, placeholder illustration or remote raster asset was introduced.
+- Copy and content: the title uses the user-approved wording. Configuration leads with east/central/west policy ratios; event injection is visibly optional and defaults off.
+- Icons and states: Phosphor icons remain consistent; policy/event tabs, sliders, enabled/disabled event catalogue, checkboxes, loading and submit states are implemented.
+- Accessibility and responsiveness: dialog semantics, field labels, visible disabled state, keyboard-focusable native inputs and reduced-motion timing are retained. Automated 1280, 1080p, 2K and 4K tests pass.
+- Review gates: central interpretation, A/B active difference and proxy-baseline confirmation remain in the same spatial dialog, with explicit progress and no raw Checkpoint ID, seed or hash on the main surface. Evidence: `outputs/m33-entry-flow/confirm-interpretation-1280x720.png`, `confirm-design-1280x720.png` and `confirm-baseline-1280x720.png`.
+
+### Comparison history
+
+1. Initial policy-dialog capture placed the compact ratio controls at the top of an otherwise tall body, leaving an imbalanced lower dead zone at 1280×720 (`outputs/m33-entry-flow/config-policy-1280x720.png`). Classified P2 spacing drift.
+2. The policy configuration content was vertically centered while the event configuration retained scroll-safe top alignment. Post-fix evidence is `outputs/m33-entry-flow/config-policy-final-1280x720.png`; viewport and document dimensions are both exactly 1280×720 and browser console error/warning count is zero.
+
+### Findings
+
+- P0/P1/P2: none remaining.
+- P3: the MapLibre/deck.gl production chunk warning remains an engineering optimization item; it does not create a visible entry-flow regression.
+
+final result: passed
+
 ### China map completeness addendum
 
 - WebGL 主图与 SVG 兼容图均显示香港、澳门、台湾的冻结轮廓/比例标记及名称；浏览器实测为 31 个可交互省域和 3 个非交互 `territory-context`。

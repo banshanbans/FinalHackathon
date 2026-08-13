@@ -4,7 +4,7 @@ PY := $(VENV)/bin/python
 PIP := $(VENV)/bin/pip
 NPM_CACHE := $(CURDIR)/.cache/npm
 
-.PHONY: setup setup-backend setup-web setup-presentation dev dev-api start-api dev-web dev-presentation test test-sim test-api test-e2e test-e2e-presentation capture-v3 lint validate-data precompute precompute-v32 precompute-v32-luna verify-cache verify-cache-v32 verify-cache-v32-luna demo smoke spike-agentsociety clean
+.PHONY: setup setup-backend setup-web setup-presentation dev dev-api start-api dev-web dev-presentation test test-sim test-api test-e2e test-e2e-presentation capture-v3 lint validate-data precompute precompute-v32 precompute-v32-luna precompute-m34 precompute-m34-luna verify-cache verify-cache-v32 verify-cache-v32-luna verify-cache-m34 verify-cache-m34-luna demo smoke spike-agentsociety clean
 
 setup: setup-backend setup-web setup-presentation
 
@@ -75,6 +75,12 @@ precompute-v32:
 precompute-v32-luna:
 	PYTHONPATH="$(CURDIR):$(CURDIR)/apps/api/src" POLICYSCOPE_RUN_MODE=live $(PY) scripts/precompute_v32_demo.py --luna
 
+precompute-m34:
+	PYTHONPATH="$(CURDIR):$(CURDIR)/apps/api/src" $(PY) scripts/precompute_m34_demo.py
+
+precompute-m34-luna:
+	PYTHONPATH="$(CURDIR):$(CURDIR)/apps/api/src" POLICYSCOPE_RUN_MODE=live $(PY) scripts/precompute_m34_demo.py --luna
+
 verify-cache:
 	PYTHONPATH="$(CURDIR):$(CURDIR)/apps/api/src" $(PY) scripts/verify_v31_cache.py
 
@@ -83,6 +89,12 @@ verify-cache-v32:
 
 verify-cache-v32-luna:
 	PYTHONPATH="$(CURDIR):$(CURDIR)/apps/api/src" $(PY) scripts/verify_v32_cache.py --luna
+
+verify-cache-m34:
+	PYTHONPATH="$(CURDIR):$(CURDIR)/apps/api/src" $(PY) scripts/verify_m34_cache.py
+
+verify-cache-m34-luna:
+	PYTHONPATH="$(CURDIR):$(CURDIR)/apps/api/src" $(PY) scripts/verify_m34_cache.py --luna
 
 demo:
 	PYTHONPATH="$(CURDIR):$(CURDIR)/apps/api/src" POLICYSCOPE_RUN_MODE=cache $(PY) scripts/smoke_demo.py

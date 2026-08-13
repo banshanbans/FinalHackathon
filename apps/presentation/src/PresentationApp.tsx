@@ -22,11 +22,13 @@ import {
   Strategy,
   X,
 } from "@phosphor-icons/react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { presentationApi } from "./api";
+import type { DemoDraft } from "./api";
 import type {
+  BranchRole,
   EventBranchScope,
   EventIntensity,
   EventTriggerPoint,
@@ -35,17 +37,29 @@ import type {
   PresentationEventCatalog,
   PresentationEventCatalogEntry,
   PresentationFrame,
+  PresentationMapFrame,
   PresentationMode,
   PresentationOverlayKind,
   PresentationTimeline,
+  PresentationWorldState,
   SimulationRound,
 } from "./contracts";
 import { PresentationMap } from "./PresentationMap";
 import { PresentationMapFallback } from "./PresentationMapFallback";
+import { LaunchExperience } from "./LaunchExperience";
+import type { LaunchReviewStep } from "./LaunchExperience";
+import { scaleLabel, visualScaleForFrame, visualScaleForFrames } from "./mapScale";
+import {
+  eventFamilyLabel,
+  fillMetricLabel,
+  mechanismChannelLabel,
+  overlayStatusLabel,
+  ROUND_LABELS,
+} from "./presentationLabels";
 import { GlobeIntro } from "./tech-spike/GlobeIntro";
 import type { PresentationMapCollection } from "./tech-spike/types";
 
-type DockPanel = "policy" | "event" | "province" | "automaker" | "competition" | "negotiation" | "coordination" | "result" | "method" | "layers";
+type DockPanel = "policy" | "event" | "province" | "automaker" | "competition" | "negotiation" | "coordination" | "decisions" | "result" | "method" | "layers";
 
 interface ProvinceSelection {
   code: string;
@@ -53,6 +67,7 @@ interface ProvinceSelection {
   value: number | null;
   x: number;
   y: number;
+  branchId?: "control" | "treatment";
 }
 
 const DOCK_ITEMS = [
@@ -63,6 +78,7 @@ const DOCK_ITEMS = [
   { id: "competition", label: "竞争", Icon: Strategy },
   { id: "negotiation", label: "谈判", Icon: Handshake },
   { id: "coordination", label: "协同", Icon: CirclesThreePlus },
+  { id: "decisions", label: "全部决策", Icon: Database },
   { id: "result", label: "结果", Icon: ChartLineUp },
   { id: "method", label: "方法", Icon: Database },
   { id: "layers", label: "图层", Icon: Stack },
@@ -87,15 +103,12 @@ const ROUND_SEQUENCE: SimulationRound[] = [
   "environment_settlement",
 ];
 
-const ROUND_LABELS: Record<SimulationRound, string> = {
-  province_initial: "省级初始行动",
-  automaker_initial: "车企初步响应",
-  province_revision: "省级策略调整",
-  automaker_negotiation: "政企谈判",
-  province_counter_response: "省级回应",
-  automaker_final: "车企最终行动",
-  environment_settlement: "环境结算",
-};
+const BRANCH_RELATIONSHIP_PANELS = new Set<DockPanel>([
+  "automaker",
+  "competition",
+  "negotiation",
+  "coordination",
+]);
 
 const TRIGGER_LABELS: Record<EventTriggerPoint, string> = {
   before_province_initial: "省级首轮前",
@@ -114,84 +127,128 @@ const SCOPE_LABELS: Record<EventBranchScope, string> = {
   treatment_only: "仅干预方案冲击",
 };
 
+const SUBJECT_LABELS: Record<string, string> = {
+  province: "省份",
+  automaker: "车企",
+  consumer: "消费端",
+  environment: "确定性环境",
+};
+
 function pathExperimentId() {
   const match = window.location.pathname.match(/\/experiments\/([^/]+)\/present/);
   return match?.[1] ?? new URLSearchParams(window.location.search).get("experiment");
 }
 
 function modeLabel(mode: PresentationMode) {
-  return { live: "实时推演", story: "章节回放", compare: "结果对照" }[mode];
+  return { live: "实时推演", compare: "结果对照" }[mode];
 }
 
-function panelOverlays(frame: PresentationFrame | undefined, kind: PresentationOverlayKind) {
+function panelOverlays(frame: PresentationMapFrame | undefined, kind: PresentationOverlayKind) {
   return frame?.overlay_records.filter((item) => item.kind === kind) ?? [];
 }
 
-interface LaunchSelection {
-  event: PresentationEventCatalogEntry;
-  triggerPoint: EventTriggerPoint;
-  intensity: EventIntensity;
-  branchScope: EventBranchScope;
-  advanceNotice: boolean;
+function mapFrame(
+  frame: PresentationFrame,
+  projection: PresentationFrame["shared_projection"],
+): PresentationMapFrame | null {
+  if (!projection) return null;
+  return {
+    ...projection,
+    frame_id: frame.frame_id,
+    sequence: frame.sequence,
+    kind: frame.kind,
+    round: frame.round,
+    title: frame.title,
+    summary: frame.summary,
+  };
 }
 
-function LaunchScreen({ catalog, onLaunch, pending, error }: {
-  catalog: PresentationEventCatalog;
-  onLaunch: (selection: LaunchSelection) => void;
-  pending: boolean;
-  error: string | null;
+function regionalShares(world: PresentationWorldState | undefined) {
+  const control = world?.design?.control_policy;
+  const treatment = world?.design?.treatment_policy;
+  if (!control || !treatment) return null;
+  return {
+    control: [
+      control.west_central_share * 100,
+      control.central_central_share * 100,
+      control.east_central_share * 100,
+    ],
+    treatment: [
+      treatment.west_central_share * 100,
+      treatment.central_central_share * 100,
+      treatment.east_central_share * 100,
+    ],
+  };
+}
+
+function DecisionIndex({ moments, threads }: {
+  moments: PresentationFrame["decision_moments"];
+  threads: PresentationFrame["interaction_threads"];
 }) {
-  const defaultEvent = catalog.templates.find((item) => item.template_id === "oil_price_rise")
-    ?? catalog.templates[0]!;
-  const [templateId, setTemplateId] = useState(defaultEvent.template_id);
-  const [triggerPoint, setTriggerPoint] = useState<EventTriggerPoint>("after_automaker_initial");
-  const [intensity, setIntensity] = useState<EventIntensity>("low");
-  const [branchScope, setBranchScope] = useState<EventBranchScope>("both");
-  const [advanceNotice, setAdvanceNotice] = useState(false);
-  const event = catalog.templates.find((item) => item.template_id === templateId) ?? defaultEvent;
-  return (
-    <main className="launch-stage">
-      <div className="launch-orbit orbit-a" />
-      <div className="launch-orbit orbit-b" />
-      <section className="launch-console glass-panel">
-        <div className="launch-copy">
-          <span className="brand-kicker"><Sparkle weight="fill" /> PolicyScope / 政策涟漪</span>
-          <h1>进入全国政策<br />全景推演厅</h1>
-          <p>选择一项机制实验事件，然后在同一块大屏内逐轮推进双方案演化。</p>
-          <div className="launch-facts"><span>31 省</span><span>10 家模拟车企</span><span>七轮互动</span></div>
-          <article className="selected-event-card">
-            <small>{event.family} / SCENARIO</small>
-            <h2>{event.title}</h2>
-            <p>{event.description}</p>
-            <div>{event.mechanism_channels.map((channel) => <span key={channel}>{channel.replaceAll("_", " ")}</span>)}</div>
-          </article>
-          <p className="scenario-disclaimer">{event.disclaimer}</p>
-        </div>
-        <div className="launch-config">
-          <div className="config-heading"><small>EVENT CATALOG</small><b>{String(catalog.templates.length).padStart(2, "0")} 项冻结情景</b></div>
-          <div className="event-catalog-grid">
-            {catalog.templates.map((item, index) => <button className={item.template_id === templateId ? "active" : ""} key={item.template_id} onClick={() => setTemplateId(item.template_id)} type="button"><span>{String(index + 1).padStart(2, "0")}</span><b>{item.title}</b><small>{item.family}</small></button>)}
-          </div>
-          <fieldset><legend>触发边界</legend><div className="config-options">{event.trigger_points.map((value) => <button className={triggerPoint === value ? "active" : ""} key={value} onClick={() => setTriggerPoint(value)} type="button">{TRIGGER_LABELS[value]}</button>)}</div></fieldset>
-          <fieldset><legend>事件强度</legend><div className="config-options">{event.supported_intensities.map((value) => <button className={intensity === value ? "active" : ""} key={value} onClick={() => setIntensity(value)} type="button">{INTENSITY_LABELS[value]}</button>)}</div></fieldset>
-          <fieldset><legend>对照范围</legend><div className="config-options">{event.branch_scopes.map((value) => <button className={branchScope === value ? "active" : ""} key={value} onClick={() => setBranchScope(value)} type="button">{SCOPE_LABELS[value]}</button>)}</div></fieldset>
-          <label className="notice-toggle"><input checked={advanceNotice} disabled={!event.advance_notice_supported} onChange={(change) => setAdvanceNotice(change.target.checked)} type="checkbox" /><span><b>提前通知 Agent</b><small>将事件写入省级与车企当轮上下文</small></span></label>
-          <button className="primary-action launch-action" disabled={pending} onClick={() => onLaunch({ event, triggerPoint, intensity, branchScope, advanceNotice })} type="button">
-            {pending ? "正在冻结同源基线…" : "启动演示实验"}<Play weight="fill" />
-          </button>
-          {error ? <p className="error-copy">{error}</p> : null}
-        </div>
-      </section>
-    </main>
+  const [branch, setBranch] = useState<"all" | BranchRole>("all");
+  const [subject, setSubject] = useState<"all" | "province" | "automaker">("all");
+  const [status, setStatus] = useState<"all" | "pending" | "responded" | "settled">("all");
+  const [round, setRound] = useState<"all" | SimulationRound>("all");
+  const [interaction, setInteraction] = useState<"all" | "competition" | "coordination" | "negotiation" | "topk">("all");
+  const [evidenceMomentId, setEvidenceMomentId] = useState<string | null>(null);
+  const interactionMoments = interaction === "all"
+    ? null
+    : new Set(threads.filter((item) => item.thread_type === interaction).flatMap((item) => item.moment_ids));
+  const filtered = moments.filter((item) =>
+    (branch === "all" || item.branch_role === branch)
+    && (subject === "all" || item.actor.subject_type === subject)
+    && (status === "all" || item.response_status === status)
+    && (round === "all" || item.round === round)
+    && (!interactionMoments || interactionMoments.has(item.moment_id)),
   );
+  return <div className="decision-index">
+    <p className="sheet-lead">全部决策轨迹 <b>{filtered.length}</b></p>
+    <div className="decision-filters">
+      <select aria-label="按分支筛选" onChange={(event) => setBranch(event.target.value as typeof branch)} value={branch}><option value="all">全部分支</option><option value="control">原始方案</option><option value="treatment">干预方案</option></select>
+      <select aria-label="按主体筛选" onChange={(event) => setSubject(event.target.value as typeof subject)} value={subject}><option value="all">全部主体</option><option value="province">省份</option><option value="automaker">车企</option></select>
+      <select aria-label="按回应状态筛选" onChange={(event) => setStatus(event.target.value as typeof status)} value={status}><option value="all">全部状态</option><option value="pending">待回应</option><option value="responded">已回应</option><option value="settled">已结算</option></select>
+      <select aria-label="按轮次筛选" onChange={(event) => setRound(event.target.value as typeof round)} value={round}><option value="all">全部轮次</option>{ROUND_SEQUENCE.map((item) => <option key={item} value={item}>{ROUND_LABELS[item]}</option>)}</select>
+      <select aria-label="按互动类型筛选" onChange={(event) => setInteraction(event.target.value as typeof interaction)} value={interaction}><option value="all">全部互动</option><option value="competition">竞争</option><option value="coordination">协同</option><option value="negotiation">谈判</option><option value="topk">重配</option></select>
+    </div>
+    <div className="decision-list">{filtered.map((item) => <article key={item.moment_id} tabIndex={0}>
+      <header><b>{item.actor.display_name}</b><span>{item.branch_role === "control" ? "原始方案" : "干预方案"}</span></header>
+      <p>{item.actual_choice}</p><footer><small>{ROUND_LABELS[item.round]} · {item.response_status === "pending" ? "待回应" : item.response_status === "settled" ? "已结算" : "已冻结"}</small><button onClick={() => setEvidenceMomentId((current) => current === item.moment_id ? null : item.moment_id)} type="button">Evidence {item.evidence_refs.length}</button></footer>
+      {evidenceMomentId === item.moment_id ? <div className="decision-evidence" aria-label={`${item.actor.display_name} Evidence`}>{item.evidence_refs.length ? item.evidence_refs.map((ref) => <code key={ref}>{ref}</code>) : <span>当前决策没有额外 Evidence 引用</span>}</div> : null}
+    </article>)}</div>
+  </div>;
 }
 
-function SideSheet({ panel, frame, timeline, catalog, comparison, selected, onClose }: {
-  panel: DockPanel;
+function GameSpotlight({ frame, selected, onSelect }: {
   frame: PresentationFrame;
+  selected: number;
+  onSelect: (index: number) => void;
+}) {
+  const spotlight = frame.spotlights[selected] ?? frame.spotlights[0];
+  const [beatIndex, setBeatIndex] = useState(0);
+  useEffect(() => setBeatIndex(0), [spotlight?.spotlight_id]);
+  if (!spotlight) return <div className="spotlight-empty"><b>Game Spotlight</b><span>当前冻结帧尚无主体决策。</span></div>;
+  const moment = frame.decision_moments.find((item) => item.moment_id === spotlight.primary_moment_id);
+  const beat = spotlight.narrative_beats[beatIndex] ?? spotlight.narrative_beats[0];
+  return <>
+    <div className="spotlight-heading"><span>GAME SPOTLIGHT</span><b>{spotlight.score.total.toFixed(0)} / 100</b></div>
+    <div className="spotlight-tabs" role="tablist">{frame.spotlights.map((item, index) => <button aria-selected={index === selected} className={index === selected ? "active" : ""} key={item.spotlight_id} onClick={() => onSelect(index)} role="tab" type="button">{item.rank === 1 ? "主镜头" : `辅助 ${item.rank - 1}`}<small>{item.label}</small></button>)}</div>
+    <h1>{moment?.actor.display_name ?? spotlight.label}</h1>
+    <p>{moment?.objective ?? frame.summary}</p>
+    <div className="micro-beats" role="tablist" aria-label="微镜头节拍">{spotlight.narrative_beats.map((item, index) => <button aria-label={item.title} aria-selected={index === beatIndex} className={`${index === beatIndex ? "active" : ""} ${item.status}`} key={item.beat} onClick={() => setBeatIndex(index)} role="tab" type="button"><i />{item.title}</button>)}</div>
+    {beat ? <article className={`beat-card ${beat.status}`}><small>{beat.status === "pending" ? "待回应" : "冻结事实"}</small><b>{beat.title}</b><p>{beat.detail}</p></article> : null}
+    {beat?.beat === "options" && moment ? <div className="option-board">{moment.option_evaluations.map((option) => <div className={option.option_type === "chosen" ? "chosen" : ""} key={option.option_id}><span>{option.label}</span><b>{option.score == null ? "不可物化" : option.score.toFixed(1)}</b><small>{option.option_type === "chosen" ? "实际选择" : option.delta_from_chosen == null ? "决策时点评估" : `较实际 ${option.delta_from_chosen > 0 ? "+" : ""}${option.delta_from_chosen.toFixed(1)}`}</small></div>)}</div> : null}
+  </>;
+}
+
+function SideSheet({ panel, frame, moments, threads, timeline, catalog, comparison, world, selected, onClose }: {
+  panel: DockPanel;
+  frame: PresentationMapFrame;
+  moments: PresentationFrame["decision_moments"];
+  threads: PresentationFrame["interaction_threads"];
   timeline: PresentationTimeline;
   catalog: PresentationEventCatalog;
   comparison: PresentationComparison | undefined;
+  world: PresentationWorldState | undefined;
   selected: ProvinceSelection | null;
   onClose: () => void;
 }) {
@@ -199,6 +256,7 @@ function SideSheet({ panel, frame, timeline, catalog, comparison, selected, onCl
   const overlays = panel === "competition" || panel === "negotiation" || panel === "coordination"
     ? panelOverlays(frame, panel)
     : frame.overlay_records;
+  const shares = regionalShares(world);
   return (
     <aside className="side-sheet glass-panel" aria-label={`${config.label}详情`}>
       <header>
@@ -208,31 +266,34 @@ function SideSheet({ panel, frame, timeline, catalog, comparison, selected, onCl
       </header>
       {panel === "policy" ? <>
         <p className="sheet-lead">同源 A/B 政策承担比例</p>
-        <div className="policy-grid"><b>原始方案</b>{timeline.frames[0]?.metric_summary.slice(0, 3).map((metric) => <span key={metric.metric_id}>{metric.label.slice(0, 2)} {metric.value.toFixed(0)}{metric.unit}</span>)}</div>
-        <div className="policy-grid treatment"><b>干预方案</b><span>变化值</span><span>随结果帧</span><span>冻结展示</span></div>
+        {shares ? <>
+          <div className="policy-grid"><b>原始方案</b><span>西部 {shares.control[0]}%</span><span>中部 {shares.control[1]}%</span><span>东部 {shares.control[2]}%</span></div>
+          <div className="policy-grid treatment"><b>干预方案</b><span>西部 {shares.treatment[0]}%</span><span>中部 {shares.treatment[1]}%</span><span>东部 {shares.treatment[2]}%</span></div>
+        </> : <div className="empty-mini"><SlidersHorizontal />实验设计尚未冻结</div>}
       </> : null}
       {panel === "event" ? <>
         <p className="sheet-lead">{timeline.event_markers.length ? "当前实验事件已冻结，触发边界不可修改。" : "当前实验未配置突发事件。"}</p>
         {catalog.templates.map((item) => {
           const active = timeline.event_markers.find((marker) => marker.template_id === item.template_id);
-          return <article className={`event-catalog-row ${active ? "active" : ""}`} key={item.template_id}><div><b>{item.title}</b>{active ? <span>ACTIVE</span> : null}</div><small>{item.description}</small>{active ? <em>{TRIGGER_LABELS[active.trigger_point]} · {INTENSITY_LABELS[active.intensity]} · {SCOPE_LABELS[active.branch_scope]}</em> : <em>{item.family} · 可用情景</em>}</article>;
+          return <article className={`event-catalog-row ${active ? "active" : ""}`} key={item.template_id}><div><b>{item.title}</b>{active ? <span>已冻结</span> : null}</div><small>{item.description}</small>{active ? <><em>{TRIGGER_LABELS[active.trigger_point]} · {INTENSITY_LABELS[active.intensity]} · {SCOPE_LABELS[active.branch_scope]}</em><div className="event-mechanism-tags"><span>影响主体：{item.affected_subjects.map((subject) => SUBJECT_LABELS[subject] ?? "其他主体").join(" / ")}</span><span>机制通道：{item.mechanism_channels.map(mechanismChannelLabel).join(" / ")}</span><span>结果方向：待验证</span></div></> : <em>{eventFamilyLabel(item.family)} · 可用情景</em>}</article>;
         })}
         <p className="method-note">{catalog.templates[0]?.disclaimer}</p>
       </> : null}
       {panel === "province" ? <>
         <p className="sheet-lead">{selected ? selected.name : "点击地图选择省份"}</p>
-        {selected ? <div className="metric-block"><small>{frame.map_projection.fill_metric}</small><strong>{selected.value?.toFixed(2) ?? "—"}</strong><span>{frame.map_projection.unit}</span></div> : <div className="empty-mini"><MapPin />省域行动将在此渐进展开</div>}
+        {selected ? <div className="metric-block"><small>{fillMetricLabel(frame.map_projection.fill_metric)}</small><strong>{selected.value?.toFixed(2) ?? "—"}</strong><span>{frame.map_projection.unit}{selected.branchId ? ` · ${selected.branchId === "control" ? "原始方案" : "干预方案"}` : ""}</span></div> : <div className="empty-mini"><MapPin />省域行动将在此渐进展开</div>}
       </> : null}
       {panel === "automaker" ? <>
-        <p className="sheet-lead">真实数据基线 / 模拟车企行动</p>
-        {panelOverlays(frame, "automaker").slice(0, 6).map((item) => <article className="sheet-row" key={item.overlay_id}><b>{item.label}</b><span>{item.status}</span></article>)}
+        <p className="sheet-lead">代理数据基线 / 模拟车企行动</p>
+        {panelOverlays(frame, "automaker").slice(0, 6).map((item) => <article className="sheet-row" key={item.overlay_id}><b>{item.label}</b><span>{overlayStatusLabel(item.status)}</span></article>)}
         {!panelOverlays(frame, "automaker").length ? <div className="empty-mini"><Factory />当前帧没有新增车企行动</div> : null}
       </> : null}
       {panel === "competition" || panel === "negotiation" || panel === "coordination" ? <>
         <p className="sheet-lead">{SEMANTIC_LABELS[panel]}只展示冻结关系，不补算新行动。</p>
-        {overlays.slice(0, 8).map((item) => <article className="sheet-row" key={item.overlay_id}><b>{item.label}</b><span>{item.status}</span><small>{item.source_subject} → {item.target_subject ?? "全国"}</small></article>)}
+        {overlays.slice(0, 8).map((item) => <article className="sheet-row" key={item.overlay_id}><b>{item.label}</b><span>{overlayStatusLabel(item.status)}</span></article>)}
         {!overlays.length ? <div className="empty-mini"><ShieldChevron />当前帧暂无该类关系</div> : null}
       </> : null}
+      {panel === "decisions" ? <DecisionIndex moments={moments} threads={threads} /> : null}
       {panel === "result" ? <>
         <p className="sheet-lead">{comparison?.conclusion ?? "结果只来自权威环境投影"}</p>
         {comparison ? <div className="compare-verdict"><span>GAP {comparison.gap_direction === "narrowed" ? "收窄" : comparison.gap_direction === "widened" ? "扩大" : "持平"}</span><strong>Δ {comparison.delta_gap > 0 ? "+" : ""}{comparison.delta_gap.toFixed(2)}</strong><small>{comparison.fiscal_tradeoff}</small><div><b>受益</b>{comparison.top_beneficiaries.slice(0, 3).join(" / ")}</div><div><b>承压</b>{comparison.top_pressured.slice(0, 3).join(" / ")}</div></div> : null}
@@ -246,7 +307,7 @@ function SideSheet({ panel, frame, timeline, catalog, comparison, selected, onCl
       </> : null}
       {panel === "layers" ? <>
         <p className="sheet-lead">当前地图投影</p>
-        <div className="layer-choice active"><span className="layer-swatch" />{frame.map_projection.fill_metric}<small>{frame.map_projection.mode === "difference" ? "差值图层" : "绝对值图层"}</small></div>
+        <div className="layer-choice active"><span className="layer-swatch" />{fillMetricLabel(frame.map_projection.fill_metric)}<small>{frame.map_projection.mode === "difference" ? "差值图层" : "绝对值图层"}</small></div>
         <div className="layer-choice"><ArrowsOutLineHorizontal />省际互动弧线<small>{frame.map_projection.enabled_overlays.length} 类已启用</small></div>
         <div className="layer-choice"><span className="layer-swatch territory" />中国版图上下文<small>港澳台显示轮廓，不着色、不交互、不参与计算</small></div>
       </> : null}
@@ -261,6 +322,7 @@ export function PresentationApp() {
   const [collectionError, setCollectionError] = useState<string | null>(null);
   const [mode, setMode] = useState<PresentationMode>("live");
   const [frameIndex, setFrameIndex] = useState(0);
+  const [liveFrameQueue, setLiveFrameQueue] = useState<string[]>([]);
   const [playing, setPlaying] = useState(false);
   const [timelineDragging, setTimelineDragging] = useState(false);
   const [speed, setSpeed] = useState(1);
@@ -271,12 +333,22 @@ export function PresentationApp() {
   const [introActive, setIntroActive] = useState(new URLSearchParams(window.location.search).get("intro") !== "0");
   const [streamStatus, setStreamStatus] = useState<"connecting" | "live" | "reconnecting" | "offline" | "frozen">("connecting");
   const [compareLayout, setCompareLayout] = useState<"delta" | "split">("delta");
+  const [spotlightIndex, setSpotlightIndex] = useState(0);
   const [syncCamera, setSyncCamera] = useState<PresentationCamera | undefined>();
   const [fullscreen, setFullscreen] = useState(Boolean(document.fullscreenElement));
   const [mapFallback, setMapFallback] = useState(new URLSearchParams(window.location.search).get("mapFallback") === "1");
+  const [demoDraft, setDemoDraft] = useState<DemoDraft | null>(null);
+  const [launchReviewStep, setLaunchReviewStep] = useState<LaunchReviewStep>("configuration");
+  const seenTimelineExperimentRef = useRef<string | null>(null);
+  const seenLiveFrameIdsRef = useRef<Set<string>>(new Set());
+  const previousModeRef = useRef<PresentationMode | null>(null);
+  const autoSplitFrameIdsRef = useRef<Set<string>>(new Set());
+  const mapFatal = useCallback(() => setMapFallback(true), []);
+  const completeIntro = useCallback(() => setIntroActive(false), []);
 
-  useEffect(() => {
+  const loadCollection = useCallback(() => {
     let active = true;
+    setCollectionError(null);
     void fetch("/assets/china-presentation-map.geojson").then((response) => {
       if (!response.ok) throw new Error(`地图资源加载失败（${response.status}）`);
       return response.json() as Promise<PresentationMapCollection>;
@@ -302,19 +374,47 @@ export function PresentationApp() {
     return () => { active = false; };
   }, []);
 
+  useEffect(() => {
+    return loadCollection();
+  }, [loadCollection]);
+
   const eventCatalogQuery = useQuery({
     queryKey: ["presentation-event-catalog"],
     queryFn: presentationApi.eventCatalog,
     staleTime: Number.POSITIVE_INFINITY,
   });
-  const createDemo = useMutation({
-    mutationFn: presentationApi.createDemo,
+  const createDemoDraft = useMutation({
+    mutationFn: presentationApi.createDemoDraft,
+    onSuccess: (draft) => {
+      setDemoDraft(draft);
+      setLaunchReviewStep("interpretation");
+    },
+  });
+  const confirmDemoInterpretation = useMutation({
+    mutationFn: async () => {
+      if (!demoDraft) throw new Error("尚未生成中央政策解读");
+      await presentationApi.confirmDemoInterpretation(demoDraft);
+    },
+    onSuccess: () => setLaunchReviewStep("design"),
+  });
+  const confirmDemoDesign = useMutation({
+    mutationFn: async () => {
+      if (!demoDraft) throw new Error("尚未生成实验设计");
+      await presentationApi.confirmDemoDesign(demoDraft);
+    },
+    onSuccess: () => setLaunchReviewStep("baseline"),
+  });
+  const confirmDemoBaseline = useMutation({
+    mutationFn: async () => {
+      if (!demoDraft) throw new Error("尚未生成实验基线");
+      return presentationApi.confirmDemoBaseline(demoDraft);
+    },
     onSuccess: (id) => {
       window.history.replaceState({}, "", `/experiments/${id}/present`);
       setExperimentId(id);
       setMode("live");
       setFrameIndex(0);
-      setIntroActive(true);
+      setIntroActive(false);
     },
   });
   const timelineQuery = useQuery({
@@ -325,11 +425,6 @@ export function PresentationApp() {
   });
   const timeline = timelineQuery.data;
   const completed = timeline?.status === "completed";
-  const summaryQuery = useQuery({
-    queryKey: ["presentation-summary", experimentId],
-    queryFn: () => presentationApi.summary(experimentId!),
-    enabled: Boolean(experimentId && completed),
-  });
   const comparisonQuery = useQuery({
     queryKey: ["presentation-comparison", experimentId],
     queryFn: () => presentationApi.comparison(experimentId!),
@@ -352,35 +447,85 @@ export function PresentationApp() {
       await queryClient.invalidateQueries({ queryKey: ["presentation-timeline", experimentId] });
     },
   });
-  const embeddedFrame = timeline?.frames[Math.min(frameIndex, Math.max(0, timeline.frames.length - 1))];
+  const frameIndexItem = timeline?.frames[Math.min(frameIndex, Math.max(0, timeline.frames.length - 1))];
   const frameQuery = useQuery({
-    queryKey: ["presentation-frame", experimentId, embeddedFrame?.frame_id],
-    queryFn: () => presentationApi.frame(experimentId!, embeddedFrame!.frame_id),
-    enabled: Boolean(experimentId && embeddedFrame),
-    placeholderData: embeddedFrame,
+    queryKey: ["presentation-frame", experimentId, frameIndexItem?.frame_id],
+    queryFn: () => presentationApi.frame(experimentId!, frameIndexItem!.frame_id),
+    enabled: Boolean(experimentId && frameIndexItem),
+    placeholderData: (previousFrame) => previousFrame,
   });
-  const frame = frameQuery.data ?? embeddedFrame;
+  const frame = frameQuery.data;
+  useEffect(() => {
+    if (!timeline || !experimentId) return;
+    for (const index of [frameIndex - 1, frameIndex + 1]) {
+      const neighbor = timeline.frames[index];
+      if (!neighbor) continue;
+      void queryClient.prefetchQuery({
+        queryKey: ["presentation-frame", experimentId, neighbor.frame_id],
+        queryFn: () => presentationApi.frame(experimentId, neighbor.frame_id),
+        staleTime: Number.POSITIVE_INFINITY,
+      });
+    }
+  }, [experimentId, frameIndex, queryClient, timeline]);
+
+  const allFrameQueries = useQueries({
+    queries: (panel === "decisions" && timeline && experimentId ? timeline.frames : []).map((item) => ({
+      queryKey: ["presentation-frame", experimentId, item.frame_id],
+      queryFn: () => presentationApi.frame(experimentId!, item.frame_id),
+      staleTime: Number.POSITIVE_INFINITY,
+    })),
+  });
+  const allDecisionMoments = useMemo(() => {
+    const unique = new Map<string, PresentationFrame["decision_moments"][number]>();
+    for (const query of allFrameQueries) {
+      for (const moment of query.data?.decision_moments ?? []) {
+        if (!moment.trace_id.startsWith("utility:")) unique.set(moment.moment_id, moment);
+      }
+    }
+    return [...unique.values()].sort((left, right) => left.round.localeCompare(right.round) || left.moment_id.localeCompare(right.moment_id));
+  }, [allFrameQueries]);
+  const allInteractionThreads = useMemo(() => {
+    const unique = new Map<string, PresentationFrame["interaction_threads"][number]>();
+    for (const query of allFrameQueries) {
+      for (const thread of query.data?.interaction_threads ?? []) unique.set(thread.thread_id, thread);
+    }
+    return [...unique.values()];
+  }, [allFrameQueries]);
+
   const branchFrames = useMemo(() => {
-    if (!frame || !worldQuery.data || frame.kind !== "comparison") return null;
-    const build = (branchId: "control" | "treatment") => ({
-      ...frame,
-      frame_id: `frame-${branchId}-synchronized-compare`,
-      branch_id: branchId,
-      title: branchId === "control" ? "原始方案" : "干预方案",
+    if (!frame?.branch_projections.control || !frame.branch_projections.treatment) return null;
+    const control = mapFrame(frame, frame.branch_projections.control);
+    const treatment = mapFrame(frame, frame.branch_projections.treatment);
+    return control && treatment ? { control, treatment } : null;
+  }, [frame]);
+  const selectedSpotlight = frame?.spotlights[spotlightIndex] ?? frame?.spotlights[0];
+  const activeRole: BranchRole = selectedSpotlight?.branch_role ?? "treatment";
+  const singleMapFrame = useMemo(() => {
+    if (!frame) return null;
+    if (mode === "compare" && frame.difference_projection) return mapFrame(frame, frame.difference_projection);
+    const mapped = mapFrame(frame, frame.shared_projection ?? frame.branch_projections[activeRole] ?? frame.branch_projections.treatment ?? null);
+    const thread = selectedSpotlight?.thread_id
+      ? frame.interaction_threads.find((item) => item.thread_id === selectedSpotlight.thread_id)
+      : null;
+    if (!mapped || !thread) return mapped;
+    const subjects = new Set(thread.participants.map((item) => `${item.subject_type}:${item.subject_id}`));
+    if (thread.resource_subject) subjects.add(`${thread.resource_subject.subject_type}:${thread.resource_subject.subject_id}`);
+    const focused = mapped.overlay_records.filter((item) =>
+      subjects.has(item.source_subject) || Boolean(item.target_subject && subjects.has(item.target_subject)),
+    );
+    return {
+      ...mapped,
+      overlay_records: focused,
       map_projection: {
-        ...frame.map_projection,
-        mode: "absolute" as const,
-        fill_metric: "province_nev_development_index",
+        ...mapped.map_projection,
+        enabled_overlays: [...new Set(focused.map((item) => item.kind))],
       },
-      province_values: Object.values(worldQuery.data.branches[branchId].province_states).map((item) => ({
-        province_code: item.province_code,
-        value: item.development_index,
-        missing: false,
-        data_quality: "proxy" as const,
-      })),
-    });
-    return { control: build("control"), treatment: build("treatment") };
-  }, [frame, worldQuery.data]);
+    };
+  }, [activeRole, frame, mode, selectedSpotlight]);
+  const splitVisualScale = useMemo(
+    () => branchFrames ? visualScaleForFrames([branchFrames.control, branchFrames.treatment]) : null,
+    [branchFrames],
+  );
 
   useEffect(() => {
     if (!experimentId || timeline?.status === "completed") {
@@ -427,26 +572,69 @@ export function PresentationApp() {
 
   useEffect(() => {
     if (!timeline) return;
-    if (mode === "live") {
+    const enteringMode = previousModeRef.current !== mode;
+    if (mode === "live" && enteringMode) {
       const current = timeline.frames.findIndex((item) => item.frame_id === timeline.current_frame_id);
       setFrameIndex(current >= 0 ? current : timeline.frames.length - 1);
       setPlaying(false);
     }
-    if (mode === "compare") {
+    if (mode === "compare" && enteringMode) {
       const comparison = timeline.frames.findIndex((item) => item.kind === "comparison");
       setFrameIndex(comparison >= 0 ? comparison : timeline.frames.length - 1);
       setPlaying(false);
       setPanel("result");
     }
+    previousModeRef.current = mode;
   }, [mode, timeline]);
 
   useEffect(() => {
-    if (mode !== "story" || !summaryQuery.data || !timeline?.story_chapters.length) return;
-    const currentChapter = timeline.story_chapters.findIndex((item) =>
-      item.frame_ids.includes(timeline.frames[frameIndex]?.frame_id ?? ""),
-    );
-    if (currentChapter < 0 || currentChapter >= summaryQuery.data.scenes.length) return;
-  }, [frameIndex, mode, summaryQuery.data, timeline]);
+    if (!timeline || !experimentId) return;
+    const frameIds = timeline.frames.map((item) => item.frame_id);
+    if (seenTimelineExperimentRef.current !== experimentId) {
+      seenTimelineExperimentRef.current = experimentId;
+      seenLiveFrameIdsRef.current = new Set(frameIds);
+      setLiveFrameQueue([]);
+      if (mode === "live") {
+        const current = timeline.frames.findIndex((item) => item.frame_id === timeline.current_frame_id);
+        setFrameIndex(current >= 0 ? current : timeline.frames.length - 1);
+      }
+      return;
+    }
+    const queued = frameIds.filter((frameId) => !seenLiveFrameIdsRef.current.has(frameId));
+    seenLiveFrameIdsRef.current = new Set(frameIds);
+    if (mode !== "live" || !queued.length) return;
+    setLiveFrameQueue((existing) => [
+      ...existing,
+      ...queued.filter((frameId) => !existing.includes(frameId)),
+    ]);
+  }, [experimentId, mode, timeline]);
+
+  useEffect(() => {
+    if (mode !== "live" || !timeline || !liveFrameQueue.length) return;
+    const nextFrameId = liveFrameQueue[0]!;
+    const nextIndex = timeline.frames.findIndex((item) => item.frame_id === nextFrameId);
+    if (nextIndex < 0) {
+      setLiveFrameQueue((existing) => existing.slice(1));
+      return;
+    }
+    setFrameIndex(nextIndex);
+    const timer = window.setTimeout(() => {
+      setLiveFrameQueue((existing) => existing.slice(1));
+    }, (reducedMotion ? 900 : 1900) / speed);
+    return () => window.clearTimeout(timer);
+  }, [liveFrameQueue, mode, reducedMotion, speed, timeline]);
+
+  useEffect(() => {
+    setSpotlightIndex(0);
+    if (!frame || !timeline || !branchFrames) return;
+    if (timeline.frames[frameIndex]?.frame_id !== frame.frame_id) return;
+    const keyDivergence = frame.frame_id === timeline.first_divergence_frame_id;
+    const settlement = frame.kind === "settlement" || frame.kind === "comparison";
+    if ((keyDivergence || settlement) && !autoSplitFrameIdsRef.current.has(frame.frame_id)) {
+      autoSplitFrameIdsRef.current.add(frame.frame_id);
+      setCompareLayout("split");
+    }
+  }, [branchFrames, frame, frameIndex, timeline]);
 
   useEffect(() => {
     if (!playing || !timeline?.frames.length) return;
@@ -473,28 +661,21 @@ export function PresentationApp() {
         event.preventDefault();
         const direction = event.key === "ArrowRight" ? 1 : -1;
         setPlaying(false);
+        setLiveFrameQueue([]);
         setFrameIndex((current) => {
-          if (!event.shiftKey || !timeline?.story_chapters.length) {
-            return Math.max(0, Math.min((timeline?.frames.length ?? 1) - 1, current + direction));
-          }
-          const starts = timeline.story_chapters
-            .map((item) => timeline.frames.findIndex((candidate) => candidate.frame_id === item.frame_ids[0]))
-            .filter((index) => index >= 0);
-          const next = direction > 0
-            ? starts.find((index) => index > current) ?? timeline.frames.length - 1
-            : [...starts].reverse().find((index) => index < current) ?? 0;
-          return next;
+          return Math.max(0, Math.min((timeline?.frames.length ?? 1) - 1, current + direction));
         });
       } else if (event.key === "Home" || event.key.toLowerCase() === "r") {
         setFrameIndex(0);
         setPlaying(false);
+        setLiveFrameQueue([]);
       } else if (event.key === "Escape") {
         setPanel(null);
       }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [timeline?.frames, timeline?.story_chapters]);
+  }, [timeline?.frames]);
 
   useEffect(() => {
     const update = () => setFullscreen(Boolean(document.fullscreenElement));
@@ -504,61 +685,92 @@ export function PresentationApp() {
 
   const selectProvince = useCallback((value: ProvinceSelection) => {
     setSelected(value);
-    if (panel === "province") setPanel("province");
-  }, [panel]);
+  }, []);
+  const selectControlProvince = useCallback((value: ProvinceSelection) => {
+    setSelected({ ...value, branchId: "control" });
+  }, []);
+  const selectTreatmentProvince = useCallback((value: ProvinceSelection) => {
+    setSelected({ ...value, branchId: "treatment" });
+  }, []);
 
-  const chapter = useMemo(() => timeline?.story_chapters.find((item) => item.frame_ids.includes(frame?.frame_id ?? "")), [frame?.frame_id, timeline?.story_chapters]);
-  const scene = useMemo(() => {
-    if (!chapter || !summaryQuery.data || !timeline) return null;
-    const index = timeline.story_chapters.findIndex((item) => item.chapter_id === chapter.chapter_id);
-    return summaryQuery.data.scenes[index] ?? null;
-  }, [chapter, summaryQuery.data, timeline]);
   const providerLabel = {
-    live: "LIVE AGENT",
+    live: "在线推演",
     cache: "验证缓存",
     cached: "验证缓存",
     fake: "FAKE / FALLBACK",
     fallback: "FAKE / FALLBACK",
   }[worldQuery.data?.versions.agent_provider_mode ?? "fake"] ?? "FAKE / FALLBACK";
-  const headlineMetric = frame?.metric_summary[0];
+  const headlineMetric = singleMapFrame?.metric_summary[0];
+  const legendFrame = compareLayout === "split" && branchFrames ? branchFrames.control : singleMapFrame;
+  const visualScale = useMemo(
+    () => compareLayout === "split" && splitVisualScale
+      ? splitVisualScale
+      : singleMapFrame
+        ? visualScaleForFrame(singleMapFrame)
+        : null,
+    [compareLayout, singleMapFrame, splitVisualScale],
+  );
+  const selectionFrame = selected?.branchId && compareLayout === "split" && branchFrames
+    ? branchFrames[selected.branchId]
+    : singleMapFrame;
+  const displayedSelection = useMemo(() => {
+    if (!selected || !selectionFrame) return selected;
+    return {
+      ...selected,
+      branchId: compareLayout === "split" && branchFrames ? selected.branchId : undefined,
+      value: selectionFrame.province_values.find((item) => item.province_code === selected.code)?.value ?? null,
+    };
+  }, [branchFrames, compareLayout, selected, selectionFrame]);
   const seekFromPointer = useCallback((clientX: number, track: HTMLDivElement) => {
     if (!timeline?.frames.length) return;
     const bounds = track.getBoundingClientRect();
     const ratio = Math.max(0, Math.min(1, (clientX - bounds.left) / bounds.width));
     setFrameIndex(Math.round(ratio * (timeline.frames.length - 1)));
     setPlaying(false);
+    setLiveFrameQueue([]);
   }, [timeline?.frames.length]);
 
   if (!experimentId) {
-    if (eventCatalogQuery.isError) return <main className="loading-stage error"><Info /><h1>事件目录未就绪</h1><p>{eventCatalogQuery.error instanceof Error ? eventCatalogQuery.error.message : "请确认后端服务已启动"}</p><button className="primary-action" onClick={() => eventCatalogQuery.refetch()} type="button">重新载入</button></main>;
-    if (eventCatalogQuery.isLoading || !eventCatalogQuery.data) return <main className="loading-stage"><span className="loader-ring" /><p>正在载入事件目录…</p></main>;
-    return <LaunchScreen catalog={eventCatalogQuery.data} error={createDemo.error instanceof Error ? createDemo.error.message : null} onLaunch={(selection) => createDemo.mutate(selection)} pending={createDemo.isPending} />;
+    if (!collection && collectionError) return <main className="loading-stage error"><Info /><h1>全国地图未就绪</h1><p>{collectionError}</p><button className="primary-action" onClick={() => loadCollection()} type="button">重试地图</button></main>;
+    if (!collection) return <main className="loading-stage"><span className="loader-ring" /><p>正在建立全球情景视角…</p></main>;
+    const launchError = launchReviewStep === "configuration" && eventCatalogQuery.isError
+      ? "突发事件目录未就绪；仍可创建纯政策对比，或重新载入目录。"
+      : [createDemoDraft.error, confirmDemoInterpretation.error, confirmDemoDesign.error, confirmDemoBaseline.error]
+        .find((value): value is Error => value instanceof Error)?.message ?? null;
+    return <LaunchExperience catalog={eventCatalogQuery.data ?? null} collection={collection} draft={demoDraft} error={launchError} introActive={introActive} introRunId={introRunId} onConfirmBaseline={() => confirmDemoBaseline.mutate()} onConfirmDesign={() => confirmDemoDesign.mutate()} onConfirmInterpretation={() => confirmDemoInterpretation.mutate()} onCreateDraft={(selection) => createDemoDraft.mutate(selection)} onIntroComplete={completeIntro} onRetryCatalog={() => { void eventCatalogQuery.refetch(); }} pending={createDemoDraft.isPending || confirmDemoInterpretation.isPending || confirmDemoDesign.isPending || confirmDemoBaseline.isPending} reducedMotion={reducedMotion} reviewStep={launchReviewStep} />;
   }
-  if (timelineQuery.isLoading || !collection || !eventCatalogQuery.data) return <main className="loading-stage"><span className="loader-ring" /><p>{collectionError ?? "正在载入全国冻结推演…"}</p></main>;
-  if (timelineQuery.isError || eventCatalogQuery.isError || !timeline || !frame) return <main className="loading-stage error"><Info /><h1>演示数据未就绪</h1><p>{timelineQuery.error instanceof Error ? timelineQuery.error.message : "请确认后端实验可读"}</p><button className="primary-action" onClick={() => timelineQuery.refetch()} type="button">重新载入</button></main>;
+  if (!collection && collectionError) return <main className="loading-stage error"><Info /><h1>全国地图未就绪</h1><p>{collectionError}</p><button className="primary-action" onClick={() => loadCollection()} type="button">重试地图</button></main>;
+  if (timelineQuery.isError || frameQuery.isError || eventCatalogQuery.isError || worldQuery.isError) return <main className="loading-stage error"><Info /><h1>演示数据未就绪</h1><p>{timelineQuery.error instanceof Error ? timelineQuery.error.message : frameQuery.error instanceof Error ? frameQuery.error.message : eventCatalogQuery.error instanceof Error ? eventCatalogQuery.error.message : worldQuery.error instanceof Error ? worldQuery.error.message : "请确认后端实验可读"}</p><button className="primary-action" onClick={() => { void timelineQuery.refetch(); void frameQuery.refetch(); void eventCatalogQuery.refetch(); void worldQuery.refetch(); }} type="button">重新载入</button></main>;
+  if (timelineQuery.isLoading || eventCatalogQuery.isLoading || worldQuery.isLoading || !collection || !eventCatalogQuery.data) return <main className="loading-stage"><span className="loader-ring" /><p>正在载入全国冻结推演…</p></main>;
+  if (!timeline || !frame || !singleMapFrame) return <main className="loading-stage"><span className="loader-ring" /><p>正在载入当前博弈帧…</p></main>;
+  const renderedLegendFrame = legendFrame ?? singleMapFrame;
+  const panelFrame = panel === "province" && selectionFrame
+    ? selectionFrame
+    : compareLayout === "split" && branchFrames && panel && BRANCH_RELATIONSHIP_PANELS.has(panel)
+      ? branchFrames[selected?.branchId ?? "control"]
+      : singleMapFrame;
 
   return (
     <main className={`presentation-shell mode-${mode} ${reducedMotion ? "reduced-motion" : ""}`}>
-      {mode === "compare" && compareLayout === "split" && branchFrames ? <section className="split-compare-stage" aria-label="同步 A/B 双世界">
-        <article><header><span>原始方案</span><b>CONTROL</b></header>{mapFallback ? <PresentationMapFallback ariaLabel="原始方案省域地图" collection={collection} frame={branchFrames.control} onSelect={selectProvince} selectedCode={selected?.code ?? null} /> : <PresentationMap ariaLabel="原始方案省域地图" cameraSync={syncCamera} collection={collection} frame={branchFrames.control} onCameraChange={setSyncCamera} onError={setCollectionError} onFatal={() => setMapFallback(true)} onSelect={selectProvince} reducedMotion={reducedMotion} selectedCode={selected?.code ?? null} />}</article>
-        <article><header><span>干预方案</span><b>TREATMENT</b></header>{mapFallback ? <PresentationMapFallback ariaLabel="干预方案省域地图" collection={collection} frame={branchFrames.treatment} onSelect={selectProvince} selectedCode={selected?.code ?? null} /> : <PresentationMap ariaLabel="干预方案省域地图" cameraSync={syncCamera} collection={collection} frame={branchFrames.treatment} onCameraChange={setSyncCamera} onError={setCollectionError} onFatal={() => setMapFallback(true)} onSelect={selectProvince} reducedMotion={reducedMotion} selectedCode={selected?.code ?? null} />}</article>
-      </section> : mapFallback ? <PresentationMapFallback collection={collection} frame={frame} onSelect={selectProvince} selectedCode={selected?.code ?? null} /> : <PresentationMap collection={collection} frame={frame} onError={setCollectionError} onFatal={() => setMapFallback(true)} onSelect={selectProvince} reducedMotion={reducedMotion} selectedCode={selected?.code ?? null} />}
+      {compareLayout === "split" && branchFrames ? <section className="split-compare-stage" aria-label="同步 A/B 双世界">
+        <article><header><span>原始方案</span><b>方案 A</b></header>{mapFallback ? <PresentationMapFallback ariaLabel="原始方案省域地图" collection={collection} frame={branchFrames.control} onSelect={selectControlProvince} selectedCode={selected?.code ?? null} visualScale={splitVisualScale ?? undefined} /> : <PresentationMap ariaLabel="原始方案省域地图" cameraSync={syncCamera} collection={collection} frame={branchFrames.control} onCameraChange={setSyncCamera} onError={setCollectionError} onFatal={mapFatal} onSelect={selectControlProvince} reducedMotion={reducedMotion} selectedCode={selected?.code ?? null} visualScale={splitVisualScale ?? undefined} />}</article>
+        <article><header><span>干预方案</span><b>方案 B</b></header>{mapFallback ? <PresentationMapFallback ariaLabel="干预方案省域地图" collection={collection} frame={branchFrames.treatment} onSelect={selectTreatmentProvince} selectedCode={selected?.code ?? null} visualScale={splitVisualScale ?? undefined} /> : <PresentationMap ariaLabel="干预方案省域地图" cameraSync={syncCamera} collection={collection} frame={branchFrames.treatment} onCameraChange={setSyncCamera} onError={setCollectionError} onFatal={mapFatal} onSelect={selectTreatmentProvince} reducedMotion={reducedMotion} selectedCode={selected?.code ?? null} visualScale={splitVisualScale ?? undefined} />}</article>
+      </section> : mapFallback ? <PresentationMapFallback collection={collection} frame={singleMapFrame} onSelect={selectProvince} selectedCode={selected?.code ?? null} /> : <PresentationMap collection={collection} frame={singleMapFrame} onError={setCollectionError} onFatal={mapFatal} onSelect={selectProvince} reducedMotion={reducedMotion} selectedCode={selected?.code ?? null} />}
+      {compareLayout === "split" && branchFrames ? <div className="split-truth-note">同步冻结事实 · 原始方案虚线/空心 · 干预方案实线/实心</div> : null}
       <div className="stage-vignette" />
 
       <header className="top-hud glass-bar" aria-hidden={introActive}>
         <div className="brand-lockup"><span className="brand-mark"><Sparkle weight="fill" /></span><div><strong>PolicyScope</strong><small>政策涟漪 · 全国全景推演</small></div></div>
         <nav className="segmented-control" aria-label="演示模式">
-          {timeline.available_modes.map((item) => <button className={mode === item ? "active" : ""} key={item} onClick={() => setMode(item)} type="button">{modeLabel(item)}</button>)}
+          {timeline.available_modes.map((item) => <button className={mode === item ? "active" : ""} key={item} onClick={() => { setLiveFrameQueue([]); setMode(item); }} type="button">{modeLabel(item)}</button>)}
         </nav>
-        <div className="hud-actions">{mode === "compare" ? <div className="compare-layout-toggle"><button className={compareLayout === "delta" ? "active" : ""} onClick={() => setCompareLayout("delta")} type="button">Δ 单图</button><button className={compareLayout === "split" ? "active" : ""} onClick={() => setCompareLayout("split")} type="button">A/B 同步</button></div> : null}<span className={`live-chip status-${streamStatus}`} title="SSE 事实流连接状态"><i /> {{ connecting: "CONNECTING", live: "LIVE", reconnecting: "RECONNECTING", offline: "OFFLINE", frozen: "FROZEN" }[streamStatus]}</span><button className="text-action" onClick={() => { setIntroRunId((current) => current + 1); setIntroActive(true); }} type="button"><ClockCounterClockwise />重播开场</button></div>
+        <div className="hud-actions">{branchFrames ? <div className="compare-layout-toggle"><button className={compareLayout === "delta" ? "active" : ""} onClick={() => { setSelected(null); setCompareLayout("delta"); }} type="button">单图聚焦</button><button className={compareLayout === "split" ? "active" : ""} onClick={() => { setSelected(null); setCompareLayout("split"); }} type="button">A/B 同步</button></div> : null}<span className={`live-chip status-${streamStatus}`} title="SSE 事实流连接状态"><i /> {{ connecting: "连接中", live: "在线", reconnecting: "重连中", offline: "离线", frozen: "已冻结" }[streamStatus]}</span><button className="text-action" onClick={() => { setIntroRunId((current) => current + 1); setIntroActive(true); }} type="button"><ClockCounterClockwise />重播开场</button></div>
       </header>
 
-      <section className="narrative-panel glass-panel" aria-hidden={introActive}>
-        <div className="chapter-row"><span>{chapter?.title ?? `FRAME ${frame.sequence + 1}`}</span><b>{String(frameIndex + 1).padStart(2, "0")} / {String(timeline.frames.length).padStart(2, "0")}</b></div>
-        <h1>{mode === "story" && scene ? scene.title : frame.title}</h1>
-        <p>{mode === "story" && scene ? scene.summary : frame.summary}</p>
-        <div className="change-list">{frame.key_changes.slice(0, 3).map((change) => <article key={change.change_id}><i className={`semantic-${change.semantic}`} /><div><b>{change.title}</b><span>{change.detail}</span></div></article>)}</div>
-        {nextRound ? <button className="round-action" disabled={runRound.isPending} onClick={() => runRound.mutate({ id: experimentId, round: nextRound })} type="button"><span><small>NEXT ROUND</small><b>{runRound.isPending ? "正在冻结双分支事实…" : ROUND_LABELS[nextRound]}</b></span><SkipForward weight="fill" /></button> : null}
+      <section className="narrative-panel glass-panel" data-frame-id={frame.frame_id} aria-hidden={introActive}>
+        <div className="chapter-row"><span>{frame.title}</span><b>{String(frameIndex + 1).padStart(2, "0")} / {String(timeline.frames.length).padStart(2, "0")}</b></div>
+        <GameSpotlight frame={frame} onSelect={setSpotlightIndex} selected={spotlightIndex} />
+        {nextRound ? <button className="round-action" disabled={runRound.isPending || liveFrameQueue.length > 0} onClick={() => runRound.mutate({ id: experimentId, round: nextRound })} type="button"><span><small>下一轮</small><b>{runRound.isPending ? "正在冻结双分支事实…" : liveFrameQueue.length ? "正在顺序播放新增帧…" : ROUND_LABELS[nextRound]}</b></span><SkipForward weight="fill" /></button> : null}
         {runRound.error instanceof Error ? <p className="round-error">{runRound.error.message}</p> : null}
       </section>
 
@@ -568,14 +780,16 @@ export function PresentationApp() {
         {DOCK_ITEMS.map(({ id, label, Icon }) => <button aria-label={label} className={panel === id ? "active" : ""} data-tooltip={label} key={id} onClick={() => setPanel((current) => current === id ? null : id)} type="button"><Icon weight={panel === id ? "fill" : "regular"} /></button>)}
       </nav>
 
-      {panel ? <SideSheet catalog={eventCatalogQuery.data} comparison={comparisonQuery.data} frame={frame} onClose={() => setPanel(null)} panel={panel} selected={selected} timeline={timeline} /> : null}
+      {panel ? <SideSheet catalog={eventCatalogQuery.data} comparison={comparisonQuery.data} frame={panelFrame} moments={panel === "decisions" ? allDecisionMoments : frame.decision_moments} onClose={() => setPanel(null)} panel={panel} selected={displayedSelection} threads={panel === "decisions" ? allInteractionThreads : frame.interaction_threads} timeline={timeline} world={worldQuery.data} /> : null}
 
-      {selected && !panel ? <button className="province-popover glass-panel" onClick={() => setPanel("province")} style={{ left: `${Math.min(selected.x + 18, window.innerWidth - 310)}px`, top: `${Math.min(selected.y + 18, window.innerHeight - 190)}px` }} type="button"><small>省域态势</small><strong>{selected.name}</strong><span>{selected.value?.toFixed(2) ?? "—"} {frame.map_projection.unit}</span><em>展开详情 →</em></button> : null}
+      {displayedSelection && !panel ? <button className="province-popover glass-panel" onClick={() => setPanel("province")} style={{ left: `${Math.min(displayedSelection.x + 18, window.innerWidth - 310)}px`, top: `${Math.min(displayedSelection.y + 18, window.innerHeight - 190)}px` }} type="button"><small>省域态势</small><strong>{displayedSelection.name}</strong><span>{displayedSelection.value?.toFixed(2) ?? "—"} {selectionFrame?.map_projection.unit ?? singleMapFrame.map_projection.unit}</span><em>展开详情 →</em></button> : null}
+
+      {frame.interaction_threads.length ? <section className="thread-rail glass-panel" aria-label="行动回应轨"><header><b>行动—回应轨</b><span>{frame.interaction_threads.length} 条冻结互动</span></header><div>{frame.interaction_threads.slice(0, 8).map((thread) => <button key={thread.thread_id} onClick={() => setPanel(thread.thread_type === "competition" ? "competition" : thread.thread_type === "coordination" ? "coordination" : "negotiation")} type="button"><small>{thread.branch_role === "control" ? "原始" : "干预"}</small><b>{thread.title}</b>{thread.beats.map((beat) => <span className={beat.status} key={beat.beat_id}>{beat.label}</span>)}</button>)}</div></section> : null}
 
       <section className="timeline-rail glass-panel" aria-hidden={introActive}>
-        <div className="transport-controls"><button aria-label="上一帧" disabled={frameIndex === 0} onClick={() => setFrameIndex((current) => Math.max(0, current - 1))} type="button"><SkipBack weight="fill" /></button><button aria-label={playing ? "暂停" : "播放"} className="play-button" onClick={() => setPlaying((current) => !current)} type="button">{playing ? <Pause weight="fill" /> : <Play weight="fill" />}</button><button aria-label="下一帧" disabled={frameIndex === timeline.frames.length - 1} onClick={() => setFrameIndex((current) => Math.min(timeline.frames.length - 1, current + 1))} type="button"><SkipForward weight="fill" /></button></div>
+        <div className="transport-controls"><button aria-label="上一帧" disabled={frameIndex === 0} onClick={() => { setLiveFrameQueue([]); setFrameIndex((current) => Math.max(0, current - 1)); }} type="button"><SkipBack weight="fill" /></button><button aria-label={playing ? "暂停" : "播放"} className="play-button" onClick={() => { setLiveFrameQueue([]); setPlaying((current) => !current); }} type="button">{playing ? <Pause weight="fill" /> : <Play weight="fill" />}</button><button aria-label="下一帧" disabled={frameIndex === timeline.frames.length - 1} onClick={() => { setLiveFrameQueue([]); setFrameIndex((current) => Math.min(timeline.frames.length - 1, current + 1)); }} type="button"><SkipForward weight="fill" /></button></div>
         <div className="timeline-track-wrap">
-          <div className="timeline-labels"><span>{chapter?.title ?? "推演起点"}</span><b>{frame.kind === "comparison" ? "结果帧" : frame.round?.replaceAll("_", " · ") ?? "方案冻结"}</b></div>
+          <div className="timeline-labels"><span>{selectedSpotlight?.label ?? frame.title}</span><b>{frame.kind === "comparison" ? "结果帧" : frame.round ? ROUND_LABELS[frame.round] : frame.kind === "event" ? "突发事件" : "方案冻结"}</b></div>
           <div
             className="timeline-track"
             onPointerDown={(event) => {
@@ -593,21 +807,21 @@ export function PresentationApp() {
             }}
           >
             <div className="timeline-progress" style={{ width: `${timeline.frames.length === 1 ? 100 : frameIndex / (timeline.frames.length - 1) * 100}%` }} />
-            {timeline.frames.map((item, index) => <button aria-label={`跳转至 ${item.title}`} className={`${index <= frameIndex ? "passed" : ""} ${index === frameIndex ? "current" : ""}`} key={item.frame_id} onClick={() => { setFrameIndex(index); setPlaying(false); }} style={{ left: `${timeline.frames.length === 1 ? 0 : index / (timeline.frames.length - 1) * 100}%` }} type="button"><span>{index + 1}</span></button>)}
+            {timeline.frames.map((item, index) => <button aria-label={`跳转至 ${item.title}`} className={`${index <= frameIndex ? "passed" : ""} ${index === frameIndex ? "current" : ""}`} key={item.frame_id} onClick={() => { setLiveFrameQueue([]); setFrameIndex(index); setPlaying(false); }} style={{ left: `${timeline.frames.length === 1 ? 0 : index / (timeline.frames.length - 1) * 100}%` }} type="button"><span>{index + 1}</span></button>)}
             {timeline.event_markers.map((event) => <i className="event-marker" key={event.marker_id} style={{ left: `${event.timeline_position * 100}%` }} title={event.title}><Lightning weight="fill" /></i>)}
-            <input aria-label="拖动推演时间轴" max={timeline.frames.length - 1} min={0} onChange={(event) => { setFrameIndex(Number(event.target.value)); setPlaying(false); }} onInput={(event) => { setFrameIndex(Number(event.currentTarget.value)); setPlaying(false); }} step={1} type="range" value={frameIndex} />
+            <input aria-label="拖动推演时间轴" max={timeline.frames.length - 1} min={0} onChange={(event) => { setLiveFrameQueue([]); setFrameIndex(Number(event.target.value)); setPlaying(false); }} onInput={(event) => { setLiveFrameQueue([]); setFrameIndex(Number(event.currentTarget.value)); setPlaying(false); }} step={1} type="range" value={frameIndex} />
           </div>
         </div>
-        <div className="timeline-tools"><button onClick={() => setSpeed((current) => current === 2 ? 0.5 : current + 0.5)} title="0.5× / 1× / 1.5× / 2×" type="button">{speed.toFixed(1)}×</button><button aria-label="回到起点" onClick={() => { setFrameIndex(0); setPlaying(false); }} type="button"><Rewind /></button><button aria-label={fullscreen ? "退出全屏" : "进入全屏"} onClick={() => { if (document.fullscreenElement) void document.exitFullscreen(); else void document.documentElement.requestFullscreen(); }} type="button"><ArrowsOutLineHorizontal /></button></div>
+        <div className="timeline-tools"><button onClick={() => setSpeed((current) => current === 2 ? 0.5 : current + 0.5)} title="0.5× / 1× / 1.5× / 2×" type="button">{speed.toFixed(1)}×</button><button aria-label="回到起点" onClick={() => { setLiveFrameQueue([]); setFrameIndex(0); setPlaying(false); }} type="button"><Rewind /></button><button aria-label={fullscreen ? "退出全屏" : "进入全屏"} onClick={() => { if (document.fullscreenElement) void document.exitFullscreen(); else void document.documentElement.requestFullscreen(); }} type="button"><ArrowsOutLineHorizontal /></button></div>
       </section>
 
-      <div className="map-legend" aria-hidden={introActive}><span>{frame.map_projection.fill_metric}</span><div><i /><i /><i /><i /><i /></div><small>{frame.map_projection.mode === "difference" ? "相对差值" : frame.map_projection.unit}</small></div>
+      <div className="map-legend" aria-hidden={introActive}><span>{fillMetricLabel(renderedLegendFrame.map_projection.fill_metric)}</span><div>{visualScale?.stops.map(([, color], index) => <i key={`${color}-${index}`} style={{ background: color }} />)}</div><small>{visualScale ? `${scaleLabel(visualScale)} · ` : ""}{renderedLegendFrame.map_projection.mode === "difference" ? "相对差值" : renderedLegendFrame.map_projection.unit}</small></div>
       <div className="data-status" aria-hidden={introActive}><Buildings />代理数据基线 · {providerLabel} · 全国版图完整 / 31 省计算</div>
 
-      {introActive ? <GlobeIntro collection={collection} onComplete={() => setIntroActive(false)} onError={() => setIntroActive(false)} reducedMotion={reducedMotion} runId={introRunId} /> : null}
+      {introActive ? <GlobeIntro collection={collection} onComplete={completeIntro} onError={completeIntro} reducedMotion={reducedMotion} runId={introRunId} /> : null}
       {collectionError ? <button className="map-error" onClick={() => setCollectionError(null)} type="button">{collectionError}<X /></button> : null}
       <button className="motion-toggle" onClick={() => setReducedMotion((current) => !current)} type="button">{reducedMotion ? "动效：简化" : "动效：完整"}</button>
-      <div className="remote-hint" aria-hidden="true">空格 播放 · ←→ 单步 · Shift+←→ 切幕 · R 复位</div>
+      <div className="remote-hint" aria-hidden="true">空格 播放 · ←→ 单步 · R 复位</div>
     </main>
   );
 }

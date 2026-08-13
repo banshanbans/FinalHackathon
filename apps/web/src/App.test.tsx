@@ -17,15 +17,16 @@ describe("PolicyScope V3 shell", () => {
     return Promise.resolve({ok:true,json:()=>Promise.resolve(payload)});
   })));
 
-  it("shows the V3.2 upfront A/B journey", async () => {
+  it("shows the M34 quarterly A/B journey", async () => {
     renderApp();
     expect(await screen.findByText("输入待研判的政策文本")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "生成政策解读" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "生成中央政策解读" })).toBeInTheDocument();
     expect(screen.getByText("参与主体")).toBeInTheDocument();
     expect(screen.getByText("结果与对比")).toBeInTheDocument();
     expect(screen.getAllByText("方法与数据")).toHaveLength(2);
     expect(screen.queryByText("干预审批")).not.toBeInTheDocument();
     expect(screen.queryByText("Y2_Q2")).not.toBeInTheDocument();
+    expect(screen.getByText("Q1–Q4")).toBeInTheDocument();
   });
 
   it("redirects unknown routes to policy setup", async () => {

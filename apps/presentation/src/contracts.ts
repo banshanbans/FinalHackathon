@@ -1,4 +1,4 @@
-export type PresentationMode = "live" | "story" | "compare";
+export type PresentationMode = "live" | "compare";
 export type PresentationFrameKind = "setup" | "round" | "event" | "settlement" | "comparison";
 export type SimulationRound = "province_initial" | "automaker_initial" | "province_revision" | "automaker_negotiation" | "province_counter_response" | "automaker_final" | "environment_settlement";
 export type PresentationOverlayKind = "competition" | "negotiation" | "coordination" | "topk" | "event" | "automaker";
@@ -31,7 +31,7 @@ export interface PresentationProvinceValue {
 }
 
 export interface PresentationOverlayRecord {
-  schema_version: "presentation-overlay-record-v1";
+  schema_version: "presentation-overlay-record-v2";
   overlay_id: string;
   kind: PresentationOverlayKind;
   source_subject: string;
@@ -40,6 +40,151 @@ export interface PresentationOverlayRecord {
   weight: number | null;
   label: string;
   style_semantic: "policy" | "evidence" | "event" | "competition" | "coordination" | "neutral";
+  evidence_refs: string[];
+}
+
+export type BranchRole = "control" | "treatment";
+
+export interface PresentationSubjectRef {
+  subject_type: "province" | "automaker" | "event" | "policy" | "environment";
+  subject_id: string;
+  display_name: string;
+}
+
+export interface PresentationScoreComponent {
+  component: string;
+  label: string;
+  value: number;
+  weight: number;
+  contribution: number;
+  direction: "benefit" | "cost";
+}
+
+export interface PresentationOptionParameter {
+  parameter: string;
+  label: string;
+  value: number;
+  unit: string;
+}
+
+export interface DecisionOptionEvaluation {
+  schema_version: "decision-option-evaluation-v1";
+  option_id: string;
+  label: string;
+  option_type: "chosen" | "maintain" | "policy_shift" | "accept" | "reject" | "counteroffer" | "reallocate" | "no_action";
+  feasible: boolean;
+  infeasible_reasons: string[];
+  score: number | null;
+  delta_from_chosen: number | null;
+  components: PresentationScoreComponent[];
+  parameters: PresentationOptionParameter[];
+  assumptions: string[];
+  evidence_refs: string[];
+}
+
+export interface PresentationObservedSignal {
+  source: PresentationSubjectRef;
+  signal: string;
+  evidence_refs: string[];
+}
+
+export interface PresentationActualResponse {
+  response_id: string;
+  actor: PresentationSubjectRef;
+  action: string;
+  status: string;
+  evidence_refs: string[];
+}
+
+export interface PresentationDecisionMoment {
+  schema_version: "presentation-decision-moment-v1";
+  moment_id: string;
+  trace_id: string;
+  branch_role: BranchRole;
+  branch_id: string;
+  round: SimulationRound;
+  actor: PresentationSubjectRef;
+  objective: string;
+  constraints: string[];
+  observed_signals: PresentationObservedSignal[];
+  actual_choice: string;
+  action_changes: string[];
+  recorded_alternatives: string[];
+  rejected_alternatives: string[];
+  opportunity_costs: string[];
+  change_conditions: string[];
+  option_evaluations: DecisionOptionEvaluation[];
+  response_status: "not_applicable" | "pending" | "responded" | "settled";
+  actual_responses: PresentationActualResponse[];
+  affected_subjects: PresentationSubjectRef[];
+  fallback_used: boolean;
+  evidence_refs: string[];
+}
+
+export interface PresentationThreadBeat {
+  beat_id: string;
+  round: SimulationRound;
+  label: string;
+  status: "frozen" | "pending";
+  subject: PresentationSubjectRef | null;
+  fact_ref: string | null;
+}
+
+export interface PresentationGameThread {
+  schema_version: "presentation-game-thread-v1";
+  thread_id: string;
+  branch_role: BranchRole;
+  thread_type: "policy_response" | "competition" | "coordination" | "negotiation" | "topk" | "settlement";
+  title: string;
+  participants: PresentationSubjectRef[];
+  resource_subject: PresentationSubjectRef | null;
+  state: "action_frozen" | "awaiting_response" | "response_frozen" | "matched" | "rejected" | "settled";
+  moment_ids: string[];
+  beats: PresentationThreadBeat[];
+  evidence_refs: string[];
+}
+
+export interface PresentationDivergence {
+  schema_version: "presentation-divergence-v1";
+  divergence_id: string;
+  subject: PresentationSubjectRef;
+  round: SimulationRound;
+  dimension: "choice" | "action" | "target" | "response" | "topk" | "utility" | "result";
+  control_summary: string;
+  treatment_summary: string;
+  magnitude: number;
+  first_for_subject: boolean;
+  evidence_refs: string[];
+}
+
+export interface PresentationSpotlightScore {
+  divergence: number;
+  response: number;
+  scarcity: number;
+  action_change: number;
+  state_change: number;
+  evidence: number;
+  total: number;
+}
+
+export interface PresentationNarrativeBeat {
+  beat: "focus" | "observe" | "options" | "action" | "response" | "tradeoff";
+  title: string;
+  detail: string;
+  status: "frozen" | "pending";
+}
+
+export interface PresentationSpotlight {
+  schema_version: "presentation-spotlight-v1";
+  spotlight_id: string;
+  rank: 1 | 2 | 3;
+  label: string;
+  primary_moment_id: string;
+  thread_id: string | null;
+  branch_role: BranchRole;
+  score: PresentationSpotlightScore;
+  narrative_beats: PresentationNarrativeBeat[];
+  focus_subjects: PresentationSubjectRef[];
   evidence_refs: string[];
 }
 
@@ -60,22 +205,46 @@ export interface PresentationMetricSummary {
   evidence_refs: string[];
 }
 
-export interface PresentationFrame {
-  schema_version: "presentation-frame-v1";
-  frame_id: string;
-  sequence: number;
-  kind: PresentationFrameKind;
+export interface PresentationBranchProjection {
+  schema_version: "presentation-branch-projection-v2";
+  branch_role: "shared" | BranchRole;
   branch_id: string | null;
-  round: SimulationRound | null;
-  title: string;
-  summary: string;
-  frozen: true;
+  label: string;
   map_projection: PresentationMapProjection;
   province_values: PresentationProvinceValue[];
   overlay_records: PresentationOverlayRecord[];
   key_changes: PresentationKeyChange[];
   metric_summary: PresentationMetricSummary[];
-  focus_subjects: string[];
+  evidence_refs: string[];
+  source_event_ids: string[];
+  source_hash: string;
+}
+
+export interface PresentationMapFrame extends PresentationBranchProjection {
+  frame_id: string;
+  sequence: number;
+  kind: PresentationFrameKind;
+  round: SimulationRound | null;
+  title: string;
+  summary: string;
+}
+
+export interface PresentationFrame {
+  schema_version: "presentation-frame-v2";
+  frame_id: string;
+  sequence: number;
+  kind: PresentationFrameKind;
+  round: SimulationRound | null;
+  title: string;
+  summary: string;
+  frozen: true;
+  shared_projection: PresentationBranchProjection | null;
+  branch_projections: Partial<Record<BranchRole, PresentationBranchProjection>>;
+  difference_projection: PresentationBranchProjection | null;
+  decision_moments: PresentationDecisionMoment[];
+  interaction_threads: PresentationGameThread[];
+  divergences: PresentationDivergence[];
+  spotlights: PresentationSpotlight[];
   panel_refs: string[];
   evidence_refs: string[];
   source_event_ids: string[];
@@ -83,7 +252,7 @@ export interface PresentationFrame {
 }
 
 export interface PresentationEventMarker {
-  schema_version: "presentation-event-marker-v1";
+  schema_version: "presentation-event-marker-v2";
   marker_id: string;
   event_plan_id: string;
   template_id: string;
@@ -126,23 +295,28 @@ export interface PresentationEventCatalog {
   templates: PresentationEventCatalogEntry[];
 }
 
-export interface PresentationStoryChapter {
-  chapter_id: string;
+export interface PresentationFrameIndex {
+  schema_version: "presentation-frame-index-v2";
+  frame_id: string;
+  sequence: number;
+  kind: PresentationFrameKind;
+  round: SimulationRound | null;
   title: string;
-  summary: string;
-  frame_ids: string[];
-  evidence_refs: string[];
+  spotlight_count: number;
+  divergence_count: number;
+  projection_roles: Array<"shared" | BranchRole>;
+  source_hash: string;
 }
 
 export interface PresentationTimeline {
-  schema_version: "presentation-timeline-v1";
+  schema_version: "presentation-timeline-v2";
   experiment_id: string;
   product_version: string;
   status: string;
   current_frame_id: string;
-  frames: PresentationFrame[];
+  frames: PresentationFrameIndex[];
   event_markers: PresentationEventMarker[];
-  story_chapters: PresentationStoryChapter[];
+  first_divergence_frame_id: string | null;
   available_modes: PresentationMode[];
   source_world_hash: string;
   generated_at: string;
@@ -202,6 +376,18 @@ export interface PresentationComparison {
 export interface PresentationWorldState {
   schema_version: "world-state-v9";
   versions: Record<string, string>;
+  design: {
+    control_policy: {
+      west_central_share: number;
+      central_central_share: number;
+      east_central_share: number;
+    };
+    treatment_policy: {
+      west_central_share: number;
+      central_central_share: number;
+      east_central_share: number;
+    };
+  } | null;
   branches: Record<"control" | "treatment", {
     branch_id: string;
     label: string;

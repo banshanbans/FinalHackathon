@@ -243,7 +243,13 @@ export function WebglProvinceMap({
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map?.isStyleLoaded()) return;
+    if (
+      !ready
+      || !map?.isStyleLoaded()
+      || !map.getSource("provinces")
+      || !map.getLayer("province-fill")
+      || !map.getLayer("province-outline")
+    ) return;
     const source = map.getSource("provinces") as maplibregl.GeoJSONSource | undefined;
     source?.setData(applyFrame(collection, frame));
     map.setPaintProperty(

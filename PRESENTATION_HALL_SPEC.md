@@ -1,7 +1,7 @@
 # PolicyScope 全景推演厅产品与交互契约
 
-> 状态：M33.0–M33.6 已实现并冻结  
-> 版本：Presentation Hall V1 / M33  
+> 状态：M34 季度运行时升级实施中；旧七轮投影仅作历史记录
+> 版本：Presentation Hall V3 / M34
 > 日期：2026-08-13  
 > 目标模块：`apps/presentation`  
 > 正式入口：`/experiments/:id/present`
@@ -14,9 +14,9 @@ PolicyScope 新增独立全屏前端“全景推演厅”。旧 `apps/web` 继�
 
 ```text
 政策输入
-  → 中央解读
-  → A/B 实验设计与突发事件设置
-  → 基线确认
+  → 中央解读人工确认
+  → A/B 实验设计与突发事件设置确认
+  → 代理数据基线确认
   → 七轮推演
   → 章节回放
   → 结果对照
@@ -316,6 +316,8 @@ V1 只开放当前 V3.2 已支持的三个冻结边界：
 - 用户可随时“跳过开场”，进入主舞台后可“重播地球开场”。
 - `prefers-reduced-motion` 下取消自转与长距离飞行，以不超过 1 秒的中国聚焦和短淡入完成交接。
 - WebGL 初始化失败时立即交接现有全国兼容地图，不能阻塞业务操作。
+- 无实验 ID 的根入口先播放该镜头，不显示前置事件目录。全国版图接管约 2 秒后自动弹出实验配置；第一 Tab 配置东中西中央承担比例，第二 Tab 选择是否注入突发事件。事件默认关闭，关闭时创建纯政策对比，开启时才冻结事件模板、触发点、强度和通知范围。
+- 配置提交后不得在单个前端函数里自动确认所有门禁。根入口必须依次显示并由用户确认中央政策解读、实验类型与唯一主动差异、代理数据基线边界；基线确认后才进入七轮推演。网络丢失响应后重试相同确认必须语义幂等。
 
 ## 7. Presentation DTO 冻结草案
 
@@ -446,6 +448,7 @@ GET /api/experiments/{id}/presentation/bootstrap
 - 常态目标接近 60 FPS；关系线过多时自动限流，不降采样省份结果。
 - 支持全屏、播放、暂停、单步、变速、一键复位和低动效模式。
 - API 断线时保留最后完整冻结帧，并显示重连状态。
+- API 进程重启后必须按实验惰性恢复 World、Replay、Comparison 和 SSE Event 游标，不得因内存索引丢失误走历史产品路径。恢复真相使用同目录原子快照；旧 `state/replay/comparison` 文件只作兼容镜像。
 - WebGL 初始化失败时切换兼容地图并保留时间轴、面板和业务操作。
 - 离线彩排只能加载经过验证的 Replay/缓存；没有 Luna 输出时必须显示 Fake/Fallback，不得伪装。
 
@@ -471,3 +474,34 @@ GET /api/experiments/{id}/presentation/bootstrap
 - [x] 离线标准地图进入 MapLibre/deck.gl 的技术验证完成。
 
 M33.1 已于 2026-08-13 通过，证据见 `M33_MAP_ANIMATION_TECH_VALIDATION.md`；M33.2 只读投影 API 也已通过，证据见 `M33_PRESENTATION_API_VALIDATION.md`。M33.3 开场与运行时壳层、M33.4 事件闭环、M33.5 路演结果和 M33.6 可靠性验收现已全部完成并冻结。
+
+## 13. M34 / Presentation V2 breaking upgrade
+
+M34 直接替换主演示厅 V1 响应，不新增并行 v2 路由。`GET /presentation/timeline` 返回轻量 `presentation-timeline-v2` 帧索引，`GET /presentation/frames/{frame_id}` 返回完整 `presentation-frame-v2`；历史 World/Replay 不迁移，服务端按请求从冻结 M32 事实确定性重建。
+
+七轮使用 `frame-round-{round}`，每个逻辑帧同步携带 Control/Treatment 分支投影与可选 Difference 投影。分支投影独立包含 31 省值、关系、指标、Replay ID、Evidence 和哈希；任一引用不得来自另一分支。事件反事实中 Control 暴露固定为零，Treatment 使用真实事件链。
+
+完整博弈叙事新增四类只读结构：
+
+1. `presentation-decision-moment-v1`：主体目标、约束、观察、实际选择、记录备选、机会成本、改变条件、实际回应与证据。
+2. `decision-option-evaluation-v1`：合法性、决策时点评分、分项贡献、与实际选择差值、假设与证据。
+3. `presentation-game-thread-v1`：竞争、协同、报价、反报价、接受/拒绝、匹配与重配的跨轮链。
+4. `presentation-divergence-v1` 与 `presentation-spotlight-v1`：双分支首次分歧、镜头排序和可反算评分。
+
+Live 只显示截至当前帧的冻结事实。行动产生时实际回应为“待回应”，下一轮冻结后补入真实回应，后续继续追加匹配、重配和结算。Spotlight 权重固定为 25/20/15/15/15/10，同分按轮次、主体、事实 ID 稳定排序，不能固定地区或读取未来 Gap。
+
+左侧浮层改为 Game Spotlight，固定使用“聚焦 → 观察 → 选择板 → 实际行动 → 实际回应 → 取舍/分歧”。全国地图仍为主舞台；单图聚焦是常态，首次关键分歧与结算进入同步 A/B。Control 使用虚线/空心，Treatment 使用实线/实心，并保留文字分支标签。时间轴上方显示行动—回应轨；全部决策索引按需加载全帧并支持分支、主体和状态筛选。
+
+M34 本期只开放 Live 和 Compare。M33 的 `presentation-summary-v1` 继续只读存在，但主演示厅不再依赖；自动 3–5 分钟路演、TTS 和 Luna 文案润色后置。
+
+## 14. M34 / Presentation V3 年度时间轴
+
+本节取代第 6、7、13 节中的固定七轮活动语义；旧结构只用于解释历史 `exp_m32_*` 投影，且相关 API 现统一返回 410。
+
+- Timeline 为一年四季度区段，不再包含固定 `ROUND_SEQUENCE`。逻辑锚点为政策冻结、外生事件、有互动的 Wave、季度结算和年度比较。
+- Frame 使用 `presentation-frame-v3`，Timeline 使用 `presentation-timeline-v3`。节点必须携带 `tick`、可选 `wave`、逻辑序号和源事实哈希。
+- 同一 Wave 的公开/私有消息、提议、响应、反报价、状态迁移、资源重配与 fallback 由后端聚合；前端不能用网络返回顺序生成叙事。
+- 年度轨固定显示 Q1、Q2、Q3、Q4 宽区段，Wave 按逻辑位置落点；所有画布显示“模拟季度与互动顺序，不代表现实响应日期”。
+- 事件节点按 `scheduled_tick/release_wave` 放置；相同时点形成批次，按稳定 ID 展示但并行结算。
+- 每个有互动的 Wave 选择 1–3 个后端稳定关键互动作为地图 Spotlight，其余在互动 Sheet 中按类别和状态下钻。
+- 根入口支持 0–3 个事件；主操作为“运行 Q1 / 下一季度”。Live 只能到最后完整 Checkpoint，断线时不显示半波结果。

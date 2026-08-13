@@ -32,7 +32,17 @@ export function GlobeIntro({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
+  const onCompleteRef = useRef(onComplete);
+  const onErrorRef = useRef(onError);
   const [phase, setPhase] = useState<IntroPhase>("ready");
+
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
+
+  useEffect(() => {
+    onErrorRef.current = onError;
+  }, [onError]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -144,8 +154,8 @@ export function GlobeIntro({
       mapRef.current = map;
       map.on("error", (event: maplibregl.ErrorEvent) => {
         if (!active) return;
-        onError(event.error?.message ?? "地球开场渲染失败");
-        onComplete();
+        onErrorRef.current(event.error?.message ?? "地球开场渲染失败");
+        onCompleteRef.current();
       });
       map.on("load", () => {
         if (!active) return;
@@ -155,7 +165,7 @@ export function GlobeIntro({
           map.setPaintProperty("china-focus-fill", "fill-opacity", 0.72);
           map.setPaintProperty("china-focus-outline", "line-opacity", 0.82);
           schedule(() => setPhase("handoff"), 520);
-          schedule(onComplete, 880);
+          schedule(() => onCompleteRef.current(), 880);
           return;
         }
 
@@ -184,11 +194,11 @@ export function GlobeIntro({
           });
         }, 820);
         schedule(() => setPhase("handoff"), 3400);
-        schedule(onComplete, 4050);
+        schedule(() => onCompleteRef.current(), 4050);
       });
     } catch (error) {
-      onError(error instanceof Error ? error.message : "地球开场初始化失败");
-      onComplete();
+      onErrorRef.current(error instanceof Error ? error.message : "地球开场初始化失败");
+      onCompleteRef.current();
     }
 
     return () => {
@@ -197,7 +207,7 @@ export function GlobeIntro({
       mapRef.current?.remove();
       mapRef.current = null;
     };
-  }, [collection, onComplete, onError, reducedMotion, runId]);
+  }, [collection, reducedMotion, runId]);
 
   return (
     <section
@@ -208,14 +218,14 @@ export function GlobeIntro({
       <div className="globe-map" ref={containerRef} />
       <div className="globe-copy" aria-live="polite">
         <span>PolicyScope / 政策涟漪</span>
-        <h1>从全球冲击<br />进入中国政策推演</h1>
+        <h1>从新能源汽车补贴<br />进入全国政策<br />全景推演厅</h1>
         <p>{phase === "approach" || phase === "handoff" ? "正在锁定中国省域政策网络" : "正在建立全球情景视角"}</p>
       </div>
       <div className="globe-progress" aria-hidden="true">
         <i />
         <span>{phase === "approach" || phase === "handoff" ? "CHINA · COMPLETE MAP" : "GLOBAL VIEW"}</span>
       </div>
-      <button className="skip-intro" onClick={onComplete} type="button">
+      <button className="skip-intro" onClick={() => onCompleteRef.current()} type="button">
         跳过开场
       </button>
     </section>

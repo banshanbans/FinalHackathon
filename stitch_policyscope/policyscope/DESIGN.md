@@ -254,3 +254,20 @@ The Presentation Hall is a separate full-screen surface, not a dark theme applie
 - MapLibre GL JS and deck.gl may be used only with locally packaged, provenance-preserving geometry derived from the frozen standard map. The verified ECharts/SVG map remains the compatibility renderer.
 - Target presentation canvases are 1920×1080, 2560×1440 and 3840×2160, with 1536×864 and 1366×768 retained for operator fallback checks.
 - M33 is frozen: high-resolution canvases scale the floating controls without scaling the map geometry; WebGL loss switches to the local 31-province SVG compatibility renderer; offline and fake rehearsals retain the last frozen frame and show `OFFLINE` / `FAKE / FALLBACK` explicitly.
+
+## M34 Game Narrative Addendum
+
+- The left narrative surface is now a Game Spotlight: actor, objective, strongest constraint, observed facts, option board, chosen action, response, and trade-off. It may scroll, but the map remains the dominant surface.
+- Each Spotlight uses six compact beats—Focus, Observe, Options, Action, Response, Trade-off—with a visible frozen/pending state. One primary and at most two auxiliary subjects use short tabs.
+- Control is indigo + dashed + hollow; Treatment is cyan + solid + filled. Text labels remain mandatory, so branch meaning never depends on color alone.
+- A compact action-response rail sits immediately above the main timeline. It scrolls horizontally and must not become a log wall.
+- The decision index is a right-hand sheet with compact filters and keyboard-focusable rows. Method versions, hashes, raw constraints and evidence remain one level below the main stage.
+- At 1366×768, the Spotlight becomes vertically scrollable, the action-response rail shows fewer cards, and the map remains operable. At 2K/4K, floating controls scale while geography and interaction density remain spatially stable.
+
+## M34 Quarterly Timeline Addendum
+
+- The active timeline is a single simulated year split into four visually stable quarter bands. Wave markers sit inside the owning quarter and never imply a calendar date.
+- Policy freeze, external-event batches, active interaction waves, quarter settlements and annual comparison are the only default nodes. Detailed messages remain progressively disclosed.
+- Every timeline surface includes the Chinese notice “模拟季度与互动顺序，不代表现实响应日期”.
+- The map spotlights one to three server-selected interactions per wave. Additional relations remain queryable without increasing the national map line density.
+- Legacy seven-round labels may appear only in historical records and must not be mixed into `v3_2_m34` screens.

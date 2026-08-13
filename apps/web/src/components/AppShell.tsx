@@ -1,9 +1,8 @@
 import { useEffect } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 
-import { useV32 } from "../context/V32Context";
+import { useM34 } from "../context/M34Context";
 import { Icon } from "./Icon";
-import { V32AutomakerDrawer } from "./V32AutomakerDrawer";
 
 const items = [
   ["new", "新建实验", "tune"],
@@ -14,7 +13,7 @@ const items = [
 ] as const;
 
 export function AppShell() {
-  const flow = useV32();
+  const flow = useM34();
   const location = useLocation();
   const navigate = useNavigate();
   useEffect(() => {
@@ -32,9 +31,7 @@ export function AppShell() {
       <header className="v3-topbar"><div><span className="v3-live-dot" />新能源汽车补贴与产业布局推演</div><div className="v3-top-actions"><span>模拟结果，仅作方案比较</span>{world && <span className="v32-top-status">{world.status === "completed" ? "推演已完成" : "实验进行中"}</span>}<button onClick={openMethods} type="button"><Icon name="fact_check" />方法与数据</button></div></header>
       {flow.busyLabel && <div className="v3-progress"><span className="spinner" />{flow.busyLabel}</div>}
       {flow.error && <div className="v3-error"><Icon name="error" />{flow.error}</div>}
-      {flow.connectionStatus === "reconnecting" && <div className="v3-runtime-notice reconnecting"><Icon name="sync_problem" /><strong>推演进度正在恢复</strong></div>}
       <div className="v3-content"><Outlet /></div>
     </main>
-    <V32AutomakerDrawer />
   </div>;
 }

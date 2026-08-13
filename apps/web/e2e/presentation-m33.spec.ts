@@ -1,140 +1,154 @@
-import { expect, test, type TestInfo } from "@playwright/test";
+import { expect, test, type APIRequestContext, type Page, type TestInfo } from "@playwright/test";
 
-test("M33.4 event catalog advances seven-round presentation through SSE", async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== "presentation-1280", "single functional browser matrix");
-  await page.goto("/?intro=0");
-  await expect(page.getByText("05 项冻结情景")).toBeVisible();
-  await expect(page.locator(".event-catalog-grid button")).toHaveCount(5);
-  await page.getByRole("button", { name: /L3 企业责任提高/ }).click();
-  await page.getByRole("button", { name: "高强度" }).click();
-  await page.getByRole("button", { name: "启动演示实验" }).click();
+type ExperimentType = "policy_comparison" | "policy_stress_test" | "event_counterfactual";
 
-  await expect(page).toHaveURL(/\/experiments\/[^/]+\/present/);
-  await expect(page.locator(".maplibregl-marker.territory-map-label")).toHaveCount(3);
-  await expect(page.locator(".maplibregl-marker.territory-map-label")).toContainText(["香港", "台湾", "澳门"]);
-  await expect(page.getByTitle("SSE 事实流连接状态")).toContainText("LIVE");
-  await expect(page.getByRole("button", { name: /NEXT ROUND 省级初始行动/ })).toBeVisible();
-  await expect(page.locator(".data-status")).toContainText("FAKE / FALLBACK");
-  const experimentId = new URL(page.url()).pathname.split("/")[2];
+const API = "http://127.0.0.1:8001/api";
 
-  await page.context().setOffline(true);
-  await expect(page.getByTitle("SSE 事实流连接状态")).toContainText("OFFLINE");
-  await expect(page.getByRole("heading", { name: "方案冻结" })).toBeVisible();
-  await page.context().setOffline(false);
-  await expect(page.getByTitle("SSE 事实流连接状态")).toContainText("LIVE");
+function policy(source: Record<string, unknown>, policyId: string, delta = 0) {
+  return {
+    ...source,
+    policy_id: policyId,
+    west_central_share: Number(source.west_central_share) + delta,
+    central_central_share: Number(source.central_central_share) + delta,
+    east_central_share: Number(source.east_central_share) + delta,
+  };
+}
 
-  const response = await page.request.post(
-    `http://127.0.0.1:8000/api/experiments/${experimentId}/run`,
-    { data: { until_round: "province_initial" } },
-  );
-  expect(response.ok()).toBeTruthy();
-  await expect(page.getByRole("heading", { name: "省级初始行动" })).toBeVisible();
-  await expect(page.getByRole("button", { name: /NEXT ROUND 车企初步响应/ })).toBeVisible();
+function eventPlan(index: number, scope: "both" | "treatment_only") {
+  return {
+    schema_version: "event-plan-v2",
+    event_plan_id: `e2e-event-${index}`,
+    template_id: `e2e-template-${index}`,
+    name: `季度压力事件 ${index}`,
+    description: "用于正式浏览器验收的冻结情景假设",
+    conflict_group: null,
+    scheduled_tick: (["Q2", "Q3", "Q4"] as const)[index - 1],
+    release_wave: (["wave_0", "wave_1", "wave_2"] as const)[index - 1],
+    branch_scope: scope,
+    advance_notice: false,
+    informed_agent_types: [],
+    affected_subjects: ["province", "automaker"],
+    mechanism_channels: ["demand", "industry"],
+    intensity: "medium",
+    data_quality: "scenario_assumption",
+    evidence_refs: [`scenario:e2e-${index}`],
+  };
+}
 
-  await page.getByRole("button", { name: "事件" }).click();
-  await expect(page.getByRole("complementary", { name: "事件详情" })).toContainText("L3 企业责任提高");
-  await expect(page.getByRole("complementary", { name: "事件详情" })).toContainText("ACTIVE");
-  await expect(page.getByRole("complementary", { name: "事件详情" })).toContainText("不代表现实");
-  await page.getByRole("button", { name: "关闭详情" }).click();
+async function createCompletedExperiment(request: APIRequestContext, type: ExperimentType) {
+  const operationId = `${type}-${Date.now()}-${Math.random()}`;
+  const createdResponse = await request.post(`${API}/experiments`, {
+    headers: { "Idempotency-Key": `e2e:create:${operationId}` },
+    data: {
+      product_version: "v3_2_m34",
+      policy_text: "西部 95%，中部 90%，东部 85%，进行年度同源对比。",
+      seed: 20260813,
+    },
+  });
+  expect(createdResponse.status()).toBe(201);
+  const created = await createdResponse.json();
+  const experimentId = created.experiment_id as string;
+  expect(experimentId).toMatch(/^exp_m34_/);
 
-  for (const [nextLabel, frameTitle] of [
-    ["车企初步响应", "L3 企业责任提高"],
-    ["省级策略调整", "省级竞争反制与协同"],
-    ["政企谈判", "车企报价与反报价"],
-    ["省级回应", "省级反报价回应"],
-    ["车企最终行动", "车企最终确认与重配"],
-    ["环境结算", "结果复盘"],
-  ] as const) {
-    await page.getByRole("button", { name: new RegExp(`NEXT ROUND ${nextLabel}`) }).click();
-    await expect(page.getByRole("heading", { name: frameTitle })).toBeVisible();
-  }
-  await expect(page.getByRole("button", { name: "结果对照" })).toBeVisible();
-  await expect(page.getByTitle("SSE 事实流连接状态")).toContainText("FROZEN");
+  const interpretationResponse = await request.put(`${API}/experiments/${experimentId}/interpretation`, {
+    data: { ...created.interpretation, status: "confirmed" },
+  });
+  expect(interpretationResponse.ok()).toBeTruthy();
 
-  await page.getByRole("button", { name: "章节回放" }).click();
-  await page.keyboard.press("Home");
-  await expect(page.getByRole("heading", { name: "政策输入" })).toBeVisible();
-  await page.keyboard.press("Shift+ArrowRight");
-  await expect(page.locator(".chapter-row")).toContainText("企业反馈");
-  await page.keyboard.press("Space");
-  await expect(page.getByRole("button", { name: "暂停" })).toBeVisible();
-  await page.keyboard.press("Space");
-  await expect(page.getByRole("button", { name: "播放" })).toBeVisible();
-  await page.keyboard.press("r");
-  await expect(page.getByRole("heading", { name: "政策输入" })).toBeVisible();
+  const base = created.interpretation.executable_policy as Record<string, unknown>;
+  const eventScope = type === "event_counterfactual" ? "treatment_only" : "both";
+  const eventPlans = type === "policy_comparison" ? [] : [eventPlan(1, eventScope)];
+  const treatment = type === "event_counterfactual"
+    ? policy(base, "treatment")
+    : policy(base, "treatment", 0.02);
+  const designResponse = await request.put(`${API}/experiments/${experimentId}/design`, {
+    data: {
+      schema_version: "experiment-design-v2",
+      experiment_type: type,
+      control_policy: policy(base, "control"),
+      treatment_policy: treatment,
+      event_plans: eventPlans,
+      status: "confirmed",
+    },
+  });
+  expect(designResponse.ok()).toBeTruthy();
 
-  await page.getByRole("button", { name: "结果对照" }).click();
-  await expect(page.getByText(/GAP (收窄|扩大|持平)/)).toBeVisible();
-  await expect(page.locator(".mechanism-chain")).toHaveCount(3);
-  await page.getByRole("button", { name: "A/B 同步" }).click();
-  await expect(page.getByRole("region", { name: "同步 A/B 双世界" })).toBeVisible();
-  await expect(page.getByLabel("原始方案省域地图")).toBeVisible();
-  await expect(page.getByLabel("干预方案省域地图")).toBeVisible();
-  await page.getByRole("button", { name: "Δ 单图" }).click();
-  await expect(page.getByLabel("全国省域推演地图")).toBeVisible();
+  const baselineMeta = await (await request.get(`${API}/meta/v32/baseline`)).json();
+  const baselineResponse = await request.post(`${API}/experiments/${experimentId}/baseline/confirm`, {
+    data: { confirm_data_snapshot: true, expected_data_version: baselineMeta.data_version },
+  });
+  expect(baselineResponse.ok()).toBeTruthy();
+  const runResponse = await request.post(`${API}/experiments/${experimentId}/run`, {
+    headers: { "Idempotency-Key": `e2e:run:${experimentId}:Q4` },
+    data: { until_tick: "Q4" },
+  });
+  expect(runResponse.ok()).toBeTruthy();
+  return experimentId;
+}
 
-  const speed = page.getByRole("button", { name: "1.0×" });
-  await speed.click();
-  await expect(page.getByRole("button", { name: "1.5×" })).toBeVisible();
-  await page.getByRole("button", { name: "1.5×" }).click();
-  await expect(page.getByRole("button", { name: "2.0×" })).toBeVisible();
-  await page.getByRole("button", { name: "2.0×" }).click();
-  await expect(page.getByRole("button", { name: "0.5×" })).toBeVisible();
-
-  await page.getByRole("button", { name: "章节回放" }).click();
-  await page.keyboard.press("Home");
-  await page.getByRole("button", { name: "0.5×" }).click();
-  await page.getByRole("button", { name: "1.0×" }).click();
-  await page.getByRole("button", { name: "1.5×" }).click();
-  await page.keyboard.press("Space");
-  await expect(page.locator(".chapter-row")).toContainText("11 / 11", { timeout: 25_000 });
-  await expect(page.getByRole("button", { name: "播放" })).toBeVisible();
-
-  const dimensions = await page.evaluate(() => ({
-    viewport: window.innerWidth,
-    scroll: document.documentElement.scrollWidth,
+async function expectCanvasFits(page: Page) {
+  await expect(page.getByText("年度已冻结")).toBeVisible();
+  await expect(page.getByText("模拟季度与互动顺序，不代表现实响应日期")).toBeVisible();
+  await expect(page.locator(".m34-quarter-bands > span")).toHaveCount(4);
+  const layout = await page.evaluate(() => ({
+    width: window.innerWidth,
+    height: window.innerHeight,
+    scrollWidth: document.documentElement.scrollWidth,
+    scrollHeight: document.documentElement.scrollHeight,
+    timelineBottom: document.querySelector(".m34-timeline")?.getBoundingClientRect().bottom ?? 0,
   }));
-  expect(dimensions.scroll).toBeLessThanOrEqual(dimensions.viewport);
+  expect(layout.scrollWidth).toBeLessThanOrEqual(layout.width);
+  expect(layout.scrollHeight).toBeLessThanOrEqual(layout.height);
+  expect(layout.timelineBottom).toBeLessThanOrEqual(layout.height);
+}
 
-  await page.goto(`/experiments/${experimentId}/present?intro=0&mapFallback=1`);
+for (const experimentType of ["policy_comparison", "policy_stress_test", "event_counterfactual"] as const) {
+  test(`${experimentType} completes as a quarterly M34 experiment`, async ({ page, request }, testInfo) => {
+    test.skip(testInfo.project.name !== "presentation-1280", "three-type semantic matrix runs once");
+    const experimentId = await createCompletedExperiment(request, experimentType);
+    const state = await (await request.get(`${API}/experiments/${experimentId}/state`)).json();
+    expect(state.design.experiment_type).toBe(experimentType);
+    expect(state.branches.control.completed_ticks).toEqual(["Q1", "Q2", "Q3", "Q4"]);
+    expect(state.branches.treatment.completed_ticks).toEqual(["Q1", "Q2", "Q3", "Q4"]);
+    expect(state.central_call_count).toBe(2);
+    if (experimentType === "policy_stress_test") {
+      expect(state.design.event_plans[0].branch_scope).toBe("both");
+    }
+    if (experimentType === "event_counterfactual") {
+      expect(state.design.control_policy.west_central_share).toBe(
+        state.design.treatment_policy.west_central_share,
+      );
+      expect(state.design.event_plans[0].branch_scope).toBe("treatment_only");
+    }
+
+    await page.goto(`/experiments/${experimentId}/present`);
+    await expectCanvasFits(page);
+    await page.getByRole("button", { name: "Q1 wave 0 互动", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Q1 wave 0 互动", exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "互动", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "互动下钻" })).toBeVisible();
+    await expect(page.locator(".m34-message").first()).toBeVisible();
+  });
+}
+
+test("completed M34 timeline fits required presentation canvases", async ({ page, request }, testInfo: TestInfo) => {
+  test.skip(testInfo.project.name === "presentation-1280", "required resolution matrix only");
+  const experimentId = await createCompletedExperiment(request, "policy_stress_test");
+  await page.goto(`/experiments/${experimentId}/present`);
+  await expectCanvasFits(page);
+  await page.screenshot({
+    path: `../../outputs/m34-resolution/${testInfo.project.name}.png`,
+    fullPage: true,
+  });
+});
+
+test("SVG fallback remains a complete 31-province canvas", async ({ page, request }, testInfo) => {
+  test.skip(testInfo.project.name !== "presentation-1080p", "fallback canvas runs once");
+  const experimentId = await createCompletedExperiment(request, "policy_comparison");
+  await page.goto(`/experiments/${experimentId}/present?mapFallback=1`);
   await expect(page.getByText("SVG COMPAT")).toBeVisible();
   await expect(page.locator(".fallback-map path.simulation-province")).toHaveCount(31);
   await expect(page.locator(".fallback-map path.territory-context")).toHaveCount(3);
-  await expect(page.locator(".fallback-map text.territory-map-label")).toHaveCount(3);
-  for (const name of ["香港", "澳门", "台湾"]) {
-    await expect(page.locator(`.fallback-map path[aria-label^="${name}"]`)).toHaveCount(1);
-  }
-});
-
-test("M33.6 @resolutions completed stage fits 1080p, 2K and 4K", async ({ page }, testInfo: TestInfo) => {
-  test.skip(testInfo.project.name === "presentation-1280", "resolution matrix only");
-  await page.goto("/?intro=0");
-  await page.getByRole("button", { name: "启动演示实验" }).click();
-  await expect(page).toHaveURL(/\/experiments\/[^/]+\/present/);
-  const experimentId = new URL(page.url()).pathname.split("/")[2];
-  const response = await page.request.post(
-    `http://127.0.0.1:8000/api/experiments/${experimentId}/run`,
-    { data: { until_round: "environment_settlement" } },
-  );
-  expect(response.ok()).toBeTruthy();
-  await page.goto(`/experiments/${experimentId}/present?intro=0`);
-  await expect(page.getByRole("button", { name: "结果对照" })).toBeVisible();
-  await expect(page.locator(".presentation-map canvas.maplibregl-canvas")).toBeVisible();
-  await page.waitForTimeout(1_200);
-  const layout = await page.evaluate(() => ({
-    viewportWidth: window.innerWidth,
-    viewportHeight: window.innerHeight,
-    scrollWidth: document.documentElement.scrollWidth,
-    scrollHeight: document.documentElement.scrollHeight,
-    timelineBottom: document.querySelector(".timeline-rail")?.getBoundingClientRect().bottom ?? 0,
-    hudTop: document.querySelector(".top-hud")?.getBoundingClientRect().top ?? -1,
-  }));
-  expect(layout.scrollWidth).toBeLessThanOrEqual(layout.viewportWidth);
-  expect(layout.scrollHeight).toBeLessThanOrEqual(layout.viewportHeight);
-  expect(layout.timelineBottom).toBeLessThanOrEqual(layout.viewportHeight);
-  expect(layout.hudTop).toBeGreaterThanOrEqual(0);
-  await page.screenshot({
-    path: `../../outputs/m33-resolution/${testInfo.project.name}.png`,
-    fullPage: true,
-  });
+  await expectCanvasFits(page);
+  await page.screenshot({ path: "../../outputs/m34-resolution/presentation-fallback-1920x1080.png" });
 });

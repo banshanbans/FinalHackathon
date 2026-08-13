@@ -2,9 +2,9 @@
 
 > 对应 PRD：[PRD_省域政策多智能体推演平台.md](./PRD_省域政策多智能体推演平台.md)
 > 前端规范：[STITCH_FRONTEND_SPEC.md](./STITCH_FRONTEND_SPEC.md)
-> 计划版本：V3.2 M31（实施与验收中）
+> 计划版本：V3.2 M34（季度事件驱动实现完成，Luna 冻结待 Key）
 > 更新日期：2026-08-13
-> 当前门禁：M31 的显式决策、互动主画布、地图规则、三类 E2E、全量命令、缓存与三画布 QA 必须重新验收；真实 Luna Provider 缓存仍需 API Key，不得宣称已冻结
+> 当前门禁：M34 Schema、季度运行时、互动市场、季度环境、API/SSE、年度时间轴、三类 E2E、缓存与四画布 QA 必须全部通过；真实 Luna Provider 缓存仍需 API Key，不得宣称已冻结
 
 ---
 
@@ -842,6 +842,8 @@ M29 v2 对用户统一显示“可信数据”；直接来源和具备合理置�
 ### M33.3 退出结果
 
 - `apps/presentation` 已切换为正式 `/experiments/:id/present`，并提供无实验 ID 时的真实演示实验启动流程。
+- 根入口已重排为“地球开场 → 全国版图接管 → 约 2 秒后配置弹窗”；配置以东中西中央承担比例为首 Tab，突发事件为默认关闭的可选 Tab，无事件与有事件分别走真实 `policy_comparison` / `policy_stress_test` 设计。
+- 配置后顺序经过“中央政策解读 → A/B 实验设计与唯一主动差异 → 代理数据基线”三个显式人工确认门禁，不再由 `createDemo` 静默代办。
 - TanStack Query 分别读取 Timeline 与当前 Frame；地图值、覆盖层、事件节点、关键变化、六指标和哈希均来自 M33.2 冻结投影。
 - GovSim Glass UI Kit、三模式、十入口工具坞、单主面板、Context Popover、Side Sheet 和地图主内容比例落地，未重建 SaaS 卡片网格。
 - 时间轴的拖动吸附、播放/暂停、前后帧、节点跳转、变速和复位通过；突发事件帧和省域点击与当前帧联动。
@@ -857,3 +859,40 @@ M29 v2 对用户统一显示“可信数据”；直接来源和具备合理置�
 - WebGL 初始化或上下文失效时切换本地 SVG 兼容地图，31 省点击、时间轴和业务操作保留。
 - 2026-08-13 追加全国版图完整性验收：WebGL、SVG 降级和旧工作台均从冻结标准地图带入香港、澳门、台湾；三者为非计算 `territory-context`，不改变 31 省 Agent、业务帧、指标或调用预算。
 - 1920×1080、2560×1440、3840×2160 完整画布通过；详细命令与证据见 `M33_PRESENTATION_FINAL_VALIDATION.md` 和 `design-qa.md`。
+
+### M33 用户复审回归封口
+
+- 根据 2026-08-13 用户提供的 GPT-5.6 Pro 审查报告，已封口 MapLibre/地球实例生命周期、Live 新增帧顺序、省份/车企/事件主体渲染、动态且 A/B 共用色阶、错误重试、SVG 键盘、分支选择真值和事件暴露投影。
+- V3.2 Runtime 使用按实验惰性恢复、同目录原子快照和异步落盘；重启后 World/Replay/Comparison/SSE 游标连续性已有 Orchestrator 与 API 回归。
+- Presentation Frame V1 不具备逐轮 Control/Treatment 双分支关系谱系；当前 A/B Split 安全地不复用 Treatment overlay，并标注“双图仅展示分支结果值”。完整逐轮 A/B 关系必须以 Presentation V2 重新冻结 Schema/Timeline，不在 V1 静默扩展。
+
+## 26. M34：Presentation Hall V2 完整博弈叙事
+
+状态：Implementation active（2026-08-13）。M33 V1 已被 breaking upgrade 取代，只保留历史验收记录；M34 未完成完整门禁前不得重新标记冻结。
+
+| 子项 | 状态 | 退出条件 |
+|---|---|---|
+| M34.0 V2 契约 | Complete | Timeline 轻量索引、同步双分支 Frame、Decision/Thread/Divergence/Spotlight Pydantic 与 TypeScript 契约冻结 |
+| M34.1 真值投影 | Complete | 七轮同步帧、分支 Replay/Evidence 隔离、事件反事实暴露、跨轮 Thread、边际评估和稳定 Spotlight 通过聚焦测试 |
+| M34.2 Live 体验 | Complete | 当前帧懒加载与相邻预取、Game Spotlight、六节拍、行动—回应轨、关键 A/B、全部决策索引与 SVG 语义落地 |
+| M34.3 API/E2E | In progress | 纯政策与事件反事实入口通过；七轮叙事已跑通核心链路，完整浏览器矩阵仍需一次无外部中断的正式记录 |
+| M34.4 四画布冻结 | In progress | 1366×768、1920×1080、3840×2160 已通过；2560×1440 截图已生成，仍需正式命令结果与禁止文案/地图几何封口 |
+
+M34 保持 M32 七轮、308 次调用和 `world-state-v9` 不变。所有备选是只读决策时点边际评估，不创建权威 Action、World、Comparison 或 Replay；本期只开放 Live/Compare，自动路演和 TTS 后置。
+
+## 27. M34：季度事件驱动 Agent 互动与年度时间轴
+
+状态：Implementation complete / Freeze pending Luna（2026-08-13）。本节是当前唯一 M34 计划；第 26 节作为季度升级前的 Presentation 投影历史记录保留。
+
+| 子项 | 状态 | 退出条件 |
+|---|---|---|
+| M34.0 文档与 Schema | Complete | ADR-360、PRD、计划、AGENTS、前端与 Presentation 契约一致；v2/v10/v3 Schema 与权限/预算测试冻结 |
+| M34.1 季度运行时 | Complete | Q1 每分支 41 主体、Q2–Q4 条件激活、三波屏障、年度资源结转与消息预算通过 |
+| M34.2 互动与环境 | Complete | 双向发起、完整交易状态机、四次纯函数季度结算、不可变 Checkpoint 与 Q4 Comparison 通过 |
+| M34.3 Provider/API/SSE | Complete | Live Prompt 无确定性候选、一次修复、Cache 哈希、Fake 诚实 fallback、until_tick、interactions 与 Last-Event-ID 通过 |
+| M34.4 Web/Presentation | Complete | 0–3 事件配置、下一季度 CTA、年度聚合时间轴、互动下钻与关键 Spotlight 完成 |
+| M34.5 缓存与冻结 | In progress | 独立 Fake 缓存三类各三次一致、全量命令、三类 E2E、1920/2560/3840/回退画布 QA 已通过；真实 Luna 缓存等待 `POLICYSCOPE_LLM_API_KEY` |
+
+实施顺序固定为：文档与 Schema → 旧实验 410/季度持久化 → Inbox/消息/调度屏障 → Provider 与季度环境 → REST/SSE → Presentation 与工作台 → 独立缓存和总验收。旧 `exp_m32_*` 只保留文件，不做转换或删除。
+
+2026-08-13 验收记录：`make test`（71 Python + 5 Web）、`make test-sim`（63）、`make test-api`（8）、`make lint`、`make validate-data`、`make test-e2e`（5）、`make test-e2e-presentation`（7）和 `make verify-cache-m34` 均通过；活动 M34 文件禁止文案扫描无命中。因当前环境未配置 Luna API Key，未生成或伪造 `v3_2_m34_luna`。

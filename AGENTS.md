@@ -758,7 +758,7 @@ V3 实现期间按里程碑运行与风险相称的检查；不得用局部通�
 
 ## 20. 当前唯一下一步
 
-M33 独立全景推演厅已完成并冻结；当前不存在 M33 开发任务。后续只能在新用户要求或明确回归下修改该模块，并必须重跑事件矩阵、地图几何、正式 E2E 与三分辨率 QA。没有 API Key 时仍不得把明示 `fallback` 的故障演练缓存标记为 Luna 输出。
+用户已于 2026-08-13 批准并完成 M34 季度事件驱动升级实现。`v3_2_m34`、`exp_m34_*`、四季度 Tick、授权 Inbox、最多三波互动、季度确定性结算、年度同源 A/B、工作台、Presentation、Fake 三次缓存、正式 E2E 和四画布 QA 已通过。旧 `exp_m32_*` 只保留磁盘文件，所有运行与展示接口返回 `410 LEGACY_V32_RUNTIME_UNSUPPORTED`。当前唯一冻结门禁是使用真实 Luna Provider 生成并验证独立 `v3_2_m34_luna` 缓存；当前环境没有 API Key，禁止把明示 `fallback` 的 Fake 输出标记为 Luna。
 
 ## 21. 已批准的后续省级数据验收方向
 
@@ -829,5 +829,37 @@ M29 v2 已将 177 项需求纳入验收；但当前 Fake 省级与车企基线�
 - 主地图目标技术为 MapLibre GL JS + deck.gl；只允许使用冻结标准地图校验后的 31 省衍生几何，并保留 ECharts/SVG 兼容模式。地图、字体、图标和样式不得依赖 CDN。
 - 所有“中国地图”画面必须完整展示香港、澳门、台湾。三者从同一冻结自然资源部标准地图提取为 `territory-context`，不进入当前 31 省 Agent、指标、事件、色阶或点击详情；前端不得把它们显示成缺失值、独立实验主体或从中国版图中删除。
 - M33.3 开场固定为 3–5 秒深空地球旋转并拉近中国，点亮 31 省后无缝交接全国省域推演地图；开场只做视觉交接，不增加业务帧或修改权威结果，并必须支持跳过、重播与低动效短交接。
+- 无实验 ID 的根入口不得先显示事件目录：必须先播放地球开场，交接全国版图约 2 秒后自动打开空间玻璃配置弹窗。配置首 Tab 为东中西中央承担比例，第二 Tab 为可选突发事件；关闭事件创建纯政策对比，开启后才冻结事件计划。
+- 根入口配置后必须显式经过中央政策解读、A/B 实验设计/唯一主动差异、代理数据基线三个人工确认门禁；不得在单个前端函数中静默代办。相同确认重试必须语义幂等。
+- Presentation Frame V1 仅包含逐轮 Treatment 投影，A/B Split 不得把 Treatment overlay 复用给 Control。在 Presentation V2 冻结分支谱系前，双图仅展示共用色阶下的分支结果值。
+- V3.2 Runtime 必须使用同目录原子快照按实验惰性恢复 World、Replay、Comparison 和 SSE Event 游标；进程重启后不得因内存索引丢失误走历史路由。
 - M33.3 使用 GovSim Glass UI Kit：仅浮动控制、上下文卡片、时间轴和 Sheet 玻璃化，地图及互动传播保持为主内容；禁止把 SaaS 卡片网格改成满屏毛玻璃。信息按“态势/动作 → 核心指标 → 方法与 Evidence”渐进披露。
 - M33.0–M33.6 全部完成：开场北京光点与 SVG 几何校准、包含港澳台版图上下文的全国地图、五事件三触发边界、七轮单屏闭环、SSE 恢复、五幕回放、Delta/A-B、机制链、键盘遥控、WebGL→SVG 降级和 1080p/2K/4K 验收均已冻结。
+
+## 27. M34 Presentation Hall V2 完整博弈叙事契约
+
+- M34 以 breaking upgrade 取代 M33 V1 主演示厅响应；原 timeline/frame 路由直接返回 `presentation-timeline-v2` 与 `presentation-frame-v2`，不保证 V1 JSON 兼容。
+- M32 `world-state-v9`、Replay、七轮和 308 次调用保持权威且只读；V2 仅从冻结事实派生，不创建 Agent、不增加 Luna 调用、不重跑反事实世界。
+- 七轮帧固定为 `frame-round-{round}`，每个逻辑帧同时包含 Control/Treatment。Overlay、Replay、Decision 与 Evidence 只能引用本分支或全局事实。
+- Timeline 仅返回帧索引、事件节点、首次分歧和计数；完整 Frame 按当前帧懒加载并预取相邻帧。
+- Frame 必须包含分支投影、决策时点边际评估、跨轮互动 Thread、Control/Treatment 分歧，以及恰好一个主 Spotlight 和最多两个不重复辅助 Spotlight。
+- 备选评估只能复用既有资源包、守恒约束与吸引力公式，属于决策时点评分；不得称为概率、最终结果、最优策略或模型思维链。无合法备选时必须显式返回“没有足够合法备选”。
+- Spotlight 只使用截至当前帧的事实，按分歧 25、真实回应 20、资源约束 15、行动变化 15、状态变化 15、Evidence 10 计算；禁止固定地区或读取未来 Gap。
+- 主演示厅本期只开放 Live 与 Compare。Game Spotlight 固定使用“聚焦、观察、选择板、实际行动、实际回应、取舍/分歧”微镜头；自动路演与语音后置。
+- 首次关键分歧、重大目标切换与结算可自动进入同步 A/B，用户可返回单图；Control 使用虚线/空心、Treatment 使用实线/实心，不能只依靠颜色区分。
+- 新增全部决策索引，支持轮次、分支、主体、互动类型和状态筛选，并能回到地图与 Evidence。断网保帧、MapLibre 单实例、SVG 键盘降级、低动效和 Fake/Fallback 边界继续强制。
+
+## 28. M34 季度事件驱动活动契约
+
+- 本节是当前活动 M34 契约；第 27 节仅记录升级前已实现的展示投影，不得覆盖本节时间和运行语义。
+- 新建实验固定为 `product_version=v3_2_m34`、ID `exp_m34_*`。旧 `exp_m32_*` 不加载、不迁移、不删除，相关运行与展示接口统一返回 `410 LEGACY_V32_RUNTIME_UNSUPPORTED`。
+- 宏观时间固定为 `Q1|Q2|Q3|Q4`，季度内逻辑波次固定为 `wave_0|wave_1|wave_2`；不生成 Agent 现实响应日期。
+- 每季依次执行授权 Inbox、最多三波互动、确定性季度结算和不可变 `tick-checkpoint-v1`。两分支完成同一 Wave 后才能前进，严禁跨分支消息或私有状态读取。
+- Q1 Wave 0 每分支恰好调用 31 省与 10 车企；Q2–Q4 只按新消息、到期复评、条件成立、新事件可见或未决事务激活。Scheduler 不替主体选择行动。
+- 每 Tick 上限为三波、180 次调用、500 条消息；每对主体最多两次条件往返。达到上限冻结最后合法状态并记录 `interaction_budget_exhausted`。
+- 实验可冻结 0–3 个 `event-plan-v2`；重复模板和相同 `conflict_group` 的互斥事件拒绝。事件从 `scheduled_tick/release_wave` 起持续至 Q4。
+- 省企双方均可发起；交易状态为 `proposed → countered/accepted/rejected/deferred → settled/withdrawn/expired/resource_invalid`，只有 `settled` 贡献环境。
+- 年度资源包在基线冻结、季度结转，行动只能重配现有资源。省份每 Tick 最多 2 项省际与 2 项省企发起，车企最多 5 项省级合作意向。
+- 中央 Agent 只在实验前政策解读和 Q4 后年度复盘各调用一次，季度内不能改变政策或 World。
+- Live/Cache Prompt 禁止包含确定性候选行动；确定性输出只作 Fake、cache miss、模型、Schema 或资源失败的显式 fallback。
+- 活动版本为 `experiment-design-v2`、`event-plan-v2`、`baseline-snapshot-v3`、`tick-checkpoint-v1`、`authorized-inbox-v1`、`interaction-message-v1`、`agent-tick-decision-v1`、`interaction-session-v1`、`interaction-market-v1`、`branch-v9`、`world-state-v10`、`comparison-v10`、`event-v10`、`runtime-snapshot-v2`、`presentation-frame-v3` 和 `presentation-timeline-v3`。

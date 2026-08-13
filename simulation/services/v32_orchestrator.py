@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import re
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -110,6 +111,9 @@ from simulation.services.replay import canonical_hash
 
 ROUND_SEQUENCE = tuple(SimulationRound)
 ModelT = TypeVar("ModelT", bound=BaseModel)
+EXPERIMENT_ID_PATTERN = re.compile(r"exp_m32_[0-9a-f]{12}\Z")
+RUNTIME_SNAPSHOT_SCHEMA = "v32-runtime-snapshot-v1"
+EVENT_ID_PATTERN = re.compile(r"evt_v32_(\d{8})\Z")
 
 MECHANISM_LABELS = {
     "consumer_wtp": "消费意愿代理",
@@ -330,13 +334,107 @@ class V32Orchestrator:
         invocation.output_schema = str(value.schema_version)
 
     def has_experiment(self, experiment_id: str) -> bool:
-        return experiment_id in self.runtimes
+        if experiment_id in self.runtimes:
+            return True
+        if not EXPERIMENT_ID_PATTERN.fullmatch(experiment_id):
+            return False
+        experiment_dir = self.runtime_dir / experiment_id
+        if (
+            not (experiment_dir / "runtime-snapshot.json").is_file()
+            and not (experiment_dir / "state.json").is_file()
+        ):
+            return False
+        self.runtimes[experiment_id] = self._restore_runtime(experiment_id)
+        return True
 
     def _runtime(self, experiment_id: str) -> V32Runtime:
-        try:
+        if self.has_experiment(experiment_id):
             return self.runtimes[experiment_id]
-        except KeyError as exc:
-            raise KeyError(f"experiment not found: {experiment_id}") from exc
+        raise KeyError(f"experiment not found: {experiment_id}")
+
+    def _restore_runtime(self, experiment_id: str) -> V32Runtime:
+        experiment_dir = self.runtime_dir / experiment_id
+        snapshot_path = experiment_dir / "runtime-snapshot.json"
+        if snapshot_path.is_file():
+            try:
+                payload = json.loads(snapshot_path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError as exc:
+                raise ValueError("RUNTIME_SNAPSHOT_JSON_INVALID") from exc
+            if payload.get("schema_version") != RUNTIME_SNAPSHOT_SCHEMA:
+                raise ValueError("RUNTIME_SNAPSHOT_SCHEMA_INVALID")
+            world_payload = payload.get("world")
+            event_payloads = payload.get("events")
+            comparison_payload = payload.get("comparison")
+            if not isinstance(world_payload, dict) or not isinstance(event_payloads, list):
+                raise ValueError("RUNTIME_SNAPSHOT_PAYLOAD_INVALID")
+            world = WorldStateV6.model_validate(world_payload)
+            events = [EventV6.model_validate(item) for item in event_payloads]
+            comparison = (
+                ComparisonResultV6.model_validate(comparison_payload)
+                if comparison_payload is not None
+                else None
+            )
+            if payload.get("world_hash") != canonical_hash(world):
+                raise ValueError("RUNTIME_SNAPSHOT_WORLD_HASH_INVALID")
+            if payload.get("replay_hash") != canonical_hash(events):
+                raise ValueError("RUNTIME_SNAPSHOT_REPLAY_HASH_INVALID")
+            expected_comparison_hash = canonical_hash(comparison) if comparison else None
+            if payload.get("comparison_hash") != expected_comparison_hash:
+                raise ValueError("RUNTIME_SNAPSHOT_COMPARISON_HASH_INVALID")
+            event_counter = payload.get("event_counter")
+            if not isinstance(event_counter, int) or event_counter < 0:
+                raise ValueError("RUNTIME_SNAPSHOT_EVENT_COUNTER_INVALID")
+        else:
+            state_path = experiment_dir / "state.json"
+            if not state_path.is_file():
+                raise KeyError(f"experiment not found: {experiment_id}")
+            world = WorldStateV6.model_validate_json(state_path.read_text(encoding="utf-8"))
+            replay_path = experiment_dir / "replay.jsonl"
+            events = []
+            if replay_path.is_file():
+                events = [
+                    EventV6.model_validate_json(line)
+                    for line in replay_path.read_text(encoding="utf-8").splitlines()
+                    if line.strip()
+                ]
+            comparison_path = experiment_dir / "comparison.json"
+            comparison = (
+                ComparisonResultV6.model_validate_json(comparison_path.read_text(encoding="utf-8"))
+                if comparison_path.is_file()
+                else None
+            )
+            event_counter = len(events)
+
+        if world.experiment_id != experiment_id:
+            raise ValueError("RUNTIME_EXPERIMENT_ID_MISMATCH")
+        previous_counter = 0
+        for event in events:
+            match = EVENT_ID_PATTERN.fullmatch(event.event_id)
+            if event.experiment_id != experiment_id or match is None:
+                raise ValueError("RUNTIME_REPLAY_EVENT_INVALID")
+            current_counter = int(match.group(1))
+            if current_counter != previous_counter + 1:
+                raise ValueError("RUNTIME_REPLAY_SEQUENCE_INVALID")
+            if event.branch_id is not None and event.branch_id not in world.branches:
+                raise ValueError("RUNTIME_REPLAY_BRANCH_INVALID")
+            previous_counter = current_counter
+        if event_counter != previous_counter:
+            raise ValueError("RUNTIME_EVENT_COUNTER_MISMATCH")
+        if comparison is not None:
+            if comparison.experiment_id != experiment_id:
+                raise ValueError("RUNTIME_COMPARISON_EXPERIMENT_MISMATCH")
+            if world.status is not V32ExperimentStatus.COMPLETED:
+                raise ValueError("RUNTIME_COMPARISON_STATUS_MISMATCH")
+        elif world.status is V32ExperimentStatus.COMPLETED:
+            raise ValueError("RUNTIME_COMPLETED_COMPARISON_MISSING")
+        for branch in world.branches.values():
+            self._assert_round_prefix(branch)
+        return V32Runtime(
+            world=world,
+            events=events,
+            comparison=comparison,
+            event_counter=event_counter,
+        )
 
     def _build_relation_network(self) -> ProvinceRelationNetwork:
         return ProvinceRelationNetwork(
@@ -622,9 +720,25 @@ class V32Orchestrator:
             public_summary=summary,
         )
 
-    async def create_experiment(self, policy_text: str, *, seed: int = 20260812) -> WorldStateV6:
+    async def create_experiment(
+        self,
+        policy_text: str,
+        *,
+        seed: int = 20260812,
+        experiment_id: str | None = None,
+    ) -> WorldStateV6:
         interpretation = self.interpret_policy(policy_text)
-        experiment_id = f"exp_m32_{uuid4().hex[:12]}"
+        experiment_id = experiment_id or f"exp_m32_{uuid4().hex[:12]}"
+        if not EXPERIMENT_ID_PATTERN.fullmatch(experiment_id):
+            raise ValueError("EXPERIMENT_ID_INVALID")
+        if self.has_experiment(experiment_id):
+            existing = self.runtimes[experiment_id].world
+            if (
+                existing.interpretation.source_text == interpretation.source_text
+                and existing.seed == seed
+            ):
+                return existing.model_copy(deep=True)
+            raise ValueError("EXPERIMENT_ID_CONFLICT")
         world = WorldStateV6(
             experiment_id=experiment_id,
             journey_step=JourneyStep.CENTRAL_INTERPRETATION,
@@ -646,7 +760,7 @@ class V32Orchestrator:
             "interpretation.generated",
             payload={"interpretation_id": interpretation.interpretation_id},
         )
-        self._persist(runtime)
+        await self._persist(runtime)
         return world.model_copy(deep=True)
 
     async def confirm_interpretation(
@@ -654,9 +768,19 @@ class V32Orchestrator:
     ) -> WorldStateV6:
         runtime = self._runtime(experiment_id)
         async with runtime.lock:
+            confirmed_interpretation = interpretation.model_copy(update={"status": "confirmed"})
             if runtime.world.status is not V32ExperimentStatus.AWAITING_INTERPRETATION_CONFIRMATION:
+                if runtime.world.interpretation == confirmed_interpretation:
+                    return runtime.world.model_copy(deep=True)
                 raise ValueError("interpretation cannot be changed after confirmation")
-            runtime.world.interpretation = interpretation.model_copy(update={"status": "confirmed"})
+            original = runtime.world.interpretation
+            if interpretation.interpretation_id != original.interpretation_id:
+                raise ValueError("INTERPRETATION_ID_MISMATCH")
+            if interpretation.source_text != original.source_text:
+                raise ValueError("INTERPRETATION_SOURCE_TEXT_MISMATCH")
+            if interpretation.executable_policy.reference_policy_year != 2025:
+                raise ValueError("INTERPRETATION_POLICY_YEAR_INVALID")
+            runtime.world.interpretation = confirmed_interpretation
             runtime.world.journey_step = JourneyStep.EXPERIMENT_DESIGN
             runtime.world.status = V32ExperimentStatus.AWAITING_DESIGN_CONFIRMATION
             await self._emit(
@@ -664,13 +788,15 @@ class V32Orchestrator:
                 "interpretation.confirmed",
                 payload={"interpretation_id": interpretation.interpretation_id},
             )
-            self._persist(runtime)
+            await self._persist(runtime)
             return runtime.world.model_copy(deep=True)
 
     async def confirm_design(self, experiment_id: str, design: ExperimentDesign) -> WorldStateV6:
         runtime = self._runtime(experiment_id)
         async with runtime.lock:
             if runtime.world.status is not V32ExperimentStatus.AWAITING_DESIGN_CONFIRMATION:
+                if runtime.world.design == design:
+                    return runtime.world.model_copy(deep=True)
                 raise ValueError("design cannot be changed in the current status")
             runtime.world.design = design
             runtime.world.journey_step = JourneyStep.BASELINE_CONFIRMATION
@@ -680,7 +806,7 @@ class V32Orchestrator:
                 "design.confirmed",
                 payload={"experiment_type": design.experiment_type.value},
             )
-            self._persist(runtime)
+            await self._persist(runtime)
             return runtime.world.model_copy(deep=True)
 
     async def confirm_baseline(
@@ -689,6 +815,16 @@ class V32Orchestrator:
         runtime = self._runtime(experiment_id)
         async with runtime.lock:
             if runtime.world.status is not V32ExperimentStatus.AWAITING_BASELINE_CONFIRMATION:
+                if runtime.world.baseline is not None:
+                    if (
+                        expected_data_version is not None
+                        and expected_data_version != runtime.world.baseline.data_version
+                    ):
+                        raise ValueError(
+                            "BASELINE_DATA_VERSION_MISMATCH: expected "
+                            f"{expected_data_version}, frozen {runtime.world.baseline.data_version}"
+                        )
+                    return runtime.world.model_copy(deep=True)
                 raise ValueError("baseline cannot be confirmed in the current status")
             if runtime.world.design is None:
                 raise ValueError("experiment design is required")
@@ -776,7 +912,7 @@ class V32Orchestrator:
                 runtime, "baseline.confirmed", payload={"checkpoint_id": checkpoint_id}
             )
             await self._emit(runtime, "branches.created", payload={"branch_count": 2})
-            self._persist(runtime)
+            await self._persist(runtime)
             return runtime.world.model_copy(deep=True)
 
     @staticmethod
@@ -809,7 +945,7 @@ class V32Orchestrator:
                     "cache.hit",
                     payload={"cache_key": runtime.world.versions["cache_key"]},
                 )
-                self._persist(runtime)
+                await self._persist(runtime)
                 return runtime.world.model_copy(deep=True)
             for round_name in ROUND_SEQUENCE:
                 if all(
@@ -861,7 +997,7 @@ class V32Orchestrator:
                     round_name=round_name,
                     payload={"round": round_name.value, "branch_count": 2},
                 )
-                self._persist(runtime)
+                await self._persist(runtime)
                 if round_name is target:
                     break
             if all(
@@ -878,7 +1014,7 @@ class V32Orchestrator:
                 )
             else:
                 runtime.world.status = V32ExperimentStatus.READY
-            self._persist(runtime)
+            await self._persist(runtime)
             return runtime.world.model_copy(deep=True)
 
     @staticmethod
@@ -3825,21 +3961,104 @@ class V32Orchestrator:
             runtime.condition.notify_all()
         return event
 
-    def _persist(self, runtime: V32Runtime) -> None:
+    async def _persist(self, runtime: V32Runtime) -> None:
         experiment_dir = self.runtime_dir / runtime.world.experiment_id
+        world_payload = runtime.world.model_dump(mode="json")
+        event_payloads = [event.model_dump(mode="json") for event in runtime.events]
+        comparison_payload = (
+            runtime.comparison.model_dump(mode="json") if runtime.comparison else None
+        )
+        snapshot_payload = {
+            "schema_version": RUNTIME_SNAPSHOT_SCHEMA,
+            "event_counter": runtime.event_counter,
+            "world": world_payload,
+            "events": event_payloads,
+            "comparison": comparison_payload,
+            "world_hash": canonical_hash(runtime.world),
+            "replay_hash": canonical_hash(runtime.events),
+            "comparison_hash": canonical_hash(runtime.comparison) if runtime.comparison else None,
+        }
+        world_text = json.dumps(world_payload, ensure_ascii=False, indent=2)
+        replay_lines = [event.model_dump_json() for event in runtime.events]
+        comparison_text = (
+            json.dumps(comparison_payload, ensure_ascii=False, indent=2)
+            if comparison_payload is not None
+            else None
+        )
+        snapshot_text = json.dumps(snapshot_payload, ensure_ascii=False, indent=2)
+        await asyncio.to_thread(
+            self._persist_files,
+            experiment_dir,
+            world_text,
+            replay_lines,
+            comparison_text,
+            snapshot_text,
+        )
+
+    @staticmethod
+    def _atomic_write(path: Path, content: str) -> None:
+        temporary_path = path.with_name(f".{path.name}.{uuid4().hex}.tmp")
+        try:
+            with temporary_path.open("w", encoding="utf-8") as handle:
+                handle.write(content)
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.replace(temporary_path, path)
+        finally:
+            temporary_path.unlink(missing_ok=True)
+
+    @classmethod
+    def _persist_files(
+        cls,
+        experiment_dir: Path,
+        world_text: str,
+        replay_lines: list[str],
+        comparison_text: str | None,
+        snapshot_text: str,
+    ) -> None:
         experiment_dir.mkdir(parents=True, exist_ok=True)
-        (experiment_dir / "state.json").write_text(
-            runtime.world.model_dump_json(indent=2), encoding="utf-8"
-        )
-        (experiment_dir / "replay.jsonl").write_text(
-            "\n".join(event.model_dump_json() for event in runtime.events)
-            + ("\n" if runtime.events else ""),
-            encoding="utf-8",
-        )
-        if runtime.comparison:
-            (experiment_dir / "comparison.json").write_text(
-                runtime.comparison.model_dump_json(indent=2), encoding="utf-8"
-            )
+        # The snapshot is the atomic recovery truth. Compatibility mirrors may lag,
+        # but can never move recovery ahead of this commit after a process crash.
+        cls._atomic_write(experiment_dir / "runtime-snapshot.json", snapshot_text)
+        cls._atomic_write(experiment_dir / "state.json", world_text)
+        cls._append_replay(experiment_dir / "replay.jsonl", replay_lines)
+        comparison_path = experiment_dir / "comparison.json"
+        if comparison_text is not None:
+            cls._atomic_write(comparison_path, comparison_text)
+        elif comparison_path.exists():
+            comparison_path.unlink()
+        directory_fd = os.open(experiment_dir, os.O_RDONLY)
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
+
+    @staticmethod
+    def _append_replay(path: Path, replay_lines: list[str]) -> None:
+        existing_lines = path.read_text(encoding="utf-8").splitlines() if path.exists() else []
+        if len(existing_lines) > len(replay_lines):
+            raise ValueError("RUNTIME_REPLAY_AHEAD_OF_SNAPSHOT")
+        for index, existing_line in enumerate(existing_lines):
+            try:
+                existing_event = EventV6.model_validate_json(existing_line)
+                expected_event = EventV6.model_validate_json(replay_lines[index])
+            except (ValueError, TypeError) as exc:
+                raise ValueError("RUNTIME_REPLAY_MIRROR_INVALID") from exc
+            if existing_event != expected_event:
+                raise ValueError("RUNTIME_REPLAY_PREFIX_MISMATCH")
+        missing_lines = replay_lines[len(existing_lines) :]
+        if not missing_lines:
+            return
+        payload = ("\n".join(missing_lines) + "\n").encode("utf-8")
+        descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)
+        try:
+            view = memoryview(payload)
+            while view:
+                written = os.write(descriptor, view)
+                view = view[written:]
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
 
     def _cache_path(self, world: WorldStateV6) -> Path:
         return self.cache_dir / f"{world.versions['cache_key']}.json"
