@@ -14,6 +14,7 @@ from policyscope_api.schemas import (
     ApproveDirectiveRequest,
     ApproveEventScenarioRequest,
     ApproveInterventionRequest,
+    ConfirmBaselineRequest,
     CreateBranchRequest,
     CreateExperimentRequest,
     RejectInterventionRequest,
@@ -26,12 +27,23 @@ from simulation.catalog import automaker_catalog, event_scenario_catalog, policy
 from simulation.models.audit import AuditRecordType
 from simulation.models.common import Phase, PolicyRegion, ProvincePersonaType
 from simulation.models.experiment import ExperimentConfig
+from simulation.models.v32 import ExperimentDesign, PolicyInterpretation, SimulationRound
+from simulation.presentation_catalog import presentation_event_catalog
+from simulation.services.v32_orchestrator import V32Orchestrator
 
 ResponseT = TypeVar("ResponseT")
 
 
 def _http_error(error: Exception) -> HTTPException:
     message = str(error)
+    if isinstance(error, KeyError) and "presentation frame not found" in message:
+        return HTTPException(
+            status_code=404,
+            detail={
+                "error_code": "PRESENTATION_FRAME_NOT_FOUND",
+                "message": message.strip("'\""),
+            },
+        )
     if isinstance(error, KeyError) and "province not found" in message:
         return HTTPException(
             status_code=404,
@@ -104,14 +116,20 @@ def create_app(
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncIterator[None]:
         application.state.adapter = adapter or build_adapter(app_settings)
+        application.state.v32 = V32Orchestrator(
+            application.state.adapter,
+            runtime_dir=app_settings.runtime_dir / "m32",
+            cache_dir=app_settings.runtime_dir / "cache" / "v3_2_m32_luna",
+            cache_enabled=app_settings.run_mode.value == "cache",
+        )
         application.state.idempotency = {}
         yield
         await application.state.adapter.close()
 
     application = FastAPI(
         title="PolicyScope API",
-        version="0.5.0",
-        description="PolicyScope V3.1 event-driven interprovincial simulation API",
+        version="0.9.0",
+        description="PolicyScope V3.2 upfront A/B multi-agent simulation API",
         lifespan=lifespan,
     )
     application.add_middleware(
@@ -155,7 +173,7 @@ def create_app(
             "status": "ok",
             "runtime": "asyncio",
             "run_mode": app_settings.run_mode.value,
-            "version": "0.5.0",
+            "version": "0.6.0",
         }
 
     @application.get("/api/meta/provinces")
@@ -230,6 +248,36 @@ def create_app(
             )
         ]
 
+    @application.get("/api/meta/presentation-event-catalog")
+    async def presentation_events() -> dict[str, object]:
+        return presentation_event_catalog().model_dump(mode="json")
+
+    @application.get("/api/meta/v32/baseline")
+    async def v32_baseline_metadata() -> dict[str, object]:
+        snapshot = application.state.v32.m29
+        return {
+            **snapshot.manifest.model_dump(mode="json"),
+            "relation_network_version": snapshot.relation_network.schema_version,
+            "profile_versions": {
+                "province": "province-profile-v6",
+                "automaker": "automaker-profile-v2",
+            },
+        }
+
+    @application.get("/api/meta/v32/provinces")
+    async def v32_provinces() -> list[dict[str, object]]:
+        return [
+            profile.model_dump(mode="json")
+            for _, profile in sorted(application.state.v32.m29.province_profiles.items())
+        ]
+
+    @application.get("/api/meta/v32/automakers")
+    async def v32_automakers() -> list[dict[str, object]]:
+        return [
+            profile.model_dump(mode="json")
+            for _, profile in sorted(application.state.v32.m29.automaker_profiles.items())
+        ]
+
     @application.post("/api/experiments", status_code=status.HTTP_201_CREATED)
     async def create_experiment(
         body: CreateExperimentRequest,
@@ -237,6 +285,13 @@ def create_app(
         simulation: AsyncioSimulationAdapter = Depends(get_adapter),
     ) -> dict[str, object]:
         async def operation() -> dict[str, object]:
+            if body.product_version == "v3_2_m32":
+                state = await application.state.v32.create_experiment(
+                    body.policy_text
+                    or "西部 95%，中部 90%，东部 85%，促进新能源汽车消费与产业布局。",
+                    seed=body.seed,
+                )
+                return state.model_dump(mode="json")
             selected_mode = body.run_mode or app_settings.run_mode
             if selected_mode != app_settings.run_mode:
                 raise ValueError("experiment run_mode must match the configured server run mode")
@@ -273,7 +328,49 @@ def create_app(
         simulation: AsyncioSimulationAdapter = Depends(get_adapter),
     ) -> dict[str, object]:
         try:
+            if application.state.v32.has_experiment(experiment_id):
+                return (await application.state.v32.get_state(experiment_id)).model_dump(
+                    mode="json"
+                )
             return (await simulation.get_record(experiment_id)).model_dump(mode="json")
+        except Exception as error:
+            raise _http_error(error) from error
+
+    @application.put("/api/experiments/{experiment_id}/interpretation")
+    async def confirm_interpretation(
+        experiment_id: str,
+        body: PolicyInterpretation,
+    ) -> dict[str, object]:
+        try:
+            result = await application.state.v32.confirm_interpretation(experiment_id, body)
+            return result.model_dump(mode="json")
+        except Exception as error:
+            raise _http_error(error) from error
+
+    @application.put("/api/experiments/{experiment_id}/design")
+    async def confirm_design(
+        experiment_id: str,
+        body: ExperimentDesign,
+    ) -> dict[str, object]:
+        try:
+            result = await application.state.v32.confirm_design(experiment_id, body)
+            return result.model_dump(mode="json")
+        except Exception as error:
+            raise _http_error(error) from error
+
+    @application.post("/api/experiments/{experiment_id}/baseline/confirm")
+    async def confirm_baseline(
+        experiment_id: str,
+        body: ConfirmBaselineRequest,
+    ) -> dict[str, object]:
+        try:
+            confirmed = body.confirm_data_snapshot or body.confirm_proxy_data is True
+            if not confirmed:
+                raise ValueError("必须确认当前 M29 事实与派生快照后才能冻结。")
+            result = await application.state.v32.confirm_baseline(
+                experiment_id, expected_data_version=body.expected_data_version
+            )
+            return result.model_dump(mode="json")
         except Exception as error:
             raise _http_error(error) from error
 
@@ -308,6 +405,11 @@ def create_app(
         simulation: AsyncioSimulationAdapter = Depends(get_adapter),
     ) -> dict[str, object]:
         async def operation() -> dict[str, object]:
+            if application.state.v32.has_experiment(experiment_id):
+                state = await application.state.v32.run(experiment_id, until_round=body.until_round)
+                return state.model_dump(mode="json")
+            if body.until_phase is None:
+                raise ValueError("V3.1 experiment run requires until_phase")
             state = await simulation.run_to_phase(experiment_id, body.until_phase, body.branch_id)
             return state.model_dump(mode="json")
 
@@ -330,6 +432,10 @@ def create_app(
         simulation: AsyncioSimulationAdapter = Depends(get_adapter),
     ) -> dict[str, object]:
         try:
+            if application.state.v32.has_experiment(experiment_id):
+                return (await application.state.v32.get_state(experiment_id)).model_dump(
+                    mode="json"
+                )
             return (await simulation.get_state(experiment_id, branch_id)).model_dump(mode="json")
         except Exception as error:
             raise _http_error(error) from error
@@ -341,6 +447,8 @@ def create_app(
         simulation: AsyncioSimulationAdapter = Depends(get_adapter),
     ) -> dict[str, object]:
         try:
+            if application.state.v32.has_experiment(experiment_id):
+                return await application.state.v32.get_province_detail(experiment_id, province_code)
             return (await simulation.get_province_detail(experiment_id, province_code)).model_dump(
                 mode="json"
             )
@@ -354,9 +462,75 @@ def create_app(
         simulation: AsyncioSimulationAdapter = Depends(get_adapter),
     ) -> dict[str, object]:
         try:
+            if application.state.v32.has_experiment(experiment_id):
+                return await application.state.v32.get_automaker_detail(experiment_id, automaker_id)
             return (await simulation.get_automaker_detail(experiment_id, automaker_id)).model_dump(
                 mode="json"
             )
+        except Exception as error:
+            raise _http_error(error) from error
+
+    @application.get("/api/experiments/{experiment_id}/decision-traces")
+    async def decision_traces(
+        experiment_id: str,
+        branch_id: str | None = Query(default=None),
+        agent_id: str | None = Query(default=None),
+        round_name: SimulationRound | None = Query(default=None, alias="round"),
+    ) -> list[dict[str, object]]:
+        try:
+            if not application.state.v32.has_experiment(experiment_id):
+                raise ValueError("decision traces are only available for V3.2 experiments")
+            traces = await application.state.v32.get_decision_traces(
+                experiment_id,
+                branch_id=branch_id,
+                agent_id=agent_id,
+                round_name=round_name,
+            )
+            return [item.model_dump(mode="json") for item in traces]
+        except Exception as error:
+            raise _http_error(error) from error
+
+    @application.get("/api/experiments/{experiment_id}/strategy-market")
+    async def strategy_market(experiment_id: str) -> dict[str, object]:
+        try:
+            if not application.state.v32.has_experiment(experiment_id):
+                raise ValueError("strategy market is only available for V3.2 experiments")
+            return (await application.state.v32.get_strategy_market(experiment_id)).model_dump(
+                mode="json"
+            )
+        except Exception as error:
+            raise _http_error(error) from error
+
+    @application.get("/api/experiments/{experiment_id}/presentation-summary")
+    async def presentation_summary(experiment_id: str) -> dict[str, object]:
+        try:
+            if not application.state.v32.has_experiment(experiment_id):
+                raise ValueError("presentation summary is only available for V3.2 experiments")
+            return (await application.state.v32.get_presentation_summary(experiment_id)).model_dump(
+                mode="json"
+            )
+        except Exception as error:
+            raise _http_error(error) from error
+
+    @application.get("/api/experiments/{experiment_id}/presentation/timeline")
+    async def presentation_timeline(experiment_id: str) -> dict[str, object]:
+        try:
+            if not application.state.v32.has_experiment(experiment_id):
+                raise ValueError("presentation timeline is only available for V3.2 experiments")
+            return (
+                await application.state.v32.get_presentation_timeline(experiment_id)
+            ).model_dump(mode="json")
+        except Exception as error:
+            raise _http_error(error) from error
+
+    @application.get("/api/experiments/{experiment_id}/presentation/frames/{frame_id}")
+    async def presentation_frame(experiment_id: str, frame_id: str) -> dict[str, object]:
+        try:
+            if not application.state.v32.has_experiment(experiment_id):
+                raise ValueError("presentation frames are only available for V3.2 experiments")
+            return (
+                await application.state.v32.get_presentation_frame(experiment_id, frame_id)
+            ).model_dump(mode="json")
         except Exception as error:
             raise _http_error(error) from error
 
@@ -371,9 +545,14 @@ def create_app(
             cursor = last_event_id_header
             while not await request.is_disconnected():
                 try:
-                    events = await simulation.wait_for_events(
-                        experiment_id, cursor, timeout_seconds=10
-                    )
+                    if application.state.v32.has_experiment(experiment_id):
+                        events = await application.state.v32.wait_for_events(
+                            experiment_id, cursor, timeout_seconds=10
+                        )
+                    else:
+                        events = await simulation.wait_for_events(
+                            experiment_id, cursor, timeout_seconds=10
+                        )
                 except Exception as error:
                     yield {"event": "error", "data": _http_error(error).detail["message"]}
                     return
@@ -399,6 +578,15 @@ def create_app(
         idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
         simulation: AsyncioSimulationAdapter = Depends(get_adapter),
     ) -> dict[str, object]:
+        if application.state.v32.has_experiment(experiment_id):
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "error_code": "V32_INCOMPATIBLE_OPERATION",
+                    "message": "V3.2 已在实验设计阶段冻结双分支，不支持年末干预审批。",
+                },
+            )
+
         async def operation() -> dict[str, object]:
             result = await simulation.approve_intervention(experiment_id, proposal_id, body.policy)
             return result.model_dump(mode="json")
@@ -423,6 +611,15 @@ def create_app(
         idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
         simulation: AsyncioSimulationAdapter = Depends(get_adapter),
     ) -> dict[str, object]:
+        if application.state.v32.has_experiment(experiment_id):
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "error_code": "V32_INCOMPATIBLE_OPERATION",
+                    "message": "V3.2 不支持运行期年末干预审批。",
+                },
+            )
+
         async def operation() -> dict[str, object]:
             state = await simulation.reject_intervention(experiment_id, proposal_id)
             result = state.model_dump(mode="json")
@@ -447,6 +644,9 @@ def create_app(
         simulation: AsyncioSimulationAdapter = Depends(get_adapter),
     ) -> list[dict[str, object]]:
         try:
+            if application.state.v32.has_experiment(experiment_id):
+                world = await application.state.v32.get_state(experiment_id)
+                return [branch.model_dump(mode="json") for branch in world.branches.values()]
             return [
                 branch.model_dump(mode="json")
                 for branch in await simulation.list_branches(experiment_id)
@@ -461,6 +661,15 @@ def create_app(
         idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
         simulation: AsyncioSimulationAdapter = Depends(get_adapter),
     ) -> dict[str, object]:
+        if application.state.v32.has_experiment(experiment_id):
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "error_code": "V32_INCOMPATIBLE_OPERATION",
+                    "message": "V3.2 在基线确认时已同源创建双分支。",
+                },
+            )
+
         async def operation() -> dict[str, object]:
             if body.kind == "policy_intervention":
                 branch = await simulation.create_approved_branch(
@@ -488,6 +697,10 @@ def create_app(
         simulation: AsyncioSimulationAdapter = Depends(get_adapter),
     ) -> dict[str, object] | None:
         try:
+            if application.state.v32.has_experiment(experiment_id):
+                world = await application.state.v32.get_state(experiment_id)
+                event = world.design.event_plan if world.design else None
+                return event.model_dump(mode="json") if event else None
             scenario = await simulation.get_event_scenario(experiment_id)
             return scenario.model_dump(mode="json") if scenario else None
         except Exception as error:
@@ -500,6 +713,15 @@ def create_app(
         idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
         simulation: AsyncioSimulationAdapter = Depends(get_adapter),
     ) -> dict[str, object]:
+        if application.state.v32.has_experiment(experiment_id):
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "error_code": "V32_INCOMPATIBLE_OPERATION",
+                    "message": "V3.2 事件在实验设计阶段冻结，运行期不再审批。",
+                },
+            )
+
         async def operation() -> dict[str, object]:
             scenario = await simulation.approve_event_scenario(experiment_id, body)
             return scenario.model_dump(mode="json")
@@ -546,6 +768,10 @@ def create_app(
         simulation: AsyncioSimulationAdapter = Depends(get_adapter),
     ) -> dict[str, object]:
         try:
+            if application.state.v32.has_experiment(experiment_id):
+                return (await application.state.v32.get_comparison(experiment_id)).model_dump(
+                    mode="json"
+                )
             return (await simulation.get_comparison(experiment_id)).model_dump(mode="json")
         except Exception as error:
             raise _http_error(error) from error
@@ -557,6 +783,8 @@ def create_app(
         simulation: AsyncioSimulationAdapter = Depends(get_adapter),
     ) -> dict[str, object]:
         try:
+            if application.state.v32.has_experiment(experiment_id):
+                return await application.state.v32.get_evidence(experiment_id, evidence_id)
             return await simulation.get_evidence(experiment_id, evidence_id)
         except Exception as error:
             raise _http_error(error) from error
@@ -576,6 +804,8 @@ def create_app(
         simulation: AsyncioSimulationAdapter = Depends(get_adapter),
     ) -> dict[str, object]:
         try:
+            if application.state.v32.has_experiment(experiment_id):
+                return await application.state.v32.get_audit(experiment_id, limit=limit)
             result = await simulation.get_audit(
                 experiment_id,
                 branch_id=branch_id,
@@ -598,6 +828,15 @@ def create_app(
         simulation: AsyncioSimulationAdapter = Depends(get_adapter),
     ) -> dict[str, object]:
         try:
+            if application.state.v32.has_experiment(experiment_id):
+                audit = await application.state.v32.get_audit(experiment_id, limit=500)
+                record = next(
+                    (item for item in audit["records"] if item["record_id"] == record_id),
+                    None,
+                )
+                if record is None:
+                    raise KeyError(f"audit record not found: {record_id}")
+                return record
             result = await simulation.get_audit_record(experiment_id, record_id)
             return result.model_dump(mode="json")
         except Exception as error:
@@ -609,6 +848,8 @@ def create_app(
         simulation: AsyncioSimulationAdapter = Depends(get_adapter),
     ) -> list[dict[str, object]]:
         try:
+            if application.state.v32.has_experiment(experiment_id):
+                return await application.state.v32.get_replay(experiment_id)
             return await simulation.get_replay(experiment_id)
         except Exception as error:
             raise _http_error(error) from error

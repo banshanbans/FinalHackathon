@@ -1,0 +1,775 @@
+[
+  {
+    "schema_version": "automaker-profile-v2",
+    "automaker_id": "byd",
+    "display_name": "比亚迪",
+    "entity_scope": "比亚迪股份有限公司（深港上市集团；汽车业务与电子业务并表）",
+    "baseline_year": 2025,
+    "feature_values": {
+      "sales_scale_index": 1.0,
+      "sales_growth_index": 0.0986,
+      "profitability_index": 0.5129,
+      "liquidity_index": 0.7652,
+      "rd_investment_index": 1.0,
+      "capacity_utilization_index": 0.5493
+    },
+    "feature_refs": {
+      "sales_scale_index": "feature_21688e81e2910a01",
+      "sales_growth_index": "feature_4864fdeca579687b",
+      "profitability_index": "feature_b2c6f61969b5f661",
+      "liquidity_index": "feature_3afd8bf836779eb8",
+      "rd_investment_index": "feature_21f6c6f476681d6c",
+      "capacity_utilization_index": "feature_4ef3f89338615ac6"
+    },
+    "fact_summary": [
+      "2025销量_辆：4602436（2025公开口径）",
+      "收入或产值_亿元：8039.65（2025公开口径）",
+      "研发投入或费用_亿元：634.41（2025公开口径）"
+    ],
+    "fact_refs": [
+      "fact_2a6df3f5c755d8c4",
+      "fact_ae95bc4de23f7747",
+      "fact_65e5420fdcbe98f1",
+      "fact_4e76583eb91f218b",
+      "fact_d9abd3456528e573",
+      "fact_7d532f0c62068132",
+      "fact_e60aa936f70b8e39",
+      "fact_bde01806fd5d0681",
+      "fact_4609c759bf0f4486",
+      "fact_b1fdf74abe5517e2",
+      "fact_0c746b20e147e1de",
+      "fact_8a8eb50185803c27",
+      "fact_d2d7ef634cf20556",
+      "fact_8eb0687e89d9f426",
+      "fact_3f4f45d2318eaa5e",
+      "fact_ec8f131a29840587",
+      "fact_46211b171c96fad1",
+      "fact_3747675b80693d88",
+      "fact_91d834959d500df5",
+      "fact_f3e758cc3768aeb9",
+      "fact_008953606a95b7c0",
+      "fact_226e44a1e12a2d61",
+      "fact_daca4138899bf7c4",
+      "fact_c22c422bbb0f2859",
+      "fact_30b6a86be0d4b3b6",
+      "fact_ed5f0af134025d26",
+      "fact_f59912d6d5fb71c8",
+      "fact_ff853ec7f0afa822",
+      "fact_54e5395c5c93b78e",
+      "fact_73c724f577772f81"
+    ],
+    "production_province_codes": [
+      "32",
+      "34",
+      "36",
+      "37",
+      "41",
+      "43",
+      "44",
+      "61"
+    ],
+    "technology_route_mix": {
+      "bev": 0.52,
+      "phev_or_erev": 0.48,
+      "other": 0
+    },
+    "product_segment_mix": {
+      "mass_market": 0.55,
+      "premium": 0.25,
+      "commercial_or_other": 0.2
+    },
+    "expansion_posture": "expansion",
+    "data_quality": "proxy"
+  },
+  {
+    "schema_version": "automaker-profile-v2",
+    "automaker_id": "geely",
+    "display_name": "吉利",
+    "entity_scope": "Geely Automobile Holdings Limited；2025年完成吉利、极氪、领克进一步整合",
+    "baseline_year": 2025,
+    "feature_values": {
+      "sales_scale_index": 0.7542,
+      "sales_growth_index": 0.2879,
+      "profitability_index": 0.2196,
+      "liquidity_index": 0.1637,
+      "rd_investment_index": 0.2428,
+      "capacity_utilization_index": 0.5211
+    },
+    "feature_refs": {
+      "sales_scale_index": "feature_bf13e3f35ae62894",
+      "sales_growth_index": "feature_5f7afb164bbb0dc9",
+      "profitability_index": "feature_01f1061b51b5cb74",
+      "liquidity_index": "feature_b9c3636a87a07b4a",
+      "rd_investment_index": "feature_cc68b2606c34eb65",
+      "capacity_utilization_index": "feature_8bc6f2c25e3f4db1"
+    },
+    "fact_summary": [
+      "2025销量_辆：3024567（2025公开口径）",
+      "收入或产值_亿元：3452.32201（2025公开口径）",
+      "研发投入或费用_亿元：176.2（2025公开口径）"
+    ],
+    "fact_refs": [
+      "fact_e160c8e62db93d0a",
+      "fact_55fb608683dfced2",
+      "fact_c251a739e64d605d",
+      "fact_937aa5fbaa20125b",
+      "fact_4e2a1bb9ab71a19f",
+      "fact_6fcf501eefb56e6d",
+      "fact_b87f7a970eb03289",
+      "fact_e9ea2d801a0c470a",
+      "fact_e4324d18163defb1",
+      "fact_056b02bfb9cda5a8",
+      "fact_2e45efd89673aeda",
+      "fact_ee2ebe1b0d753830",
+      "fact_874436a2c98c1da7",
+      "fact_3427b93824d1e287",
+      "fact_750ee57b40de7de2",
+      "fact_8b904e4820a05cf5",
+      "fact_8a357f403d943109",
+      "fact_a3580d155e3ebc81",
+      "fact_e99c41dee9774167",
+      "fact_1e27648bc8edc59b",
+      "fact_3b6eb1ba60f9d27a",
+      "fact_56dbd07111d9243c",
+      "fact_03f67948a6478f5b",
+      "fact_12c3f34cc3b54ebc",
+      "fact_7f1b87ac52530ce0",
+      "fact_70eb8d8cd08b9032",
+      "fact_d3b30b3c7ccbb98a",
+      "fact_fbc8db9693d14411",
+      "fact_ded968cd3822569c",
+      "fact_aaeb42a8a255cc4d"
+    ],
+    "production_province_codes": [
+      "14",
+      "33",
+      "37",
+      "43",
+      "51",
+      "61"
+    ],
+    "technology_route_mix": {
+      "bev": 0.45,
+      "phev_or_erev": 0.45,
+      "other": 0.1
+    },
+    "product_segment_mix": {
+      "mass_market": 0.55,
+      "premium": 0.25,
+      "commercial_or_other": 0.2
+    },
+    "expansion_posture": "expansion",
+    "data_quality": "proxy"
+  },
+  {
+    "schema_version": "automaker-profile-v2",
+    "automaker_id": "changan",
+    "display_name": "长安",
+    "entity_scope": "重庆长安汽车股份有限公司；销量含自主品牌及部分合资口径",
+    "baseline_year": 2025,
+    "feature_values": {
+      "sales_scale_index": 0.7226,
+      "sales_growth_index": 0.1035,
+      "profitability_index": 0.1399,
+      "liquidity_index": 0.078,
+      "rd_investment_index": 0.1294,
+      "capacity_utilization_index": 0.4131
+    },
+    "feature_refs": {
+      "sales_scale_index": "feature_cc1de0ddc666c868",
+      "sales_growth_index": "feature_df38bd5cb8965f03",
+      "profitability_index": "feature_72b6343c7cc15779",
+      "liquidity_index": "feature_79789e3c64ca9058",
+      "rd_investment_index": "feature_acafaa2e6892687a",
+      "capacity_utilization_index": "feature_4e40116a6a8b11e1"
+    },
+    "fact_summary": [
+      "2025销量_辆：2913042（2025公开口径）",
+      "收入或产值_亿元：1639.998（2025公开口径）",
+      "研发投入或费用_亿元：125.757（2025公开口径）"
+    ],
+    "fact_refs": [
+      "fact_8f8eff71ab78a035",
+      "fact_9ed1528a66a1bde1",
+      "fact_cf012b02904fac27",
+      "fact_7cbc74b697674143",
+      "fact_1539be8f670a4db4",
+      "fact_cfc6f92ce46fc3d1",
+      "fact_1526c31474579abb",
+      "fact_ae0c6344363089d6",
+      "fact_f16c195688425cc9",
+      "fact_73c02724feba68d8",
+      "fact_0cc4d71752fbe59d",
+      "fact_2ec1c9d2b62130bb",
+      "fact_7299297bb6062762",
+      "fact_10ed45bfdedfb149",
+      "fact_1fac9e0beab68fa0",
+      "fact_be3b00eae92c840d",
+      "fact_f23dfb7071c66738",
+      "fact_a5a6dac68da5f427",
+      "fact_9f17c6e6bbf55bca",
+      "fact_c7f2d53cf8e656f2",
+      "fact_ef6ab8be942d28c3",
+      "fact_04edc131e8aad427",
+      "fact_3a1e9622bf5966f0",
+      "fact_306dd9f5818ba9a8",
+      "fact_7dd9dbb3ae6aa991",
+      "fact_7f31f1fa57c4419c",
+      "fact_2075e4ddb7f0fa0c",
+      "fact_fb28eaf719bb4119",
+      "fact_b03f0d4115bef1c4",
+      "fact_d44cc93e4a49b244"
+    ],
+    "production_province_codes": [
+      "11",
+      "13",
+      "32",
+      "34",
+      "36",
+      "50"
+    ],
+    "technology_route_mix": {
+      "bev": 0.42,
+      "phev_or_erev": 0.48,
+      "other": 0.1
+    },
+    "product_segment_mix": {
+      "mass_market": 0.55,
+      "premium": 0.25,
+      "commercial_or_other": 0.2
+    },
+    "expansion_posture": "expansion",
+    "data_quality": "proxy"
+  },
+  {
+    "schema_version": "automaker-profile-v2",
+    "automaker_id": "sgmw",
+    "display_name": "上汽通用五菱",
+    "entity_scope": "上汽通用五菱汽车股份有限公司（上汽、通用、广西汽车合资）",
+    "baseline_year": 2025,
+    "feature_values": {
+      "sales_scale_index": 0.3606,
+      "sales_growth_index": 0.0893,
+      "profitability_index": 0.2196,
+      "liquidity_index": 0.1637,
+      "rd_investment_index": 0.128,
+      "capacity_utilization_index": 0.2249
+    },
+    "feature_refs": {
+      "sales_scale_index": "feature_380675377e6f2b27",
+      "sales_growth_index": "feature_613e6c7c685ae42b",
+      "profitability_index": "feature_b8853194e91378c9",
+      "liquidity_index": "feature_b59e3e05864fae5c",
+      "rd_investment_index": "feature_5b497dffe02b5dc7",
+      "capacity_utilization_index": "feature_75a137d6de46e2c2"
+    },
+    "fact_summary": [
+      "2025销量_辆：1635066（2025公开口径）",
+      "收入或产值_亿元：1000.2（2025公开口径）",
+      "省级渠道或产能利用缺少统一公开口径，运行时使用统一推算值。"
+    ],
+    "fact_refs": [
+      "fact_3433ed9c8e3be8b7",
+      "fact_dbf13bcacab39627",
+      "fact_031c7e9ff0068f43",
+      "fact_85b71d5d9a7d1991",
+      "fact_ed75ace926f98825",
+      "fact_375692e3e10f1b32",
+      "fact_48c378a58b4fea44",
+      "fact_3bf445b59787470c",
+      "fact_536467572e6c7451",
+      "fact_cc2c893bbcdcf683",
+      "fact_e1353d02c9f919a5",
+      "fact_de209542f02a80bc",
+      "fact_a1210924d2373528",
+      "fact_3b5f5ab026b20530",
+      "fact_80acb2e33072ac4e",
+      "fact_997dc2bbdfba5c6f",
+      "fact_e6bdb6269bd19ebf",
+      "fact_7279852d802b3776",
+      "fact_3ce92af777143030",
+      "fact_b6329de2cdcec83a",
+      "fact_0ca1e9d637f2e882",
+      "fact_c14bd144066ef8c5",
+      "fact_dc9dce79649ffb87",
+      "fact_fd6e3b609636aa1f",
+      "fact_3ba8938ed0f4f964",
+      "fact_14b9bc37d4216f15",
+      "fact_75b408f08bfd50ff",
+      "fact_afe248239f81945e",
+      "fact_dbb54b6d0284204c",
+      "fact_0cb6c8e5fc493f21"
+    ],
+    "production_province_codes": [
+      "37",
+      "45",
+      "50"
+    ],
+    "technology_route_mix": {
+      "bev": 0.76,
+      "phev_or_erev": 0.14,
+      "other": 0.1
+    },
+    "product_segment_mix": {
+      "mass_market": 0.55,
+      "premium": 0.25,
+      "commercial_or_other": 0.2
+    },
+    "expansion_posture": "expansion",
+    "data_quality": "proxy"
+  },
+  {
+    "schema_version": "automaker-profile-v2",
+    "automaker_id": "nio",
+    "display_name": "蔚来",
+    "entity_scope": "NIO Inc.（蔚来、乐道、firefly品牌并表）",
+    "baseline_year": 2025,
+    "feature_values": {
+      "sales_scale_index": 0.0,
+      "sales_growth_index": 0.3357,
+      "profitability_index": 0.0,
+      "liquidity_index": 0.0291,
+      "rd_investment_index": 0.0851,
+      "capacity_utilization_index": 0.1678
+    },
+    "feature_refs": {
+      "sales_scale_index": "feature_3ac6ecfa0ed6c391",
+      "sales_growth_index": "feature_da2cd3a56c9faf45",
+      "profitability_index": "feature_b2e31c240dc6deca",
+      "liquidity_index": "feature_c38656824161ad61",
+      "rd_investment_index": "feature_33a1e8f8609b01fd",
+      "capacity_utilization_index": "feature_11bf888bef6879a9"
+    },
+    "fact_summary": [
+      "2025销量_辆：326028（2025公开口径）",
+      "收入或产值_亿元：874.875（2025公开口径）",
+      "研发投入或费用_亿元：106.05（2025公开口径）"
+    ],
+    "fact_refs": [
+      "fact_e58405c9c3466e77",
+      "fact_33c43711bd914607",
+      "fact_8e18c4454a32aa8a",
+      "fact_db3eadda864368ee",
+      "fact_9e2f61195cb375f2",
+      "fact_f9c994ce040dcbc7",
+      "fact_ec71ced96bd2b9c5",
+      "fact_05f85cb1612eaf06",
+      "fact_1993c5f8a8a5ca2b",
+      "fact_2458995e5ad55670",
+      "fact_6e250ed1f86ef1bc",
+      "fact_a4abf085fa44f5d5",
+      "fact_80e0859ae6b30816",
+      "fact_5861e0734dc6ce53",
+      "fact_ed54f6f736284af1",
+      "fact_fe906f817c158541",
+      "fact_bd84e2dfa323996f",
+      "fact_3829cffa30622d87",
+      "fact_7c25761fdd33b4dd",
+      "fact_0d15340c4a3e382f",
+      "fact_b31f43a22b93beab",
+      "fact_f67c38146cf8e1ec",
+      "fact_1fdf5fccf393ae39",
+      "fact_822264eaa76e83f7",
+      "fact_26a68f820dbaab75",
+      "fact_6932bea911b7118a",
+      "fact_419a7cc1bd886ff0",
+      "fact_efc956f5bc0ce858",
+      "fact_194f1bf3eb775e56",
+      "fact_435379f790ea5efa"
+    ],
+    "production_province_codes": [
+      "34"
+    ],
+    "technology_route_mix": {
+      "bev": 1,
+      "phev_or_erev": 0,
+      "other": 0
+    },
+    "product_segment_mix": {
+      "mass_market": 0.55,
+      "premium": 0.25,
+      "commercial_or_other": 0.2
+    },
+    "expansion_posture": "disciplined",
+    "data_quality": "proxy"
+  },
+  {
+    "schema_version": "automaker-profile-v2",
+    "automaker_id": "chery",
+    "display_name": "奇瑞",
+    "entity_scope": "销量采用奇瑞控股集团公开口径；财务采用奇瑞汽车股份有限公司（9973.HK）",
+    "baseline_year": 2025,
+    "feature_values": {
+      "sales_scale_index": 0.6924,
+      "sales_growth_index": 0.099,
+      "profitability_index": 0.009,
+      "liquidity_index": 0.1851,
+      "rd_investment_index": 0.104,
+      "capacity_utilization_index": 0.3957
+    },
+    "feature_refs": {
+      "sales_scale_index": "feature_a06bbaa796975ae4",
+      "sales_growth_index": "feature_6060ab590d99c193",
+      "profitability_index": "feature_35d6fcd294300009",
+      "liquidity_index": "feature_94f6919c5badd4a3",
+      "rd_investment_index": "feature_455ccb78ff1d4934",
+      "capacity_utilization_index": "feature_e7530165e83ff1c4"
+    },
+    "fact_summary": [
+      "2025销量_辆：2806393（2025公开口径）",
+      "收入或产值_亿元：3002.87（2025公开口径）",
+      "研发投入或费用_亿元：114.44（2025公开口径）"
+    ],
+    "fact_refs": [
+      "fact_36f4a3693c709af6",
+      "fact_a558660c0fc2af6f",
+      "fact_55dff4b7b7e92d7b",
+      "fact_83982e7e0218330e",
+      "fact_12e91759e6f8b18a",
+      "fact_30d37b11a67b8fa7",
+      "fact_a34a6a233975369b",
+      "fact_362c119a38b1bee3",
+      "fact_691b86495af5834b",
+      "fact_1ee88707bec85397",
+      "fact_4ad7f77657245533",
+      "fact_a2bad46c5a55b51c",
+      "fact_c0771ad66eebbf4b",
+      "fact_35a7dd2e78850444",
+      "fact_4258f61b148dd23d",
+      "fact_dc226915c0407f04",
+      "fact_07f9450a4cd04dfb",
+      "fact_d61c89c81b1fd318",
+      "fact_facedb5eaf765444",
+      "fact_6e8750ef8765400a",
+      "fact_ea0006b146bf04fe",
+      "fact_3d08144f8268d8b3",
+      "fact_8c886c60e1f37d56",
+      "fact_5be98fec86f1efc4",
+      "fact_2b1ec89951025666",
+      "fact_78d93354cc569dba",
+      "fact_0cb518d56086e3b0",
+      "fact_f3ef194c3eed699a",
+      "fact_e0cf59133c0c91a5",
+      "fact_50fbf3ec8f8ba7fa"
+    ],
+    "production_province_codes": [
+      "34",
+      "35",
+      "37",
+      "41"
+    ],
+    "technology_route_mix": {
+      "bev": 0.35,
+      "phev_or_erev": 0.45,
+      "other": 0.2
+    },
+    "product_segment_mix": {
+      "mass_market": 0.55,
+      "premium": 0.25,
+      "commercial_or_other": 0.2
+    },
+    "expansion_posture": "expansion",
+    "data_quality": "proxy"
+  },
+  {
+    "schema_version": "automaker-profile-v2",
+    "automaker_id": "leapmotor",
+    "display_name": "零跑",
+    "entity_scope": "浙江零跑科技股份有限公司（9863.HK）",
+    "baseline_year": 2025,
+    "feature_values": {
+      "sales_scale_index": 0.0664,
+      "sales_growth_index": 0.676,
+      "profitability_index": 0.0617,
+      "liquidity_index": 0.0,
+      "rd_investment_index": 0.0,
+      "capacity_utilization_index": 0.3712
+    },
+    "feature_refs": {
+      "sales_scale_index": "feature_e41a79e615a91e27",
+      "sales_growth_index": "feature_97e8c481fb4da0ec",
+      "profitability_index": "feature_f696371b899fdb0c",
+      "liquidity_index": "feature_6837fabcdf78798e",
+      "rd_investment_index": "feature_f8bd15285f7be215",
+      "capacity_utilization_index": "feature_3a7377cc88642e89"
+    },
+    "fact_summary": [
+      "2025销量_辆：596555（2025公开口径）",
+      "收入或产值_亿元：647.3186（2025公开口径）",
+      "研发投入或费用_亿元：42.92381（2025公开口径）"
+    ],
+    "fact_refs": [
+      "fact_788d4f0cdd53a2c5",
+      "fact_57b6e57744c8da42",
+      "fact_f25f0db5275d40ac",
+      "fact_f79d32645f5c8c95",
+      "fact_787c5d04ac1a16eb",
+      "fact_cb16a2ced7de4698",
+      "fact_ec663cc6e7e938cd",
+      "fact_12f81da3ce12e3e3",
+      "fact_e9954e2272d241b5",
+      "fact_a7d956d388fa1460",
+      "fact_a3885c2b78d49cf7",
+      "fact_ccdeac444e0df090",
+      "fact_54b89f9c6e09b5e6",
+      "fact_402de88353c23264",
+      "fact_9f260bd9daa83691",
+      "fact_0c1c9bf56964b86e",
+      "fact_132581aa19a83551",
+      "fact_1844ce27935dd84e",
+      "fact_2c02559d44754fdf",
+      "fact_9de4fbb8570bb991",
+      "fact_bffb92a168b72888",
+      "fact_4808c59d01bba234",
+      "fact_12dc3a3fffbcf3f1",
+      "fact_15565343afd85770",
+      "fact_217cfe9423ba01f4",
+      "fact_b9ee61610af88749",
+      "fact_e29edc54e2ee0c5a",
+      "fact_36be06b6350b245a",
+      "fact_12e188964433f06b",
+      "fact_e5fbf3ba2c8422e6"
+    ],
+    "production_province_codes": [
+      "33"
+    ],
+    "technology_route_mix": {
+      "bev": 0.48,
+      "phev_or_erev": 0.52,
+      "other": 0
+    },
+    "product_segment_mix": {
+      "mass_market": 0.55,
+      "premium": 0.25,
+      "commercial_or_other": 0.2
+    },
+    "expansion_posture": "expansion",
+    "data_quality": "proxy"
+  },
+  {
+    "schema_version": "automaker-profile-v2",
+    "automaker_id": "seres",
+    "display_name": "赛力斯",
+    "entity_scope": "赛力斯集团股份有限公司（A+H上市集团；问界为核心高端智能电动车品牌）",
+    "baseline_year": 2025,
+    "feature_values": {
+      "sales_scale_index": 0.0438,
+      "sales_growth_index": 0.076,
+      "profitability_index": 1.0,
+      "liquidity_index": 0.0697,
+      "rd_investment_index": 0.128,
+      "capacity_utilization_index": 0.0599
+    },
+    "feature_refs": {
+      "sales_scale_index": "feature_cd001643156b867d",
+      "sales_growth_index": "feature_9379d1f39706c70e",
+      "profitability_index": "feature_b510b72a9bbffa9a",
+      "liquidity_index": "feature_1adfb47a7fe25944",
+      "rd_investment_index": "feature_caa48222f756d02a",
+      "capacity_utilization_index": "feature_b8fc915ae175e5f3"
+    },
+    "fact_summary": [
+      "2025销量_辆：516860（2025公开口径）",
+      "收入或产值_亿元：1648.88013（2025公开口径）",
+      "研发投入或费用_亿元：125.11927（2025公开口径）"
+    ],
+    "fact_refs": [
+      "fact_71550a37da75d0bd",
+      "fact_465a6a4814f68598",
+      "fact_00045af0bb453825",
+      "fact_d3b3d2aa51d349b5",
+      "fact_d890b8609653ffe6",
+      "fact_19f839f4624beed1",
+      "fact_88f8255efbe5ce2b",
+      "fact_a4934bab09f39908",
+      "fact_1d2d4f3aa93e6a56",
+      "fact_565d92a7f095a4ca",
+      "fact_02e61ecd874a54a7",
+      "fact_990c9dfdefc70fab",
+      "fact_c57296106bfad956",
+      "fact_64ce44ed1cb56f62",
+      "fact_4dc4d26748a93e86",
+      "fact_8fbdef9d86eec22e",
+      "fact_46506df32c777939",
+      "fact_1e7bf2c275dcaae7",
+      "fact_5459ce3843006d02",
+      "fact_e7efd5ff998962b1",
+      "fact_f8466a64946fe121",
+      "fact_c3e2f438fdfeb7fa",
+      "fact_26bf7e49c366a9e6",
+      "fact_d55131a5b273349a",
+      "fact_81a86ce4efafe2cb",
+      "fact_52f9997603e07cb3",
+      "fact_c1c17fee5b9d9a6b",
+      "fact_5537cccd3b8a4adb",
+      "fact_6a33fc7b1c2ffe63",
+      "fact_f59e60367f886ae5"
+    ],
+    "production_province_codes": [
+      "50"
+    ],
+    "technology_route_mix": {
+      "bev": 0.08,
+      "phev_or_erev": 0.92,
+      "other": 0
+    },
+    "product_segment_mix": {
+      "mass_market": 0.55,
+      "premium": 0.25,
+      "commercial_or_other": 0.2
+    },
+    "expansion_posture": "expansion",
+    "data_quality": "proxy"
+  },
+  {
+    "schema_version": "automaker-profile-v2",
+    "automaker_id": "xiaomi_auto",
+    "display_name": "小米汽车",
+    "entity_scope": "销量为小米汽车；财务多采用小米集团“智能电动汽车、AI及其他创新业务”分部或集团口径",
+    "baseline_year": 2025,
+    "feature_values": {
+      "sales_scale_index": 0.0139,
+      "sales_growth_index": 1.0,
+      "profitability_index": 0.7987,
+      "liquidity_index": 1.0,
+      "rd_investment_index": 0.5913,
+      "capacity_utilization_index": 0.507
+    },
+    "feature_refs": {
+      "sales_scale_index": "feature_8751c0ae611e3f90",
+      "sales_growth_index": "feature_ab660b1d37b68eee",
+      "profitability_index": "feature_ad857656b6fa5d0c",
+      "liquidity_index": "feature_ecdbf4078841fddf",
+      "rd_investment_index": "feature_6b07e7033570c273",
+      "capacity_utilization_index": "feature_bc796deb1ff59c32"
+    },
+    "fact_summary": [
+      "2025销量_辆：411082（2025公开口径）",
+      "收入或产值_亿元：1060.695（2025公开口径）",
+      "研发投入或费用_亿元：331.322（2025公开口径）"
+    ],
+    "fact_refs": [
+      "fact_655e6f8904481062",
+      "fact_aa05ac78b8fa1fba",
+      "fact_937ce2c16b23d46b",
+      "fact_aa21230aff707157",
+      "fact_afe0f5c21b7cb273",
+      "fact_bcbd83c01718a54d",
+      "fact_432756a0c3bd0e5c",
+      "fact_9499ee257322c03c",
+      "fact_c163727cc546bc7a",
+      "fact_9e23fb11844b6fe5",
+      "fact_a2289b24fa4fc91c",
+      "fact_e0c3bad56859fc1b",
+      "fact_4d33f8d91c79f636",
+      "fact_a740f29bf34f2b7f",
+      "fact_ce3c4e5f12b85953",
+      "fact_49aa269f7d30f494",
+      "fact_441836fd9d3e88d5",
+      "fact_558b26a99a06d49e",
+      "fact_4118bcb849df3e29",
+      "fact_0508f44add5a87ff",
+      "fact_a2e944412d5ff04f",
+      "fact_f922d21e420ef309",
+      "fact_fe62e61b1e112ba9",
+      "fact_68f8041663226373",
+      "fact_238718eca321623b",
+      "fact_e39c7fb0b7d0f906",
+      "fact_4531a43e207da768",
+      "fact_93bbad4a1b827cc8",
+      "fact_94eb09af30097cd9",
+      "fact_a384bd52a3c6d0f6"
+    ],
+    "production_province_codes": [
+      "11"
+    ],
+    "technology_route_mix": {
+      "bev": 1,
+      "phev_or_erev": 0,
+      "other": 0
+    },
+    "product_segment_mix": {
+      "mass_market": 0.55,
+      "premium": 0.25,
+      "commercial_or_other": 0.2
+    },
+    "expansion_posture": "expansion",
+    "data_quality": "proxy"
+  },
+  {
+    "schema_version": "automaker-profile-v2",
+    "automaker_id": "li_auto",
+    "display_name": "理想汽车",
+    "entity_scope": "Li Auto Inc.",
+    "baseline_year": 2025,
+    "feature_values": {
+      "sales_scale_index": 0.0125,
+      "sales_growth_index": 0.0,
+      "profitability_index": 0.3776,
+      "liquidity_index": 0.363,
+      "rd_investment_index": 0.1011,
+      "capacity_utilization_index": 0.0063
+    },
+    "feature_refs": {
+      "sales_scale_index": "feature_c2e3079d972edcdb",
+      "sales_growth_index": "feature_50a3120a536247ae",
+      "profitability_index": "feature_ad203a540e3c14ea",
+      "liquidity_index": "feature_a9cd238fab8c72fc",
+      "rd_investment_index": "feature_992c5f33dd362e33",
+      "capacity_utilization_index": "feature_f7c634ddb70f9265"
+    },
+    "fact_summary": [
+      "2025销量_辆：406343（2025公开口径）",
+      "收入或产值_亿元：1123（2025公开口径）",
+      "研发投入或费用_亿元：113.14949（2025公开口径）"
+    ],
+    "fact_refs": [
+      "fact_f6753590811c8a45",
+      "fact_32f14330dcc0e1c5",
+      "fact_68ba4222522fac47",
+      "fact_71988a799983c33a",
+      "fact_8919fa1102b3a9b9",
+      "fact_32cc428bc0181104",
+      "fact_e21df4f11b3a4cb8",
+      "fact_73786fb50b29b649",
+      "fact_4db6df3054d576a8",
+      "fact_5b04adf79ce8fdcf",
+      "fact_767fb7cec44d2f02",
+      "fact_f5655b3b06a39c37",
+      "fact_def4cf42e95b3e6b",
+      "fact_3986ced9390f8895",
+      "fact_b626d171562a31e4",
+      "fact_87452a972cc5b366",
+      "fact_7a91b9b2a28bb577",
+      "fact_e0375fb5b586a3de",
+      "fact_eaebae427a7efbd4",
+      "fact_091eef1ef9d4877f",
+      "fact_ce6384f28face35b",
+      "fact_97c6539c23d81027",
+      "fact_c580d164f45e9bd2",
+      "fact_81c6354381a6e4b9",
+      "fact_0dbd451f8e6fb2a6",
+      "fact_c224723d72789405",
+      "fact_af3f9b905569a6ab",
+      "fact_42a987905b9c9362",
+      "fact_c3df7571d3b7a6dd",
+      "fact_4b399e2cff8d3238"
+    ],
+    "production_province_codes": [
+      "11",
+      "32"
+    ],
+    "technology_route_mix": {
+      "bev": 0.1,
+      "phev_or_erev": 0.9,
+      "other": 0
+    },
+    "product_segment_mix": {
+      "mass_market": 0.55,
+      "premium": 0.25,
+      "commercial_or_other": 0.2
+    },
+    "expansion_posture": "disciplined",
+    "data_quality": "proxy"
+  }
+]

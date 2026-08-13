@@ -4,9 +4,9 @@ PY := $(VENV)/bin/python
 PIP := $(VENV)/bin/pip
 NPM_CACHE := $(CURDIR)/.cache/npm
 
-.PHONY: setup setup-backend setup-web dev dev-api start-api dev-web test test-sim test-api test-e2e capture-v3 lint validate-data precompute verify-cache demo smoke spike-agentsociety clean
+.PHONY: setup setup-backend setup-web setup-presentation dev dev-api start-api dev-web dev-presentation test test-sim test-api test-e2e test-e2e-presentation capture-v3 lint validate-data precompute precompute-v32 precompute-v32-luna verify-cache verify-cache-v32 verify-cache-v32-luna demo smoke spike-agentsociety clean
 
-setup: setup-backend setup-web
+setup: setup-backend setup-web setup-presentation
 
 setup-backend:
 	$(PYTHON) -m venv $(VENV)
@@ -17,8 +17,11 @@ setup-backend:
 setup-web:
 	npm --prefix apps/web install --cache $(NPM_CACHE)
 
+setup-presentation:
+	npm --prefix apps/presentation install --cache $(NPM_CACHE)
+
 dev:
-	@echo "Run 'make dev-api' and 'make dev-web' in separate terminals."
+	@echo "Run 'make dev-api' with 'make dev-web' or 'make dev-presentation' in separate terminals."
 
 dev-api:
 	PYTHONPATH="$(CURDIR):$(CURDIR)/apps/api/src" POLICYSCOPE_RUN_MODE=fake $(VENV)/bin/uvicorn policyscope_api.main:app --app-dir apps/api/src --reload --port 8000
@@ -28,6 +31,9 @@ start-api:
 
 dev-web:
 	npm --prefix apps/web run dev
+
+dev-presentation:
+	npm --prefix apps/presentation run dev -- --host 127.0.0.1 --port 4180
 
 test:
 	$(PY) -m pytest
@@ -42,6 +48,9 @@ test-api:
 test-e2e:
 	npm --prefix apps/web run test:e2e
 
+test-e2e-presentation:
+	npm --prefix apps/web run test:e2e:presentation
+
 capture-v3:
 	npm --prefix apps/web run test:e2e:capture
 
@@ -50,16 +59,30 @@ lint:
 	$(VENV)/bin/ruff format --check simulation apps/api scripts
 	npm --prefix apps/web run lint
 	npm --prefix apps/web run build
+	npm --prefix apps/presentation run build
 
 validate-data:
 	PYTHONPATH="$(CURDIR):$(CURDIR)/apps/api/src" $(PY) scripts/validate_data.py
 	PYTHONPATH="$(CURDIR):$(CURDIR)/apps/api/src" $(PY) scripts/validate_standard_map.py
+	PYTHONPATH="$(CURDIR):$(CURDIR)/apps/api/src" $(PY) scripts/validate_presentation_map.py
 
 precompute:
 	PYTHONPATH="$(CURDIR):$(CURDIR)/apps/api/src" $(PY) scripts/precompute_demo.py
 
+precompute-v32:
+	PYTHONPATH="$(CURDIR):$(CURDIR)/apps/api/src" $(PY) scripts/precompute_v32_demo.py
+
+precompute-v32-luna:
+	PYTHONPATH="$(CURDIR):$(CURDIR)/apps/api/src" POLICYSCOPE_RUN_MODE=live $(PY) scripts/precompute_v32_demo.py --luna
+
 verify-cache:
 	PYTHONPATH="$(CURDIR):$(CURDIR)/apps/api/src" $(PY) scripts/verify_v31_cache.py
+
+verify-cache-v32:
+	PYTHONPATH="$(CURDIR):$(CURDIR)/apps/api/src" $(PY) scripts/verify_v32_cache.py
+
+verify-cache-v32-luna:
+	PYTHONPATH="$(CURDIR):$(CURDIR)/apps/api/src" $(PY) scripts/verify_v32_cache.py --luna
 
 demo:
 	PYTHONPATH="$(CURDIR):$(CURDIR)/apps/api/src" POLICYSCOPE_RUN_MODE=cache $(PY) scripts/smoke_demo.py

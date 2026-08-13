@@ -1,0 +1,1772 @@
+[
+  {
+    "requirement_id": "R001",
+    "chapter": "1. 统一记录字段",
+    "requirement": "主体或省份。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "统一字段已落实到长表、来源索引和缺口表",
+    "source_or_method": "数据包结构",
+    "decision_reason": "统一字段已落实到长表、来源索引和缺口表"
+  },
+  {
+    "requirement_id": "R002",
+    "chapter": "1. 统一记录字段",
+    "requirement": "指标名称。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "统一字段已落实到长表、来源索引和缺口表",
+    "source_or_method": "数据包结构",
+    "decision_reason": "统一字段已落实到长表、来源索引和缺口表"
+  },
+  {
+    "requirement_id": "R003",
+    "chapter": "1. 统一记录字段",
+    "requirement": "原始数值。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "统一字段已落实到长表、来源索引和缺口表",
+    "source_or_method": "数据包结构",
+    "decision_reason": "统一字段已落实到长表、来源索引和缺口表"
+  },
+  {
+    "requirement_id": "R004",
+    "chapter": "1. 统一记录字段",
+    "requirement": "原始单位。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "统一字段已落实到长表、来源索引和缺口表",
+    "source_or_method": "数据包结构",
+    "decision_reason": "统一字段已落实到长表、来源索引和缺口表"
+  },
+  {
+    "requirement_id": "R005",
+    "chapter": "1. 统一记录字段",
+    "requirement": "统计年份或政策有效期。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "统一字段已落实到长表、来源索引和缺口表",
+    "source_or_method": "数据包结构",
+    "decision_reason": "统一字段已落实到长表、来源索引和缺口表"
+  },
+  {
+    "requirement_id": "R006",
+    "chapter": "1. 统一记录字段",
+    "requirement": "来源机构。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "统一字段已落实到长表、来源索引和缺口表",
+    "source_or_method": "数据包结构",
+    "decision_reason": "统一字段已落实到长表、来源索引和缺口表"
+  },
+  {
+    "requirement_id": "R007",
+    "chapter": "1. 统一记录字段",
+    "requirement": "原始链接。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "统一字段已落实到长表、来源索引和缺口表",
+    "source_or_method": "数据包结构",
+    "decision_reason": "统一字段已落实到长表、来源索引和缺口表"
+  },
+  {
+    "requirement_id": "R008",
+    "chapter": "1. 统一记录字段",
+    "requirement": "原始表名、公告名或章节。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "统一字段已落实到长表、来源索引和缺口表",
+    "source_or_method": "数据包结构",
+    "decision_reason": "统一字段已落实到长表、来源索引和缺口表"
+  },
+  {
+    "requirement_id": "R009",
+    "chapter": "1. 统一记录字段",
+    "requirement": "获取日期。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "统一字段已落实到长表、来源索引和缺口表",
+    "source_or_method": "数据包结构",
+    "decision_reason": "统一字段已落实到长表、来源索引和缺口表"
+  },
+  {
+    "requirement_id": "R010",
+    "chapter": "1. 统一记录字段",
+    "requirement": "统计口径。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "统一字段已落实到长表、来源索引和缺口表",
+    "source_or_method": "数据包结构",
+    "decision_reason": "统一字段已落实到长表、来源索引和缺口表"
+  },
+  {
+    "requirement_id": "R011",
+    "chapter": "1. 统一记录字段",
+    "requirement": "转换和标准化方法。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "统一字段已落实到长表、来源索引和缺口表",
+    "source_or_method": "数据包结构",
+    "decision_reason": "统一字段已落实到长表、来源索引和缺口表"
+  },
+  {
+    "requirement_id": "R012",
+    "chapter": "1. 统一记录字段",
+    "requirement": "缺失值处理。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "统一字段已落实到长表、来源索引和缺口表",
+    "source_or_method": "数据包结构",
+    "decision_reason": "统一字段已落实到长表、来源索引和缺口表"
+  },
+  {
+    "requirement_id": "R013",
+    "chapter": "1. 统一记录字段",
+    "requirement": "数据质量：`verified | proxy | scenario_assumption`。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "统一字段已落实到长表、来源索引和缺口表",
+    "source_or_method": "数据包结构",
+    "decision_reason": "统一字段已落实到长表、来源索引和缺口表"
+  },
+  {
+    "requirement_id": "R014",
+    "chapter": "2. 31 省经济情况",
+    "requirement": "GDP 总量。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "31省2024统一横截面",
+    "source_or_method": "S001-S010",
+    "decision_reason": "31省2024统一横截面"
+  },
+  {
+    "requirement_id": "R015",
+    "chapter": "2. 31 省经济情况",
+    "requirement": "GDP 实际增速。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "31省2024统一横截面",
+    "source_or_method": "S001-S010",
+    "decision_reason": "31省2024统一横截面"
+  },
+  {
+    "requirement_id": "R016",
+    "chapter": "2. 31 省经济情况",
+    "requirement": "人均 GDP。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "31省2024统一横截面",
+    "source_or_method": "S001-S010",
+    "decision_reason": "31省2024统一横截面"
+  },
+  {
+    "requirement_id": "R017",
+    "chapter": "2. 31 省经济情况",
+    "requirement": "常住人口。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "31省2024统一横截面",
+    "source_or_method": "S001-S010",
+    "decision_reason": "31省2024统一横截面"
+  },
+  {
+    "requirement_id": "R018",
+    "chapter": "2. 31 省经济情况",
+    "requirement": "城镇化率。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "31省2024统一横截面",
+    "source_or_method": "S001-S010",
+    "decision_reason": "31省2024统一横截面"
+  },
+  {
+    "requirement_id": "R019",
+    "chapter": "2. 31 省经济情况",
+    "requirement": "城镇居民人均可支配收入。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "31省2024统一横截面",
+    "source_or_method": "S001-S010",
+    "decision_reason": "31省2024统一横截面"
+  },
+  {
+    "requirement_id": "R020",
+    "chapter": "2. 31 省经济情况",
+    "requirement": "一般公共预算收入。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "31省2024统一横截面",
+    "source_or_method": "S001-S010",
+    "decision_reason": "31省2024统一横截面"
+  },
+  {
+    "requirement_id": "R021",
+    "chapter": "2. 31 省经济情况",
+    "requirement": "一般公共预算支出。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "31省2024统一横截面",
+    "source_or_method": "S001-S010",
+    "decision_reason": "31省2024统一横截面"
+  },
+  {
+    "requirement_id": "R022",
+    "chapter": "2. 31 省经济情况",
+    "requirement": "财政自给率。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "31省2024统一横截面",
+    "source_or_method": "S001-S010",
+    "decision_reason": "31省2024统一横截面"
+  },
+  {
+    "requirement_id": "R023",
+    "chapter": "2. 31 省经济情况",
+    "requirement": "固定资产投资及增速。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "31省2024统一横截面",
+    "source_or_method": "S001-S010",
+    "decision_reason": "31省2024统一横截面"
+  },
+  {
+    "requirement_id": "R024",
+    "chapter": "2. 31 省经济情况",
+    "requirement": "社会消费品零售总额。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "31省2024统一横截面",
+    "source_or_method": "S001-S010",
+    "decision_reason": "31省2024统一横截面"
+  },
+  {
+    "requirement_id": "R025",
+    "chapter": "2. 31 省经济情况",
+    "requirement": "居民消费支出。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "31省2024统一横截面",
+    "source_or_method": "S001-S010",
+    "decision_reason": "31省2024统一横截面"
+  },
+  {
+    "requirement_id": "R026",
+    "chapter": "2. 31 省经济情况",
+    "requirement": "工业用地、人才、能源和物流成本的可比数据。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "能源规模、人才和物流基础已提供；工业地价与可比成本待补",
+    "source_or_method": "S014-S019",
+    "decision_reason": "能源规模、人才和物流基础已提供；工业地价与可比成本待补"
+  },
+  {
+    "requirement_id": "R027",
+    "chapter": "3. 31 省产业结构",
+    "requirement": "第一产业增加值及占 GDP 比重。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "31省2024统一口径",
+    "source_or_method": "S001/S018/S021",
+    "decision_reason": "31省2024统一口径"
+  },
+  {
+    "requirement_id": "R028",
+    "chapter": "3. 31 省产业结构",
+    "requirement": "第二产业增加值及占 GDP 比重。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "31省2024统一口径",
+    "source_or_method": "S001/S018/S021",
+    "decision_reason": "31省2024统一口径"
+  },
+  {
+    "requirement_id": "R029",
+    "chapter": "3. 31 省产业结构",
+    "requirement": "第三产业增加值及占 GDP 比重。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "31省2024统一口径",
+    "source_or_method": "S001/S018/S021",
+    "decision_reason": "31省2024统一口径"
+  },
+  {
+    "requirement_id": "R030",
+    "chapter": "3. 31 省产业结构",
+    "requirement": "工业增加值。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "31省2024统一口径",
+    "source_or_method": "S001/S018/S021",
+    "decision_reason": "31省2024统一口径"
+  },
+  {
+    "requirement_id": "R031",
+    "chapter": "3. 31 省产业结构",
+    "requirement": "制造业增加值及占比。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "年鉴公开表未形成31省同年同口径",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "年鉴公开表未形成31省同年同口径"
+  },
+  {
+    "requirement_id": "R032",
+    "chapter": "3. 31 省产业结构",
+    "requirement": "高技术制造业增加值及占比。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "年鉴公开表未形成31省同年同口径",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "年鉴公开表未形成31省同年同口径"
+  },
+  {
+    "requirement_id": "R033",
+    "chapter": "3. 31 省产业结构",
+    "requirement": "战略性新兴产业增加值及占比。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "年鉴公开表未形成31省同年同口径",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "年鉴公开表未形成31省同年同口径"
+  },
+  {
+    "requirement_id": "R034",
+    "chapter": "3. 31 省产业结构",
+    "requirement": "规模以上工业企业数量。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "年鉴公开表未形成31省同年同口径",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "年鉴公开表未形成31省同年同口径"
+  },
+  {
+    "requirement_id": "R035",
+    "chapter": "3. 31 省产业结构",
+    "requirement": "汽车制造业增加值、产值或规上企业指标。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "提供汽车产量与关键产业节点代理，不替代产业增加值",
+    "source_or_method": "S011/06_产业节点",
+    "decision_reason": "提供汽车产量与关键产业节点代理，不替代产业增加值"
+  },
+  {
+    "requirement_id": "R036",
+    "chapter": "3. 31 省产业结构",
+    "requirement": "新能源汽车产业增加值或产值。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "提供汽车产量与关键产业节点代理，不替代产业增加值",
+    "source_or_method": "S011/06_产业节点",
+    "decision_reason": "提供汽车产量与关键产业节点代理，不替代产业增加值"
+  },
+  {
+    "requirement_id": "R037",
+    "chapter": "3. 31 省产业结构",
+    "requirement": "汽车及零部件企业数量和空间分布。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "提供汽车产量与关键产业节点代理，不替代产业增加值",
+    "source_or_method": "S011/06_产业节点",
+    "decision_reason": "提供汽车产量与关键产业节点代理，不替代产业增加值"
+  },
+  {
+    "requirement_id": "R038",
+    "chapter": "3. 31 省产业结构",
+    "requirement": "研发经费投入总额及占 GDP 比重。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "31省2024统一口径",
+    "source_or_method": "S001/S018/S021",
+    "decision_reason": "31省2024统一口径"
+  },
+  {
+    "requirement_id": "R039",
+    "chapter": "3. 31 省产业结构",
+    "requirement": "有效发明专利、研发机构和研发人员等创新指标。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "31省2024统一口径",
+    "source_or_method": "S001/S018/S021",
+    "decision_reason": "31省2024统一口径"
+  },
+  {
+    "requirement_id": "R040",
+    "chapter": "3. 31 省产业结构",
+    "requirement": "单位工业增加值能耗。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "31省2024统一口径",
+    "source_or_method": "S001/S018/S021",
+    "decision_reason": "31省2024统一口径"
+  },
+  {
+    "requirement_id": "R041",
+    "chapter": "3. 31 省产业结构",
+    "requirement": "环境容量、能耗和工业准入约束。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "提供用电规模与污染排放强度代理；准入约束需政策逐省补采",
+    "source_or_method": "S014/S020",
+    "decision_reason": "提供用电规模与污染排放强度代理；准入约束需政策逐省补采"
+  },
+  {
+    "requirement_id": "R042",
+    "chapter": "3. 31 省产业结构",
+    "requirement": "重点支持产业目录。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "年鉴公开表未形成31省同年同口径",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "年鉴公开表未形成31省同年同口径"
+  },
+  {
+    "requirement_id": "R043",
+    "chapter": "3. 31 省产业结构",
+    "requirement": "限制、淘汰或转移产业目录。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "年鉴公开表未形成31省同年同口径",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "年鉴公开表未形成31省同年同口径"
+  },
+  {
+    "requirement_id": "R044",
+    "chapter": "4. 31 省新能源汽车产业与市场基线",
+    "requirement": "新能源汽车产量。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "省级统一公开口径不可得；表内保留字段和候选来源",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "省级统一公开口径不可得；表内保留字段和候选来源"
+  },
+  {
+    "requirement_id": "R045",
+    "chapter": "4. 31 省新能源汽车产业与市场基线",
+    "requirement": "新能源汽车产量增速。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "省级统一公开口径不可得；表内保留字段和候选来源",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "省级统一公开口径不可得；表内保留字段和候选来源"
+  },
+  {
+    "requirement_id": "R046",
+    "chapter": "4. 31 省新能源汽车产业与市场基线",
+    "requirement": "新能源汽车销量或注册量。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "省级统一公开口径不可得；表内保留字段和候选来源",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "省级统一公开口径不可得；表内保留字段和候选来源"
+  },
+  {
+    "requirement_id": "R047",
+    "chapter": "4. 31 省新能源汽车产业与市场基线",
+    "requirement": "新能源汽车渗透率。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "省级统一公开口径不可得；表内保留字段和候选来源",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "省级统一公开口径不可得；表内保留字段和候选来源"
+  },
+  {
+    "requirement_id": "R048",
+    "chapter": "4. 31 省新能源汽车产业与市场基线",
+    "requirement": "汽车保有量。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "31省2024官方统计",
+    "source_or_method": "S012/S013",
+    "decision_reason": "31省2024官方统计"
+  },
+  {
+    "requirement_id": "R049",
+    "chapter": "4. 31 省新能源汽车产业与市场基线",
+    "requirement": "燃油车保有量。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "省级统一公开口径不可得；表内保留字段和候选来源",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "省级统一公开口径不可得；表内保留字段和候选来源"
+  },
+  {
+    "requirement_id": "R050",
+    "chapter": "4. 31 省新能源汽车产业与市场基线",
+    "requirement": "新车注册量。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "31省2024官方统计",
+    "source_or_method": "S012/S013",
+    "decision_reason": "31省2024官方统计"
+  },
+  {
+    "requirement_id": "R051",
+    "chapter": "4. 31 省新能源汽车产业与市场基线",
+    "requirement": "汽车消费规模。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "省级统一公开口径不可得；表内保留字段和候选来源",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "省级统一公开口径不可得；表内保留字段和候选来源"
+  },
+  {
+    "requirement_id": "R052",
+    "chapter": "4. 31 省新能源汽车产业与市场基线",
+    "requirement": "汽车以旧换新申请或执行数据。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "省级统一公开口径不可得；表内保留字段和候选来源",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "省级统一公开口径不可得；表内保留字段和候选来源"
+  },
+  {
+    "requirement_id": "R053",
+    "chapter": "4. 31 省新能源汽车产业与市场基线",
+    "requirement": "充电桩总量。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "省级统一公开口径不可得；表内保留字段和候选来源",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "省级统一公开口径不可得；表内保留字段和候选来源"
+  },
+  {
+    "requirement_id": "R054",
+    "chapter": "4. 31 省新能源汽车产业与市场基线",
+    "requirement": "公共充电桩数量。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "省级统一公开口径不可得；表内保留字段和候选来源",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "省级统一公开口径不可得；表内保留字段和候选来源"
+  },
+  {
+    "requirement_id": "R055",
+    "chapter": "4. 31 省新能源汽车产业与市场基线",
+    "requirement": "车桩比。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "省级统一公开口径不可得；表内保留字段和候选来源",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "省级统一公开口径不可得；表内保留字段和候选来源"
+  },
+  {
+    "requirement_id": "R056",
+    "chapter": "4. 31 省新能源汽车产业与市场基线",
+    "requirement": "高速公路和城市充电覆盖。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "省级统一公开口径不可得；表内保留字段和候选来源",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "省级统一公开口径不可得；表内保留字段和候选来源"
+  },
+  {
+    "requirement_id": "R057",
+    "chapter": "4. 31 省新能源汽车产业与市场基线",
+    "requirement": "换电站数量。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "省级统一公开口径不可得；表内保留字段和候选来源",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "省级统一公开口径不可得；表内保留字段和候选来源"
+  },
+  {
+    "requirement_id": "R058",
+    "chapter": "4. 31 省新能源汽车产业与市场基线",
+    "requirement": "整车制造基地及产能口径。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "关键节点和高校人才代理已整理；非穷尽清单",
+    "source_or_method": "S019/06_产业节点",
+    "decision_reason": "关键节点和高校人才代理已整理；非穷尽清单"
+  },
+  {
+    "requirement_id": "R059",
+    "chapter": "4. 31 省新能源汽车产业与市场基线",
+    "requirement": "汽车零部件产业规模。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "省级统一公开口径不可得；表内保留字段和候选来源",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "省级统一公开口径不可得；表内保留字段和候选来源"
+  },
+  {
+    "requirement_id": "R060",
+    "chapter": "4. 31 省新能源汽车产业与市场基线",
+    "requirement": "动力电池及材料产业规模。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "省级统一公开口径不可得；表内保留字段和候选来源",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "省级统一公开口径不可得；表内保留字段和候选来源"
+  },
+  {
+    "requirement_id": "R061",
+    "chapter": "4. 31 省新能源汽车产业与市场基线",
+    "requirement": "新能源汽车研发机构、实验室和测试平台。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "关键节点和高校人才代理已整理；非穷尽清单",
+    "source_or_method": "S019/06_产业节点",
+    "decision_reason": "关键节点和高校人才代理已整理；非穷尽清单"
+  },
+  {
+    "requirement_id": "R062",
+    "chapter": "4. 31 省新能源汽车产业与市场基线",
+    "requirement": "新能源汽车相关人才和高校科研基础。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "关键节点和高校人才代理已整理；非穷尽清单",
+    "source_or_method": "S019/06_产业节点",
+    "decision_reason": "关键节点和高校人才代理已整理；非穷尽清单"
+  },
+  {
+    "requirement_id": "R063",
+    "chapter": "5. 省级历史政策行为",
+    "requirement": "新能源汽车消费补贴政策。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "收录国家政策和若干省级样本；未完成31省过去3-5年逐条执行记录",
+    "source_or_method": "S024-S048",
+    "decision_reason": "收录国家政策和若干省级样本；未完成31省过去3-5年逐条执行记录"
+  },
+  {
+    "requirement_id": "R064",
+    "chapter": "5. 省级历史政策行为",
+    "requirement": "汽车以旧换新政策。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "收录国家政策和若干省级样本；未完成31省过去3-5年逐条执行记录",
+    "source_or_method": "S024-S048",
+    "decision_reason": "收录国家政策和若干省级样本；未完成31省过去3-5年逐条执行记录"
+  },
+  {
+    "requirement_id": "R065",
+    "chapter": "5. 省级历史政策行为",
+    "requirement": "购车、置换、报废和消费券政策。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "收录国家政策和若干省级样本；未完成31省过去3-5年逐条执行记录",
+    "source_or_method": "S024-S048",
+    "decision_reason": "收录国家政策和若干省级样本；未完成31省过去3-5年逐条执行记录"
+  },
+  {
+    "requirement_id": "R066",
+    "chapter": "5. 省级历史政策行为",
+    "requirement": "建厂和产业招商支持政策。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "收录国家政策和若干省级样本；未完成31省过去3-5年逐条执行记录",
+    "source_or_method": "S024-S048",
+    "decision_reason": "收录国家政策和若干省级样本；未完成31省过去3-5年逐条执行记录"
+  },
+  {
+    "requirement_id": "R067",
+    "chapter": "5. 省级历史政策行为",
+    "requirement": "固定资产投资支持政策。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "收录国家政策和若干省级样本；未完成31省过去3-5年逐条执行记录",
+    "source_or_method": "S024-S048",
+    "decision_reason": "收录国家政策和若干省级样本；未完成31省过去3-5年逐条执行记录"
+  },
+  {
+    "requirement_id": "R068",
+    "chapter": "5. 省级历史政策行为",
+    "requirement": "技术改造支持政策。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "收录国家政策和若干省级样本；未完成31省过去3-5年逐条执行记录",
+    "source_or_method": "S024-S048",
+    "decision_reason": "收录国家政策和若干省级样本；未完成31省过去3-5年逐条执行记录"
+  },
+  {
+    "requirement_id": "R069",
+    "chapter": "5. 省级历史政策行为",
+    "requirement": "研发、创新平台和首台套支持政策。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "收录国家政策和若干省级样本；未完成31省过去3-5年逐条执行记录",
+    "source_or_method": "S024-S048",
+    "decision_reason": "收录国家政策和若干省级样本；未完成31省过去3-5年逐条执行记录"
+  },
+  {
+    "requirement_id": "R070",
+    "chapter": "5. 省级历史政策行为",
+    "requirement": "人才引进和人才补贴政策。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "收录国家政策和若干省级样本；未完成31省过去3-5年逐条执行记录",
+    "source_or_method": "S024-S048",
+    "decision_reason": "收录国家政策和若干省级样本；未完成31省过去3-5年逐条执行记录"
+  },
+  {
+    "requirement_id": "R071",
+    "chapter": "5. 省级历史政策行为",
+    "requirement": "土地、厂房、能源、物流和运营成本支持政策。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "收录国家政策和若干省级样本；未完成31省过去3-5年逐条执行记录",
+    "source_or_method": "S024-S048",
+    "decision_reason": "收录国家政策和若干省级样本；未完成31省过去3-5年逐条执行记录"
+  },
+  {
+    "requirement_id": "R072",
+    "chapter": "5. 省级历史政策行为",
+    "requirement": "充电与换电基础设施支持政策。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "收录国家政策和若干省级样本；未完成31省过去3-5年逐条执行记录",
+    "source_or_method": "S024-S048",
+    "decision_reason": "收录国家政策和若干省级样本；未完成31省过去3-5年逐条执行记录"
+  },
+  {
+    "requirement_id": "R073",
+    "chapter": "5. 省级历史政策行为",
+    "requirement": "智能网联汽车和自动驾驶支持政策。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "收录国家政策和若干省级样本；未完成31省过去3-5年逐条执行记录",
+    "source_or_method": "S024-S048",
+    "decision_reason": "收录国家政策和若干省级样本；未完成31省过去3-5年逐条执行记录"
+  },
+  {
+    "requirement_id": "R074",
+    "chapter": "5. 省级历史政策行为",
+    "requirement": "补贴工具组合及各工具占比。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "预算执行与审批速度多未按省公开结构化披露",
+    "source_or_method": "S024-S048",
+    "decision_reason": "预算执行与审批速度多未按省公开结构化披露"
+  },
+  {
+    "requirement_id": "R075",
+    "chapter": "5. 省级历史政策行为",
+    "requirement": "政策发布时间和生效时间。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "收录国家政策和若干省级样本；未完成31省过去3-5年逐条执行记录",
+    "source_or_method": "S024-S048",
+    "decision_reason": "收录国家政策和若干省级样本；未完成31省过去3-5年逐条执行记录"
+  },
+  {
+    "requirement_id": "R076",
+    "chapter": "5. 省级历史政策行为",
+    "requirement": "政策持续期。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "收录国家政策和若干省级样本；未完成31省过去3-5年逐条执行记录",
+    "source_or_method": "S024-S048",
+    "decision_reason": "收录国家政策和若干省级样本；未完成31省过去3-5年逐条执行记录"
+  },
+  {
+    "requirement_id": "R077",
+    "chapter": "5. 省级历史政策行为",
+    "requirement": "申报、审批和资金拨付速度。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "预算执行与审批速度多未按省公开结构化披露",
+    "source_or_method": "S024-S048",
+    "decision_reason": "预算执行与审批速度多未按省公开结构化披露"
+  },
+  {
+    "requirement_id": "R078",
+    "chapter": "5. 省级历史政策行为",
+    "requirement": "政策覆盖对象和资格条件。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "收录国家政策和若干省级样本；未完成31省过去3-5年逐条执行记录",
+    "source_or_method": "S024-S048",
+    "decision_reason": "收录国家政策和若干省级样本；未完成31省过去3-5年逐条执行记录"
+  },
+  {
+    "requirement_id": "R079",
+    "chapter": "5. 省级历史政策行为",
+    "requirement": "政策预算、实际执行和完成情况。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "预算执行与审批速度多未按省公开结构化披露",
+    "source_or_method": "S024-S048",
+    "decision_reason": "预算执行与审批速度多未按省公开结构化披露"
+  },
+  {
+    "requirement_id": "R080",
+    "chapter": "5. 省级历史政策行为",
+    "requirement": "面对中央补贴或分担政策变化时的省级响应。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "预算执行与审批速度多未按省公开结构化披露",
+    "source_or_method": "S024-S048",
+    "decision_reason": "预算执行与审批速度多未按省公开结构化披露"
+  },
+  {
+    "requirement_id": "R081",
+    "chapter": "5. 省级历史政策行为",
+    "requirement": "省级新能源汽车产业规划。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "收录国家政策和若干省级样本；未完成31省过去3-5年逐条执行记录",
+    "source_or_method": "S024-S048",
+    "decision_reason": "收录国家政策和若干省级样本；未完成31省过去3-5年逐条执行记录"
+  },
+  {
+    "requirement_id": "R082",
+    "chapter": "5. 省级历史政策行为",
+    "requirement": "省级智能网联汽车产业规划。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "收录国家政策和若干省级样本；未完成31省过去3-5年逐条执行记录",
+    "source_or_method": "S024-S048",
+    "decision_reason": "收录国家政策和若干省级样本；未完成31省过去3-5年逐条执行记录"
+  },
+  {
+    "requirement_id": "R083",
+    "chapter": "5. 省级历史政策行为",
+    "requirement": "省级先进制造业和战略性新兴产业规划。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "收录国家政策和若干省级样本；未完成31省过去3-5年逐条执行记录",
+    "source_or_method": "S024-S048",
+    "decision_reason": "收录国家政策和若干省级样本；未完成31省过去3-5年逐条执行记录"
+  },
+  {
+    "requirement_id": "R084",
+    "chapter": "5. 省级历史政策行为",
+    "requirement": "省级产业准入、能耗、环保和空间规划约束。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "收录国家政策和若干省级样本；未完成31省过去3-5年逐条执行记录",
+    "source_or_method": "S024-S048",
+    "decision_reason": "收录国家政策和若干省级样本；未完成31省过去3-5年逐条执行记录"
+  },
+  {
+    "requirement_id": "R085",
+    "chapter": "6. 真实电池与整车产业节点",
+    "requirement": "节点名称。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "整理关键节点；坐标为城市中心点，不是厂门点；非穷尽",
+    "source_or_method": "S032-S052",
+    "decision_reason": "整理关键节点；坐标为城市中心点，不是厂门点；非穷尽"
+  },
+  {
+    "requirement_id": "R086",
+    "chapter": "6. 真实电池与整车产业节点",
+    "requirement": "所在省份和城市。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "整理关键节点；坐标为城市中心点，不是厂门点；非穷尽",
+    "source_or_method": "S032-S052",
+    "decision_reason": "整理关键节点；坐标为城市中心点，不是厂门点；非穷尽"
+  },
+  {
+    "requirement_id": "R087",
+    "chapter": "6. 真实电池与整车产业节点",
+    "requirement": "经度和纬度。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "整理关键节点；坐标为城市中心点，不是厂门点；非穷尽",
+    "source_or_method": "S032-S052",
+    "decision_reason": "整理关键节点；坐标为城市中心点，不是厂门点；非穷尽"
+  },
+  {
+    "requirement_id": "R088",
+    "chapter": "6. 真实电池与整车产业节点",
+    "requirement": "主体名称。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "整理关键节点；坐标为城市中心点，不是厂门点；非穷尽",
+    "source_or_method": "S032-S052",
+    "decision_reason": "整理关键节点；坐标为城市中心点，不是厂门点；非穷尽"
+  },
+  {
+    "requirement_id": "R089",
+    "chapter": "6. 真实电池与整车产业节点",
+    "requirement": "主体口径：集团、上市主体、子公司或生产基地。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "整理关键节点；坐标为城市中心点，不是厂门点；非穷尽",
+    "source_or_method": "S032-S052",
+    "decision_reason": "整理关键节点；坐标为城市中心点，不是厂门点；非穷尽"
+  },
+  {
+    "requirement_id": "R090",
+    "chapter": "6. 真实电池与整车产业节点",
+    "requirement": "节点类型：电池材料、电芯、电池系统、零部件、整车、研发或测试。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "整理关键节点；坐标为城市中心点，不是厂门点；非穷尽",
+    "source_or_method": "S032-S052",
+    "decision_reason": "整理关键节点；坐标为城市中心点，不是厂门点；非穷尽"
+  },
+  {
+    "requirement_id": "R091",
+    "chapter": "6. 真实电池与整车产业节点",
+    "requirement": "主要产品和技术路线。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "整理关键节点；坐标为城市中心点，不是厂门点；非穷尽",
+    "source_or_method": "S032-S052",
+    "decision_reason": "整理关键节点；坐标为城市中心点，不是厂门点；非穷尽"
+  },
+  {
+    "requirement_id": "R092",
+    "chapter": "6. 真实电池与整车产业节点",
+    "requirement": "设计产能或能力代理。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "需要逐项目环评、备案、年报或工厂公告",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "需要逐项目环评、备案、年报或工厂公告"
+  },
+  {
+    "requirement_id": "R093",
+    "chapter": "6. 真实电池与整车产业节点",
+    "requirement": "实际产能或利用情况（如可得）。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "需要逐项目环评、备案、年报或工厂公告",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "需要逐项目环评、备案、年报或工厂公告"
+  },
+  {
+    "requirement_id": "R094",
+    "chapter": "6. 真实电池与整车产业节点",
+    "requirement": "投产年份。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "需要逐项目环评、备案、年报或工厂公告",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "需要逐项目环评、备案、年报或工厂公告"
+  },
+  {
+    "requirement_id": "R095",
+    "chapter": "6. 真实电池与整车产业节点",
+    "requirement": "当前状态。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "整理关键节点；坐标为城市中心点，不是厂门点；非穷尽",
+    "source_or_method": "S032-S052",
+    "decision_reason": "整理关键节点；坐标为城市中心点，不是厂门点；非穷尽"
+  },
+  {
+    "requirement_id": "R096",
+    "chapter": "6. 真实电池与整车产业节点",
+    "requirement": "数据年份和来源。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "整理关键节点；坐标为城市中心点，不是厂门点；非穷尽",
+    "source_or_method": "S032-S052",
+    "decision_reason": "整理关键节点；坐标为城市中心点，不是厂门点；非穷尽"
+  },
+  {
+    "requirement_id": "R097",
+    "chapter": "6. 真实电池与整车产业节点",
+    "requirement": "省份到节点的真实地理距离矩阵。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "已构造省会—节点城市中心大圆距离矩阵",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "已构造省会—节点城市中心大圆距离矩阵"
+  },
+  {
+    "requirement_id": "R098",
+    "chapter": "6. 真实电池与整车产业节点",
+    "requirement": "省份到节点的公路或铁路物流距离/时间矩阵。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "公路/铁路时距和真实物流通道需地图/物流数据源",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "公路/铁路时距和真实物流通道需地图/物流数据源"
+  },
+  {
+    "requirement_id": "R099",
+    "chapter": "6. 真实电池与整车产业节点",
+    "requirement": "主要电池材料—电池—零部件—整车物流通道。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "公路/铁路时距和真实物流通道需地图/物流数据源",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "公路/铁路时距和真实物流通道需地图/物流数据源"
+  },
+  {
+    "requirement_id": "R100",
+    "chapter": "7. 省际产业链关系",
+    "requirement": "电池材料供应关系。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "关系框架已构造；真实交易量、合同和协议仍需逐条证据",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "关系框架已构造；真实交易量、合同和协议仍需逐条证据"
+  },
+  {
+    "requirement_id": "R101",
+    "chapter": "7. 省际产业链关系",
+    "requirement": "电芯和电池系统供应关系。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "关系框架已构造；真实交易量、合同和协议仍需逐条证据",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "关系框架已构造；真实交易量、合同和协议仍需逐条证据"
+  },
+  {
+    "requirement_id": "R102",
+    "chapter": "7. 省际产业链关系",
+    "requirement": "汽车零部件供应关系。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "关系框架已构造；真实交易量、合同和协议仍需逐条证据",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "关系框架已构造；真实交易量、合同和协议仍需逐条证据"
+  },
+  {
+    "requirement_id": "R103",
+    "chapter": "7. 省际产业链关系",
+    "requirement": "整车生产协作关系。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "关系框架已构造；真实交易量、合同和协议仍需逐条证据",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "关系框架已构造；真实交易量、合同和协议仍需逐条证据"
+  },
+  {
+    "requirement_id": "R104",
+    "chapter": "7. 省际产业链关系",
+    "requirement": "研发、软件、芯片和智驾技术协作关系。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "关系框架已构造；真实交易量、合同和协议仍需逐条证据",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "关系框架已构造；真实交易量、合同和协议仍需逐条证据"
+  },
+  {
+    "requirement_id": "R105",
+    "chapter": "7. 省际产业链关系",
+    "requirement": "测试道路、示范区和检测认证协作关系。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "关系框架已构造；真实交易量、合同和协议仍需逐条证据",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "关系框架已构造；真实交易量、合同和协议仍需逐条证据"
+  },
+  {
+    "requirement_id": "R106",
+    "chapter": "7. 省际产业链关系",
+    "requirement": "跨省产业园区和产业联盟。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "关系框架已构造；真实交易量、合同和协议仍需逐条证据",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "关系框架已构造；真实交易量、合同和协议仍需逐条证据"
+  },
+  {
+    "requirement_id": "R107",
+    "chapter": "7. 省际产业链关系",
+    "requirement": "跨省招商竞争关系。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "关系框架已构造；真实交易量、合同和协议仍需逐条证据",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "关系框架已构造；真实交易量、合同和协议仍需逐条证据"
+  },
+  {
+    "requirement_id": "R108",
+    "chapter": "7. 省际产业链关系",
+    "requirement": "跨省产业转移和承接关系。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "关系框架已构造；真实交易量、合同和协议仍需逐条证据",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "关系框架已构造；真实交易量、合同和协议仍需逐条证据"
+  },
+  {
+    "requirement_id": "R109",
+    "chapter": "7. 省际产业链关系",
+    "requirement": "货运、港口、铁路和高速物流联系。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "关系框架已构造；真实交易量、合同和协议仍需逐条证据",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "关系框架已构造；真实交易量、合同和协议仍需逐条证据"
+  },
+  {
+    "requirement_id": "R110",
+    "chapter": "7. 省际产业链关系",
+    "requirement": "已公开的跨省合作协议。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "关系框架已构造；真实交易量、合同和协议仍需逐条证据",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "关系框架已构造；真实交易量、合同和协议仍需逐条证据"
+  },
+  {
+    "requirement_id": "R111",
+    "chapter": "7. 省际产业链关系",
+    "requirement": "关系方向、强度、年份和来源。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "用统一统计特征、产业角色和距离透明生成三类peer",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "用统一统计特征、产业角色和距离透明生成三类peer"
+  },
+  {
+    "requirement_id": "R112",
+    "chapter": "7. 省际产业链关系",
+    "requirement": "`observation_peer`：可观察和跟随的省份。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "用统一统计特征、产业角色和距离透明生成三类peer",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "用统一统计特征、产业角色和距离透明生成三类peer"
+  },
+  {
+    "requirement_id": "R113",
+    "chapter": "7. 省际产业链关系",
+    "requirement": "`competition_peer`：存在同质产业竞争的省份。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "用统一统计特征、产业角色和距离透明生成三类peer",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "用统一统计特征、产业角色和距离透明生成三类peer"
+  },
+  {
+    "requirement_id": "R114",
+    "chapter": "7. 省际产业链关系",
+    "requirement": "`coordination_peer`：具备产业链互补和协作资格的省份。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "用统一统计特征、产业角色和距离透明生成三类peer",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "用统一统计特征、产业角色和距离透明生成三类peer"
+  },
+  {
+    "requirement_id": "R115",
+    "chapter": "8. V3.1 事件敏感度",
+    "requirement": "智能网联汽车示范区和先行区。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "提供可追溯组件与公式化敏感度代理；不等同官方评级",
+    "source_or_method": "S001-S021/S030-S031",
+    "decision_reason": "提供可追溯组件与公式化敏感度代理；不等同官方评级"
+  },
+  {
+    "requirement_id": "R116",
+    "chapter": "8. V3.1 事件敏感度",
+    "requirement": "自动驾驶测试道路里程。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "需逐省法规、交通、能源和监管专项数据",
+    "source_or_method": "S001-S021/S030-S031",
+    "decision_reason": "需逐省法规、交通、能源和监管专项数据"
+  },
+  {
+    "requirement_id": "R117",
+    "chapter": "8. V3.1 事件敏感度",
+    "requirement": "测试牌照和测试主体数量。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "需逐省法规、交通、能源和监管专项数据",
+    "source_or_method": "S001-S021/S030-S031",
+    "decision_reason": "需逐省法规、交通、能源和监管专项数据"
+  },
+  {
+    "requirement_id": "R118",
+    "chapter": "8. V3.1 事件敏感度",
+    "requirement": "车路云、路侧设施和高精地图基础。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "需逐省法规、交通、能源和监管专项数据",
+    "source_or_method": "S001-S021/S030-S031",
+    "decision_reason": "需逐省法规、交通、能源和监管专项数据"
+  },
+  {
+    "requirement_id": "R119",
+    "chapter": "8. V3.1 事件敏感度",
+    "requirement": "汽车软件、芯片、传感器和算法产业基础。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "提供可追溯组件与公式化敏感度代理；不等同官方评级",
+    "source_or_method": "S001-S021/S030-S031",
+    "decision_reason": "提供可追溯组件与公式化敏感度代理；不等同官方评级"
+  },
+  {
+    "requirement_id": "R120",
+    "chapter": "8. V3.1 事件敏感度",
+    "requirement": "智驾相关研发投入、专利、实验室和人才。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "提供可追溯组件与公式化敏感度代理；不等同官方评级",
+    "source_or_method": "S001-S021/S030-S031",
+    "decision_reason": "提供可追溯组件与公式化敏感度代理；不等同官方评级"
+  },
+  {
+    "requirement_id": "R121",
+    "chapter": "8. V3.1 事件敏感度",
+    "requirement": "地方智驾产业规划和支持政策。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "提供可追溯组件与公式化敏感度代理；不等同官方评级",
+    "source_or_method": "S001-S021/S030-S031",
+    "decision_reason": "提供可追溯组件与公式化敏感度代理；不等同官方评级"
+  },
+  {
+    "requirement_id": "R122",
+    "chapter": "8. V3.1 事件敏感度",
+    "requirement": "智能网联汽车道路测试管理办法。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "提供可追溯组件与公式化敏感度代理；不等同官方评级",
+    "source_or_method": "S001-S021/S030-S031",
+    "decision_reason": "提供可追溯组件与公式化敏感度代理；不等同官方评级"
+  },
+  {
+    "requirement_id": "R123",
+    "chapter": "8. V3.1 事件敏感度",
+    "requirement": "L3/L4 测试、准入和示范运营政策。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "提供可追溯组件与公式化敏感度代理；不等同官方评级",
+    "source_or_method": "S001-S021/S030-S031",
+    "decision_reason": "提供可追溯组件与公式化敏感度代理；不等同官方评级"
+  },
+  {
+    "requirement_id": "R124",
+    "chapter": "8. V3.1 事件敏感度",
+    "requirement": "测试道路开放范围。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "提供可追溯组件与公式化敏感度代理；不等同官方评级",
+    "source_or_method": "S001-S021/S030-S031",
+    "decision_reason": "提供可追溯组件与公式化敏感度代理；不等同官方评级"
+  },
+  {
+    "requirement_id": "R125",
+    "chapter": "8. V3.1 事件敏感度",
+    "requirement": "事故责任和保险配套规则。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "需逐省法规、交通、能源和监管专项数据",
+    "source_or_method": "S001-S021/S030-S031",
+    "decision_reason": "需逐省法规、交通、能源和监管专项数据"
+  },
+  {
+    "requirement_id": "R126",
+    "chapter": "8. V3.1 事件敏感度",
+    "requirement": "数据安全、数据出境和本地存储要求。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "需逐省法规、交通、能源和监管专项数据",
+    "source_or_method": "S001-S021/S030-S031",
+    "decision_reason": "需逐省法规、交通、能源和监管专项数据"
+  },
+  {
+    "requirement_id": "R127",
+    "chapter": "8. V3.1 事件敏感度",
+    "requirement": "软件更新、备案和召回要求。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "需逐省法规、交通、能源和监管专项数据",
+    "source_or_method": "S001-S021/S030-S031",
+    "decision_reason": "需逐省法规、交通、能源和监管专项数据"
+  },
+  {
+    "requirement_id": "R128",
+    "chapter": "8. V3.1 事件敏感度",
+    "requirement": "监管、检测、认证和事故处置能力。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "提供可追溯组件与公式化敏感度代理；不等同官方评级",
+    "source_or_method": "S001-S021/S030-S031",
+    "decision_reason": "提供可追溯组件与公式化敏感度代理；不等同官方评级"
+  },
+  {
+    "requirement_id": "R129",
+    "chapter": "8. V3.1 事件敏感度",
+    "requirement": "法规发布时间、执行期和覆盖范围。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "提供可追溯组件与公式化敏感度代理；不等同官方评级",
+    "source_or_method": "S001-S021/S030-S031",
+    "decision_reason": "提供可追溯组件与公式化敏感度代理；不等同官方评级"
+  },
+  {
+    "requirement_id": "R130",
+    "chapter": "8. V3.1 事件敏感度",
+    "requirement": "燃油车保有量和占比。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "提供可追溯组件与公式化敏感度代理；不等同官方评级",
+    "source_or_method": "S001-S021/S030-S031",
+    "decision_reason": "提供可追溯组件与公式化敏感度代理；不等同官方评级"
+  },
+  {
+    "requirement_id": "R131",
+    "chapter": "8. V3.1 事件敏感度",
+    "requirement": "新能源汽车渗透率。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "提供可追溯组件与公式化敏感度代理；不等同官方评级",
+    "source_or_method": "S001-S021/S030-S031",
+    "decision_reason": "提供可追溯组件与公式化敏感度代理；不等同官方评级"
+  },
+  {
+    "requirement_id": "R132",
+    "chapter": "8. V3.1 事件敏感度",
+    "requirement": "居民汽车使用和通勤距离。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "提供可追溯组件与公式化敏感度代理；不等同官方评级",
+    "source_or_method": "S001-S021/S030-S031",
+    "decision_reason": "提供可追溯组件与公式化敏感度代理；不等同官方评级"
+  },
+  {
+    "requirement_id": "R133",
+    "chapter": "8. V3.1 事件敏感度",
+    "requirement": "城乡道路出行结构。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "提供可追溯组件与公式化敏感度代理；不等同官方评级",
+    "source_or_method": "S001-S021/S030-S031",
+    "decision_reason": "提供可追溯组件与公式化敏感度代理；不等同官方评级"
+  },
+  {
+    "requirement_id": "R134",
+    "chapter": "8. V3.1 事件敏感度",
+    "requirement": "公共交通分担率。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "提供可追溯组件与公式化敏感度代理；不等同官方评级",
+    "source_or_method": "S001-S021/S030-S031",
+    "decision_reason": "提供可追溯组件与公式化敏感度代理；不等同官方评级"
+  },
+  {
+    "requirement_id": "R135",
+    "chapter": "8. V3.1 事件敏感度",
+    "requirement": "居民燃油消费支出。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "需逐省法规、交通、能源和监管专项数据",
+    "source_or_method": "S001-S021/S030-S031",
+    "decision_reason": "需逐省法规、交通、能源和监管专项数据"
+  },
+  {
+    "requirement_id": "R136",
+    "chapter": "8. V3.1 事件敏感度",
+    "requirement": "居民收入和汽车使用成本负担。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "提供可追溯组件与公式化敏感度代理；不等同官方评级",
+    "source_or_method": "S001-S021/S030-S031",
+    "decision_reason": "提供可追溯组件与公式化敏感度代理；不等同官方评级"
+  },
+  {
+    "requirement_id": "R137",
+    "chapter": "8. V3.1 事件敏感度",
+    "requirement": "汽油零售价格及历史变化。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "需逐省法规、交通、能源和监管专项数据",
+    "source_or_method": "S001-S021/S030-S031",
+    "decision_reason": "需逐省法规、交通、能源和监管专项数据"
+  },
+  {
+    "requirement_id": "R138",
+    "chapter": "8. V3.1 事件敏感度",
+    "requirement": "省级电价、充电服务费和充电便利度。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "需逐省法规、交通、能源和监管专项数据",
+    "source_or_method": "S001-S021/S030-S031",
+    "decision_reason": "需逐省法规、交通、能源和监管专项数据"
+  },
+  {
+    "requirement_id": "R139",
+    "chapter": "8. V3.1 事件敏感度",
+    "requirement": "各省在电池材料、电池、零部件、整车、研发和测试环节的分工。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "提供可追溯组件与公式化敏感度代理；不等同官方评级",
+    "source_or_method": "S001-S021/S030-S031",
+    "decision_reason": "提供可追溯组件与公式化敏感度代理；不等同官方评级"
+  },
+  {
+    "requirement_id": "R140",
+    "chapter": "8. V3.1 事件敏感度",
+    "requirement": "上下游供需关系。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "提供可追溯组件与公式化敏感度代理；不等同官方评级",
+    "source_or_method": "S001-S021/S030-S031",
+    "decision_reason": "提供可追溯组件与公式化敏感度代理；不等同官方评级"
+  },
+  {
+    "requirement_id": "R141",
+    "chapter": "8. V3.1 事件敏感度",
+    "requirement": "产业结构重合度。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "提供可追溯组件与公式化敏感度代理；不等同官方评级",
+    "source_or_method": "S001-S021/S030-S031",
+    "decision_reason": "提供可追溯组件与公式化敏感度代理；不等同官方评级"
+  },
+  {
+    "requirement_id": "R142",
+    "chapter": "8. V3.1 事件敏感度",
+    "requirement": "产业结构互补度。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "提供可追溯组件与公式化敏感度代理；不等同官方评级",
+    "source_or_method": "S001-S021/S030-S031",
+    "decision_reason": "提供可追溯组件与公式化敏感度代理；不等同官方评级"
+  },
+  {
+    "requirement_id": "R143",
+    "chapter": "8. V3.1 事件敏感度",
+    "requirement": "地理和物流可达性。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "提供可追溯组件与公式化敏感度代理；不等同官方评级",
+    "source_or_method": "S001-S021/S030-S031",
+    "decision_reason": "提供可追溯组件与公式化敏感度代理；不等同官方评级"
+  },
+  {
+    "requirement_id": "R144",
+    "chapter": "8. V3.1 事件敏感度",
+    "requirement": "跨省供应链交易或公开合作事实。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "提供可追溯组件与公式化敏感度代理；不等同官方评级",
+    "source_or_method": "S001-S021/S030-S031",
+    "decision_reason": "提供可追溯组件与公式化敏感度代理；不等同官方评级"
+  },
+  {
+    "requirement_id": "R145",
+    "chapter": "8. V3.1 事件敏感度",
+    "requirement": "协作关系的持续时间和稳定性。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "提供可追溯组件与公式化敏感度代理；不等同官方评级",
+    "source_or_method": "S001-S021/S030-S031",
+    "decision_reason": "提供可追溯组件与公式化敏感度代理；不等同官方评级"
+  },
+  {
+    "requirement_id": "R146",
+    "chapter": "9. 10 家车企真实冻结基线",
+    "requirement": "主体口径：集团、品牌、上市主体和合资公司关系。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "已保留字段与证据说明",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "已保留字段与证据说明"
+  },
+  {
+    "requirement_id": "R147",
+    "chapter": "9. 10 家车企真实冻结基线",
+    "requirement": "2025 年销量。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "官方披露可得字段已录入；口径差异已单列",
+    "source_or_method": "S032-S041",
+    "decision_reason": "官方披露可得字段已录入；口径差异已单列"
+  },
+  {
+    "requirement_id": "R148",
+    "chapter": "9. 10 家车企真实冻结基线",
+    "requirement": "新能源汽车销量和增速。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "官方披露可得字段已录入；口径差异已单列",
+    "source_or_method": "S032-S041",
+    "decision_reason": "官方披露可得字段已录入；口径差异已单列"
+  },
+  {
+    "requirement_id": "R149",
+    "chapter": "9. 10 家车企真实冻结基线",
+    "requirement": "主要车型和价格带。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "官方披露可得字段已录入；口径差异已单列",
+    "source_or_method": "S032-S041",
+    "decision_reason": "官方披露可得字段已录入；口径差异已单列"
+  },
+  {
+    "requirement_id": "R150",
+    "chapter": "9. 10 家车企真实冻结基线",
+    "requirement": "纯电、插混、增程等技术路线占比。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "官方披露可得字段已录入；口径差异已单列",
+    "source_or_method": "S032-S041",
+    "decision_reason": "官方披露可得字段已录入；口径差异已单列"
+  },
+  {
+    "requirement_id": "R151",
+    "chapter": "9. 10 家车企真实冻结基线",
+    "requirement": "营业收入。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "官方披露可得字段已录入；口径差异已单列",
+    "source_or_method": "S032-S041",
+    "decision_reason": "官方披露可得字段已录入；口径差异已单列"
+  },
+  {
+    "requirement_id": "R152",
+    "chapter": "9. 10 家车企真实冻结基线",
+    "requirement": "毛利率或盈利代理。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "官方披露可得字段已录入；口径差异已单列",
+    "source_or_method": "S032-S041",
+    "decision_reason": "官方披露可得字段已录入；口径差异已单列"
+  },
+  {
+    "requirement_id": "R153",
+    "chapter": "9. 10 家车企真实冻结基线",
+    "requirement": "净利润或亏损情况。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "官方披露可得字段已录入；口径差异已单列",
+    "source_or_method": "S032-S041",
+    "decision_reason": "官方披露可得字段已录入；口径差异已单列"
+  },
+  {
+    "requirement_id": "R154",
+    "chapter": "9. 10 家车企真实冻结基线",
+    "requirement": "经营现金流。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "官方披露可得字段已录入；口径差异已单列",
+    "source_or_method": "S032-S041",
+    "decision_reason": "官方披露可得字段已录入；口径差异已单列"
+  },
+  {
+    "requirement_id": "R155",
+    "chapter": "9. 10 家车企真实冻结基线",
+    "requirement": "现金及现金等价物。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "官方披露可得字段已录入；口径差异已单列",
+    "source_or_method": "S032-S041",
+    "decision_reason": "官方披露可得字段已录入；口径差异已单列"
+  },
+  {
+    "requirement_id": "R156",
+    "chapter": "9. 10 家车企真实冻结基线",
+    "requirement": "流动性和融资约束。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "已保留字段与证据说明",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "已保留字段与证据说明"
+  },
+  {
+    "requirement_id": "R157",
+    "chapter": "9. 10 家车企真实冻结基线",
+    "requirement": "设计产能和产能利用情况。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "省级/厂区级统一公开数据不足",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "省级/厂区级统一公开数据不足"
+  },
+  {
+    "requirement_id": "R158",
+    "chapter": "9. 10 家车企真实冻结基线",
+    "requirement": "生产基地及所在省份。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "官方披露可得字段已录入；口径差异已单列",
+    "source_or_method": "S032-S041",
+    "decision_reason": "官方披露可得字段已录入；口径差异已单列"
+  },
+  {
+    "requirement_id": "R159",
+    "chapter": "9. 10 家车企真实冻结基线",
+    "requirement": "电池和关键零部件供应关系。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "省级/厂区级统一公开数据不足",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "省级/厂区级统一公开数据不足"
+  },
+  {
+    "requirement_id": "R160",
+    "chapter": "9. 10 家车企真实冻结基线",
+    "requirement": "研发投入和研发强度。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "官方披露可得字段已录入；口径差异已单列",
+    "source_or_method": "S032-S041",
+    "decision_reason": "官方披露可得字段已录入；口径差异已单列"
+  },
+  {
+    "requirement_id": "R161",
+    "chapter": "9. 10 家车企真实冻结基线",
+    "requirement": "智驾技术路线和部署阶段。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "官方披露可得字段已录入；口径差异已单列",
+    "source_or_method": "S032-S041",
+    "decision_reason": "官方披露可得字段已录入；口径差异已单列"
+  },
+  {
+    "requirement_id": "R162",
+    "chapter": "9. 10 家车企真实冻结基线",
+    "requirement": "全国门店、服务网点和渠道数量。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "官方披露可得字段已录入；口径差异已单列",
+    "source_or_method": "S032-S041",
+    "decision_reason": "官方披露可得字段已录入；口径差异已单列"
+  },
+  {
+    "requirement_id": "R163",
+    "chapter": "9. 10 家车企真实冻结基线",
+    "requirement": "31 省渠道覆盖。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "省级/厂区级统一公开数据不足",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "省级/厂区级统一公开数据不足"
+  },
+  {
+    "requirement_id": "R164",
+    "chapter": "9. 10 家车企真实冻结基线",
+    "requirement": "31 省销量或上牌量（如可得）。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "省级/厂区级统一公开数据不足",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "省级/厂区级统一公开数据不足"
+  },
+  {
+    "requirement_id": "R165",
+    "chapter": "9. 10 家车企真实冻结基线",
+    "requirement": "31 省现有销售和服务布局。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "省级/厂区级统一公开数据不足",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "省级/厂区级统一公开数据不足"
+  },
+  {
+    "requirement_id": "R166",
+    "chapter": "9. 10 家车企真实冻结基线",
+    "requirement": "历史建厂、扩产和延迟项目。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "省级/厂区级统一公开数据不足",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "省级/厂区级统一公开数据不足"
+  },
+  {
+    "requirement_id": "R167",
+    "chapter": "9. 10 家车企真实冻结基线",
+    "requirement": "扩张、审慎或防御姿态的事实依据。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "官方披露可得字段已录入；口径差异已单列",
+    "source_or_method": "S032-S041",
+    "decision_reason": "官方披露可得字段已录入；口径差异已单列"
+  },
+  {
+    "requirement_id": "R168",
+    "chapter": "9. 10 家车企真实冻结基线",
+    "requirement": "每个字段的年份、原始值、单位、来源和转换方式。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "已保留字段与证据说明",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "已保留字段与证据说明"
+  },
+  {
+    "requirement_id": "R169",
+    "chapter": "10. 数据验收",
+    "requirement": "31 省完整，无缺省和重复。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "已执行省份数量、重复、来源和公式错误检查",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "已执行省份数量、重复、来源和公式错误检查"
+  },
+  {
+    "requirement_id": "R170",
+    "chapter": "10. 数据验收",
+    "requirement": "同一指标尽量使用相同年份和统计口径。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "已执行省份数量、重复、来源和公式错误检查",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "已执行省份数量、重复、来源和公式错误检查"
+  },
+  {
+    "requirement_id": "R171",
+    "chapter": "10. 数据验收",
+    "requirement": "GDP 等核心指标必须保留原始数量，不能只有 0–1 指数。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "已执行省份数量、重复、来源和公式错误检查",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "已执行省份数量、重复、来源和公式错误检查"
+  },
+  {
+    "requirement_id": "R172",
+    "chapter": "10. 数据验收",
+    "requirement": "每个派生指标可以反算到原始数据和公式版本。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "已执行省份数量、重复、来源和公式错误检查",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "已执行省份数量、重复、来源和公式错误检查"
+  },
+  {
+    "requirement_id": "R173",
+    "chapter": "10. 数据验收",
+    "requirement": "每项省级产业偏好判断都能关联政策或产业 Evidence。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "已执行省份数量、重复、来源和公式错误检查",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "已执行省份数量、重复、来源和公式错误检查"
+  },
+  {
+    "requirement_id": "R174",
+    "chapter": "10. 数据验收",
+    "requirement": "每条省际协作关系都有产业互补或公开合作依据。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "已执行省份数量、重复、来源和公式错误检查",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "已执行省份数量、重复、来源和公式错误检查"
+  },
+  {
+    "requirement_id": "R175",
+    "chapter": "10. 数据验收",
+    "requirement": "车企数据明确区分集团、品牌、上市主体和生产基地。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "已执行省份数量、重复、来源和公式错误检查",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "已执行省份数量、重复、来源和公式错误检查"
+  },
+  {
+    "requirement_id": "R176",
+    "chapter": "10. 数据验收",
+    "requirement": "无来源数据不得标记为 `verified`。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "已执行省份数量、重复、来源和公式错误检查",
+    "source_or_method": "M29可信来源索引与统一推算规则v2",
+    "decision_reason": "已执行省份数量、重复、来源和公式错误检查"
+  },
+  {
+    "requirement_id": "R177",
+    "chapter": "9. 10 家车企真实冻结基线",
+    "requirement": "固定主体：比亚迪、吉利、长安、上汽通用五菱、蔚来、奇瑞、零跑、赛力斯、小米汽车、理想汽车。",
+    "final_status": "accepted_trusted",
+    "quality": "trusted",
+    "resolution": "10家主体均已建行",
+    "source_or_method": "S032-S041",
+    "decision_reason": "10家主体均已建行"
+  }
+]

@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
+import json
 from collections import Counter
+
+from validate_analysis_map import validate as validate_analysis_map
 
 from simulation.catalog import automaker_catalog, policy_region_catalog
 from simulation.data import (
@@ -10,18 +13,21 @@ from simulation.data import (
     load_profiles,
 )
 from simulation.domain_constants import AUTOMAKER_IDS, MAINLAND_PROVINCE_CODES
+from simulation.m29_data import M29_DATA_DIR, load_m29_snapshot
 from simulation.models.automaker import AUTOMAKER_PROVENANCE_FIELDS
 from simulation.models.common import DataQuality, Phase, PolicyRegion
 from simulation.models.policy import PolicySchema
 
 
 def validate() -> None:
+    validate_analysis_map()
     provinces = policy_region_catalog()
     automakers = automaker_catalog()
     profiles = load_profiles()
     automaker_profiles = load_automaker_profiles()
     network = load_network()
     personas = build_province_personas()
+    m29 = load_m29_snapshot()
 
     expected_codes = set(MAINLAND_PROVINCE_CODES)
     if len(provinces) != 31 or set(provinces) != expected_codes:
@@ -45,6 +51,19 @@ def validate() -> None:
         raise ValueError("peer network must cover all 31 provinces")
     if set(automaker_profiles) != set(AUTOMAKER_IDS):
         raise ValueError("automaker profiles must cover the 10 frozen IDs")
+    if set(m29.province_profiles) != expected_codes:
+        raise ValueError("M29 province-profile-v6 must cover all 31 provinces")
+    if set(m29.automaker_profiles) != set(AUTOMAKER_IDS):
+        raise ValueError("M29 automaker-profile-v2 must cover all 10 automakers")
+    if any(fact.source_id not in m29.sources for fact in m29.facts.values()):
+        raise ValueError("M29 raw fact contains an orphan source ID")
+    requirement_records = json.loads(
+        (M29_DATA_DIR / "requirements_acceptance_v1.json").read_text(encoding="utf-8")
+    )
+    if len(requirement_records) != 177 or any(
+        item.get("final_status") != "accepted_trusted" for item in requirement_records
+    ):
+        raise ValueError("M29 must accept all 177 requirements under the trusted-data rule")
 
     for code, profile in profiles.items():
         if profile.data_quality not in {DataQuality.VERIFIED, DataQuality.PROXY}:
@@ -93,7 +112,8 @@ def validate() -> None:
 
     print(
         "Data validation passed: 31 provinces (west 12 / central 10 / east 9), "
-        "10 automakers, complete provenance, policy-v3 defaults and annual phases."
+        "10 automakers, complete provenance, M29 facts/relations/177 requirements, "
+        "policy-v3 defaults and annual phases."
     )
 
 

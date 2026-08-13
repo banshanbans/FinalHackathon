@@ -1,12 +1,49 @@
-# PolicyScope V3.0 / V3.1 新能源汽车补贴、产业布局与事件协同开发计划
+# PolicyScope V3.2 产品旅程与 Fake Agent 重构开发计划
 
 > 对应 PRD：[PRD_省域政策多智能体推演平台.md](./PRD_省域政策多智能体推演平台.md)
 > 前端规范：[STITCH_FRONTEND_SPEC.md](./STITCH_FRONTEND_SPEC.md)
-> 计划版本：V3.1（M21–M28 已完成，M29 数据迁移待启动）
-> 更新日期：2026-08-12
-> 当前门禁：V3.0 只读冻结；V3.1 事件协同契约与运行证据已冻结，下一阶段仅按 M29 数据清单迁移真实事实层
+> 计划版本：V3.2 M31（实施与验收中）
+> 更新日期：2026-08-13
+> 当前门禁：M31 的显式决策、互动主画布、地图规则、三类 E2E、全量命令、缓存与三画布 QA 必须重新验收；真实 Luna Provider 缓存仍需 API Key，不得宣称已冻结
 
 ---
+
+## 0. V3.2 五个实施门禁
+
+| 门禁 | 状态 | 退出条件 |
+|---|---|---|
+| G1 文档与 Schema | In Progress | PRD、计划、AGENTS、前端规范、README、ADR 和 M31 版本对象一致 |
+| G2 解读与 Fake Agent | In Progress | 省企 0–2 资源包、明确接受/拒绝、31 省明确车企决定与 226 次调用通过契约测试 |
+| G3 Orchestrator 与平台能力 | In Progress | Strategy Market v2、环境贡献、SSE、Replay、Audit 和 M31 缓存键一致 |
+| G4 React 六步旅程 | In Progress | 差异地图、互动决策台、Province/Automaker 联动与三画布响应式通过 |
+| G5 全量验收 | Reopened | M31 三类 E2E、全量命令、Luna 缓存、三画布 QA 与禁止文案扫描通过 |
+
+M30 对象与缓存保持只读。M31 活动版本为 `baseline-snapshot-v2`、`province-resource-envelope-v2`、`province-action-v7`、`automaker-action-v4`、`decision-trace-v3`、`checkpoint-v6`、`branch-v7`、`world-state-v8`、`comparison-v8`、`event-v8`、`strategy-market-v2` 和 `nev-policy-env-v5`，使用独立 `v3_2_m31_*` 缓存命名空间。
+
+### M31 显式决策与互动主画布门禁
+
+| 任务 | 状态 | 验收点 |
+|---|---|---|
+| M31-1 契约与决策边界 | In Progress | 两类 0–2 提议互不占用；不发起、维持、接受、拒绝均可追溯；车企 31 省均为明确决定 |
+| M31-2 环境与可追溯性 | In Progress | 每份资源包逐项响应、每车企最多 5 项接受、无效/拒绝零贡献、Cache/Audit/SSE 使用 M31 版本 |
+| M31-3 互动主画布与地图 | In Progress | 差异地图默认、动态色阶、空值纹理、互动台和地图/详情/抽屉联动，无横向滚动 |
+| M31-4 验收 | Pending | 三类实验、全量命令、缓存验证、三画布 QA、地图几何校验和禁止文案扫描通过 |
+
+### M32 前端产品化与文案收敛
+
+- 当前 React V3.2 页面遵循“方案、行动、结果优先”；方法与数据页是唯一技术审计入口。
+- 省份详情收敛为政策配置、企业互动、竞争与协同、推演影响四张结果卡；Live、主体、车企侧栏、设置和结果页不展示内部规则或开发字段。
+- 本轮不修改 API、Schema、推演或缓存；验收只要求前端构建与三画布人工检查。
+
+### M30 上下文驱动互动门禁
+
+| 任务 | 状态 | 验收点 |
+|---|---|---|
+| M30-1 资源与上下文 | Complete | M29 4,527 事实、711 特征、282 关系边作为输入；关系不直接决定行动 |
+| M30-2 3A/3B 策略市场 | Complete | 31 省自主提议、全量冻结、逐项响应；网外对象可用且需证据 |
+| M30-3 追溯与 API | Complete | 226 次主体调用、DecisionTrace v2、Strategy Market、Presentation Summary、Audit/Evidence |
+| M30-4 产品展示 | Complete | Live、Province、Automaker、Compare、Methods 已接入真实运行对象 |
+| M30-5 Luna 缓存与总验收 | In Progress | 全量命令、三类 E2E、fallback 缓存、三画布 QA 与独立 Luna 线程审阅已通过；真实 Luna Provider 缓存等待 API Key |
 
 ## 1. V3.0 最终交付目标
 
@@ -707,13 +744,13 @@ V3 实现后必须让这些命令覆盖新领域；不得为了通过门禁跳�
 
 V3.1 调用预算：政策干预模式 281 次；事件反事实模式 219 次，其中 Control 无事件不产生伪交互调用。缓存矩阵按公共首年语义输入去重，不按实验 ID 或审批时间重复。
 
-### V3.1 当前唯一下一任务
+### V3.1 后续数据任务状态
 
-启动 M29 的省级真实事实层采集与迁移；当前 V3.1 代理字段继续明确标记为 `proxy` 或 `scenario_assumption`，不得改称真实事实或 `verified`。
+M29 已作为 V3.2 独立事实层完成；V3.1 代理字段和缓存仍只读保留，不回写 M29 结果。
 
 ### M29：省级真实事实层与 Peer 语义拆分（M28 后启动）
 
-状态：Approved next milestone；M28 已完成，可按最新采集清单启动。
+状态：Complete（2026-08-13）。活动数据版本为 `nev-m29-2025-v2`，快照哈希由基线元数据接口公开并纳入缓存键。
 
 - 建立 31 省经济原始事实、产业结构原始事实与近 3–5 年历史政策证据表。
 - 建立 31 省新能源汽车产业与市场基线、真实电池/整车节点、地理/物流距离矩阵和省际产业链关系。
@@ -724,4 +761,99 @@ V3.1 调用预算：政策干预模式 281 次；事件反事实模式 219 次�
 - 将观察、竞争和协作三类 Peer 网络拆分为独立版本、边和 provenance。
 - 验收依据固定为 `docs/data/PROVINCE_PROFILE_DATA_REQUIREMENTS_V3_1.md`。
 
-数据质量只允许 `verified | proxy | scenario_assumption`；每条记录必须保存原值、单位、年份/有效期、机构、原始链接、表名/公告/章节、获取日期、统计口径、转换和缺失值处理。无来源数据不得标记 verified。
+M29 v2 对用户统一显示“可信数据”；直接来源和具备合理置信度的跨来源推算均可使用。每条记录仍保存原值、单位、年份/有效期、机构、链接、统计口径、转换公式和方法版本。
+
+验收结果：整合 292 个来源、4527 条可信事实、65 条政策事实、48 个产业节点、90 条省际关系、711 个派生特征和 1488 条公路/铁路距离；177 项需求全部为 `accepted_trusted`。V3.2 已接入 `province-profile-v6`、`automaker-profile-v2`、`province-relation-network-v3` 及 `fact:`/`feature:`/`relation:`/`source:` Evidence。
+
+## 24. M32 / v9：省际竞争、闭环谈判与严格 Top-K 资源博弈
+
+状态：In progress（2026-08-13）。M31 保持只读；M32 新建 `v3_2_m32` 运行、缓存和验收命名空间。
+
+| 工作项 | 状态 | 退出证据 |
+|---|---|---|
+| M32.1 v9 Schema / 环境 | In progress | 可反算省级效用、竞争损失环境负机制、Top-K 配额与守恒、反报价状态机 schema 测试 |
+| M32.2 七轮编排 / Audit | In progress | 双分支报价与回应冻结门禁、308 调用、Replay/Audit/Evidence 链路 |
+| M32.3 API / 缓存分派 | In progress | `product_version=v3_2_m32`、v9 投影、独立缓存键、SSE 恢复与旧对象只读 |
+| M32.4 Live / Province / Automaker / Compare | In progress | 竞争/协同/Top-K 地图链、谈判台、效用拆解与分支对比 |
+| M32.5 全量验收 | Pending | 三类 E2E、缓存一致性、三画布 QA、地图几何、全量命令与禁止文案扫描 |
+
+## 25. M33：独立全景推演厅
+
+状态：M33 complete / frozen（2026-08-13）。独立大屏、事件与七轮闭环、五幕路演、结果对照和可靠性门禁均已完成；旧 `apps/web` 继续作为研究工作台和兼容入口保留。
+
+| 阶段 | 状态 | 退出证据 |
+|---|---|---|
+| M33.0 契约冻结 | Complete | ADR-350、`PRESENTATION_HALL_SPEC.md`、PRD、计划、AGENTS、前端规范与 DESIGN 已同步；Pydantic/TypeScript 契约、回归与文档检查通过 |
+| M33.1 地图与动画技术验证 | Complete | 本地校验几何、31 省绑定、Delta、弧线、镜头、1080p/4K 60 FPS、低动效和 SVG 降级通过；证据见 `M33_MAP_ANIMATION_TECH_VALIDATION.md` |
+| M33.2 演示投影 API | Complete | 两个只读接口、10 个合法冻结帧、事件节点、六类覆盖层、Replay 映射、旧帧哈希稳定性和只读边界通过 Schema/API/Replay 测试；证据见 `M33_PRESENTATION_API_VALIDATION.md` |
+| M33.3 独立大屏壳层 | Complete | 地球开场、全屏 HUD、GovSim Glass UI Kit、十入口功能坞、浮层/Side Sheet、三模式、真实 Timeline/Frame、事件节点、可拖动时间轴和省域联动通过；证据见 `M33_PRESENTATION_SHELL_VALIDATION.md` |
+| M33.4 事件与七轮闭环 | Complete | 五项版本化事件目录、三触发边界、七轮单屏推进、SSE 恢复和资源守恒矩阵通过契约/API/E2E |
+| M33.5 路演与结果 | Complete | 五幕摘要、单图 Delta、同步 A/B、三机制链、键盘遥控、全屏、四档变速与复位通过正式 E2E |
+| M33.6 可靠性与冻结 | Complete | 1080p/2K/4K、连续播放、断网保帧、WebGL→SVG 降级、禁止文案、Fake/Fallback 标签、全量测试与 Design QA 通过 |
+
+### M33.0 本轮工作
+
+- 冻结单屏三模式和 `/experiments/:id/present`。
+- 将突发事件升级为一级模块和版本化可扩展目录；现有五个模板继续作为首批正式模板。
+- 冻结可拖动时间轴的业务帧、吸附、动画、键盘和真实性边界。
+- 定义 Presentation DTO 与现有 API 映射，标出必须新增的只读投影接口。
+- 保持七轮 Orchestrator、308 调用预算、同源 A/B、环境权威和 Evidence 边界不变。
+
+### M33.0 退出门禁
+
+只有以下条件全部满足才能进入 M33.1/M33.2：
+
+1. 文档一致性检查通过。
+2. Presentation DTO 进入 Pydantic 和 TypeScript 严格类型并有契约测试。
+3. M32 车企详情的反报价响应过滤缺陷修复。
+4. 用户可见事件文案不把示例战争、油价或法规写成现实预测。
+
+退出结果：上述四项于 2026-08-13 全部通过。M33.1 为当前唯一下一阶段；在地图、动画与降级技术门禁通过前，不开始运行时页面。
+
+### M33.1 退出结果
+
+- 冻结标准地图已确定性生成只读 WebGL 展示 GeoJSON：31 个省域进入推演，香港、澳门、台湾作为非交互版图上下文；逐区域源路径哈希、根级几何哈希和声明 bbox 校验通过。
+- MapLibre/deck.gl 本地渲染完成 Delta 填色、选择、事件点、弧线和镜头验证；无远程底图或运行时 CDN。
+- 1920×1080 与 3840×2160 连续播放均实测 60 FPS、P95 17.6 ms；SVG 容错和低动效路径通过。
+- 详细证据见 `M33_MAP_ANIMATION_TECH_VALIDATION.md`。该退出记录形成时，M33.2 是下一阶段；当前 M33.2–M33.6 均已完成。
+
+### M33.2 退出结果
+
+- `GET /presentation/timeline` 与 `GET /presentation/frames/{frame_id}` 已接入 M32 Orchestrator，且调用前后 WorldState 完全一致。
+- 完整无事件实验投影政策输入、方案冻结、七轮和结果复盘共 10 帧；事件实验在合法触发边界增加 Marker 与 Event Frame。
+- 省域值、竞争/协同/谈判/Top-K/车企/事件覆盖层、六项指标和 A/B Delta 均由已提交 DTO 投影，每帧保留 Replay 事件、Evidence 和稳定哈希。
+- Simulation 48/48、API 7/7、M33.2 聚焦 10/10、前端类型与生产构建通过；详细证据见 `M33_PRESENTATION_API_VALIDATION.md`。
+- 该退出记录形成时，M33.3 正式壳层是下一阶段；当前已完成并冻结。
+
+### M33.3 开场镜头先行子项
+
+- 用户于 2026-08-13 明确授权该可独立验证的壳层子项先行；当时不改变 M33.2 仍为业务接入前置门禁。
+- 已实现本地 MapLibre 地球、Natural Earth 公共领域陆地几何、31 省中国高亮、约 4.5 秒旋转与拉近、淡入全国省域地图、跳过、重播和低动效交接。
+- 1920×1080、1366×768 与 3840×2160 浏览器检查通过；4K 主舞台交接后实测 60.1 FPS、P95 17.7 ms，无控制台错误或警告。
+- 本子项完成不等于 M33.3 全部完成。M33.2 现已通过，正式 HUD、功能坞、运行时浮层、三模式和权威时间轴可以开始接入。
+
+### M33.3 视觉实现约束
+
+- 建立 GovSim Glass UI Kit：Floating Glass Panel、Glass Pill/Chip、Floating Segmented Control、单指标 Metric Card、Context Popover、Timeline Rail、Command/Scenario Bar 与 Bottom/Side Sheet。
+- 坚持“背景是主内容，玻璃只是工具”；地图可见面积保持 70%–80%，不使用玻璃卡片网格重建 SaaS Dashboard。
+- 使用三级渐进披露：态势与动作 → 单项指标 → 方法、数据和 Evidence；Agent 博弈优先表现为地图动作、关系线和短标签，而不是日志墙。
+- 产品定位保持 `Workbench = 操作复杂系统`、`World View = 看见复杂系统`；旧工作台保留研究用途，全景推演厅专注理解与路演。
+
+### M33.3 退出结果
+
+- `apps/presentation` 已切换为正式 `/experiments/:id/present`，并提供无实验 ID 时的真实演示实验启动流程。
+- TanStack Query 分别读取 Timeline 与当前 Frame；地图值、覆盖层、事件节点、关键变化、六指标和哈希均来自 M33.2 冻结投影。
+- GovSim Glass UI Kit、三模式、十入口工具坞、单主面板、Context Popover、Side Sheet 和地图主内容比例落地，未重建 SaaS 卡片网格。
+- 时间轴的拖动吸附、播放/暂停、前后帧、节点跳转、变速和复位通过；突发事件帧和省域点击与当前帧联动。
+- `npm run typecheck`、`npm run build`、1280×720/1366×768 浏览器交互、无溢出和 console 零错误/警告通过；视觉对照没有未闭环 P0/P1/P2。
+- 详细证据见 `M33_PRESENTATION_SHELL_VALIDATION.md`；该退出记录形成时，M33.4 是下一阶段，当前 M33.4–M33.6 均已完成。
+- 2026-08-13 用户复核后追加地图校准：开场光点改为北京真实经纬度；展示投影按冻结 SVG 宽高比锁定 Web Mercator，经度跨度不再造成横向拉伸，贝塞尔采样从 8 提升至 24，并加入几何回归门禁。
+
+### M33.4–M33.6 最终退出结果
+
+- `presentation-event-catalog-v1` 以五项冻结情景对外提供三个触发边界、三档强度和两种分支范围；五组高风险矩阵全部完成七轮。
+- 七轮在同一大屏逐轮推进，SSE 只通知事实并支持 Last-Event-ID 恢复；断网时保留最后完整帧。
+- Story 绑定后端五幕摘要；Compare 默认权威 Delta，可切换镜头、选择和值同步的 A/B 双世界，并展示 Gap、财政代价、受益/承压省份和三条机制链。
+- WebGL 初始化或上下文失效时切换本地 SVG 兼容地图，31 省点击、时间轴和业务操作保留。
+- 2026-08-13 追加全国版图完整性验收：WebGL、SVG 降级和旧工作台均从冻结标准地图带入香港、澳门、台湾；三者为非计算 `territory-context`，不改变 31 省 Agent、业务帧、指标或调用预算。
+- 1920×1080、2560×1440、3840×2160 完整画布通过；详细命令与证据见 `M33_PRESENTATION_FINAL_VALIDATION.md` 和 `design-qa.md`。

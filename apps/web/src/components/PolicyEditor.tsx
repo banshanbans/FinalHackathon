@@ -10,7 +10,6 @@ export function PolicyEditor({ policy, onChange, readOnly = false }: { policy: P
   const hasOrderingWarning = !(policy.west_central_share >= policy.central_central_share && policy.central_central_share >= policy.east_central_share);
   return <div className="v3-policy-editor">
     {fields.map(([field, label, hint]) => <label key={field}><span><strong>{label}</strong><small>{hint}</small></span><input aria-label={`${label}中央承担比例`} disabled={readOnly} max="100" min="0" onChange={(event) => onChange({ ...policy, input_mode: "absolute", share_adjustments: { west: 0, central: 0, east: 0 }, [field]: Number(event.target.value) / 100 })} step="1" type="number" value={(policy[field] * 100).toFixed(0)} /><b>%</b></label>)}
-    <p>三项比例彼此独立，不求和；偏离“西部≥中部≥东部”时仅警告，不阻止实验。</p>
     {hasOrderingWarning && <div className="v3-policy-warning" role="alert">当前比例偏离西部≥中部≥东部的参考排序；允许继续用于机制实验。</div>}
   </div>;
 }

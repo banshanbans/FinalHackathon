@@ -34,6 +34,21 @@ python scripts/annotate_standard_map.py \
 - 港澳台保留在标准地图视觉中，但不带 `simulation-province` 标记，不进入仿真、指标着色或点击详情。
 - 31 个交互 path 的几何摘要 SHA-256：`2f6aea81b85e929df44aa83beb6c4dcf3fe8f14b8274506e62c6b836ac1c97d6`。
 
+## M31 分析衍生底图
+
+`china-analysis-map.svg` 是仅供 Live 与 Compare 分析画布使用的衍生资源。它保留上述 31 个带 `simulation-province` 标记的省域 path，并从同一冻结标准地图带入香港、台湾的原始区域轮廓及该比例尺下澳门的官方比例标记，三者标记为 `territory-context`。构建过程不重绘、不简化、不移动任何几何。
+
+港澳台只承担中国版图完整展示：不进入 31 省仿真、指标色阶、空值纹理、Agent 调用或点击下钻。香港/台湾使用官方区域轮廓，澳门沿用 1:4800 万原图的比例标记，避免为可见性手工放大或伪造边界。
+
+```bash
+python scripts/build_analysis_map.py
+python scripts/validate_analysis_map.py
+```
+
+- `build_analysis_map.py` 从冻结的 `china-standard-map.svg` 选择省域路径。
+- `validate_analysis_map.py` 逐省比较代码和完整 `d` 路径，并输出总几何签名；任一差异即失败。
+- `make validate-data` 会同时运行此校验。分析底图沿用原图来源、审图号与使用边界，不替代冻结的标准地图原件。
+
 ## 比赛版发布状态
 
 根据用户确认的比赛发布规则，比赛产品不设额外地图合规审核门禁，该资产可直接随比赛 Web 产品上线。源头地图、审图号、转换步骤和几何签名仍继续保留，用于资产追溯和回归校验。

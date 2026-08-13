@@ -325,6 +325,8 @@ class ChinaPolicyEnv:
         event_scenario: EventScenario | None = None,
         event_responses: dict[str, ProvinceEventResponse] | None = None,
         coordination_matches: list[CoordinationMatch] | None = None,
+        province_enterprise_effects: dict[str, tuple[float, float]] | None = None,
+        competition_effects: dict[str, tuple[float, float]] | None = None,
     ) -> YearSettlement:
         if phase not in {Phase.Y1_Q4, Phase.Y2_Q4}:
             raise ValueError("annual settlement is only valid in Q4")
@@ -349,6 +351,8 @@ class ChinaPolicyEnv:
             raise ValueError("event responses require an approved scenario")
         event_exposures = self.event_exposure(event_scenario) if event_scenario else {}
         matches = coordination_matches or []
+        enterprise_effects = province_enterprise_effects or {}
+        competition_effects = competition_effects or {}
         states: dict[str, ProvinceState] = {}
         contributions: dict[str, MechanismContribution] = {}
         thresholds: dict[str, FixedVariableThreshold] = {}
@@ -488,6 +492,8 @@ class ChinaPolicyEnv:
                 if code in {item.left_province_code, item.right_province_code}
                 and item.status is CoordinationStatus.MATCHED
             )
+            enterprise_channel, enterprise_industry = enterprise_effects.get(code, (0.0, 0.0))
+            competition_channel, competition_facility = competition_effects.get(code, (0.0, 0.0))
             if response:
                 response_effect = 4 * response.response_intensity * exposure
                 if response.policy_focus is EventPolicyFocus.CONSUMER_SUPPORT:
@@ -519,6 +525,18 @@ class ChinaPolicyEnv:
                     input_value=profile.willingness_to_pay_index,
                     coefficient=28,
                     contribution=28 * profile.willingness_to_pay_index,
+                ),
+                MechanismTerm(
+                    name="province_enterprise_channel_effect",
+                    input_value=enterprise_channel,
+                    coefficient=8,
+                    contribution=8 * enterprise_channel,
+                ),
+                MechanismTerm(
+                    name="competition_channel_displacement",
+                    input_value=competition_channel,
+                    coefficient=-10,
+                    contribution=-10 * competition_channel,
                 ),
                 MechanismTerm(
                     name="consumer_subsidy",
@@ -583,6 +601,18 @@ class ChinaPolicyEnv:
                     coefficient=15,
                     contribution=15 * min(1, facility),
                 ),
+                MechanismTerm(
+                    name="province_enterprise_industry_effect",
+                    input_value=enterprise_industry,
+                    coefficient=10,
+                    contribution=10 * enterprise_industry,
+                ),
+                MechanismTerm(
+                    name="competition_facility_displacement",
+                    input_value=competition_facility,
+                    coefficient=-10,
+                    contribution=-10 * competition_facility,
+                ),
                 *event_industry_terms,
                 MechanismTerm(
                     name="event_policy_response",
@@ -636,7 +666,12 @@ class ChinaPolicyEnv:
                 fiscal_pressure_index=fiscal_pressure,
                 event_exposure_index=_clamp(exposure * 100),
                 event_response_effect_index=_clamp(
-                    response_demand + response_industry + peer_effect + coordination_effect
+                    response_demand
+                    + response_industry
+                    + peer_effect
+                    + coordination_effect
+                    + 8 * enterprise_channel
+                    + 10 * enterprise_industry
                 ),
                 last_action_id=action.action_id,
                 last_event_response_id=response.response_id if response else None,

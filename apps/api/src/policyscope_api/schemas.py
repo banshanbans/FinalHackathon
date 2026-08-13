@@ -1,14 +1,17 @@
 from typing import Annotated, Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from simulation.models.base import DomainModel
 from simulation.models.common import ComparisonMode, Phase, RunMode
 from simulation.models.policy import PolicySchema
 from simulation.models.scenario import EventScenarioSelection
+from simulation.models.v32 import SimulationRound
 
 
 class CreateExperimentRequest(DomainModel):
+    policy_text: str | None = Field(default=None, min_length=3, max_length=4000)
+    product_version: Literal["v3_2_m32"] | None = None
     objective: str = Field(
         default="比较西部、中部、东部中央承担比例变化对新能源汽车需求、地方财政空间和产业布局的模拟影响。",
         min_length=3,
@@ -25,8 +28,21 @@ class ApproveDirectiveRequest(DomainModel):
 
 
 class RunExperimentRequest(DomainModel):
-    until_phase: Phase
+    until_phase: Phase | None = None
+    until_round: SimulationRound | None = None
     branch_id: str = "control"
+
+    @model_validator(mode="after")
+    def one_target(self) -> "RunExperimentRequest":
+        if self.until_phase is not None and self.until_round is not None:
+            raise ValueError("run request cannot mix a V3.1 phase and V3.2 round")
+        return self
+
+
+class ConfirmBaselineRequest(DomainModel):
+    confirm_data_snapshot: bool = True
+    expected_data_version: str | None = None
+    confirm_proxy_data: bool | None = None
 
 
 class ApproveInterventionRequest(DomainModel):

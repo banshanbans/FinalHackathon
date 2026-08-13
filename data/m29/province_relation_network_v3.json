@@ -1,0 +1,3572 @@
+{
+  "schema_version": "province-relation-network-v3",
+  "edges": [
+    {
+      "edge_id": "edge_bc5aad5167c380ee",
+      "source_code": "11",
+      "target_code": "31",
+      "relation_type": "observation",
+      "weight": 0.8656,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_822d0bf397360a0f",
+        "feature_13a2fd57928dcf9f",
+        "feature_916f30fd6bafb5bd",
+        "feature_2e20eec8dad245c8"
+      ]
+    },
+    {
+      "edge_id": "edge_8682b9490b4017f6",
+      "source_code": "11",
+      "target_code": "12",
+      "relation_type": "observation",
+      "weight": 0.8425,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_822d0bf397360a0f",
+        "feature_13a2fd57928dcf9f",
+        "feature_916f30fd6bafb5bd",
+        "feature_2e20eec8dad245c8"
+      ]
+    },
+    {
+      "edge_id": "edge_2057408c9e55972f",
+      "source_code": "11",
+      "target_code": "21",
+      "relation_type": "observation",
+      "weight": 0.7157,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_822d0bf397360a0f",
+        "feature_13a2fd57928dcf9f",
+        "feature_916f30fd6bafb5bd",
+        "feature_2e20eec8dad245c8"
+      ]
+    },
+    {
+      "edge_id": "edge_b4c6bbd011ea65ea",
+      "source_code": "11",
+      "target_code": "21",
+      "relation_type": "competition",
+      "weight": 0.9786,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_13a2fd57928dcf9f",
+        "feature_916f30fd6bafb5bd",
+        "feature_2e20eec8dad245c8"
+      ]
+    },
+    {
+      "edge_id": "edge_6365641a1547a63b",
+      "source_code": "11",
+      "target_code": "22",
+      "relation_type": "competition",
+      "weight": 0.9696,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_13a2fd57928dcf9f",
+        "feature_916f30fd6bafb5bd",
+        "feature_2e20eec8dad245c8"
+      ]
+    },
+    {
+      "edge_id": "edge_13deb096a91cb2da",
+      "source_code": "11",
+      "target_code": "43",
+      "relation_type": "competition",
+      "weight": 0.9611,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_13a2fd57928dcf9f",
+        "feature_916f30fd6bafb5bd",
+        "feature_2e20eec8dad245c8"
+      ]
+    },
+    {
+      "edge_id": "edge_911da1b6b60f8bae",
+      "source_code": "12",
+      "target_code": "11",
+      "relation_type": "observation",
+      "weight": 0.8425,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_f3dbf12ee0dcd33b",
+        "feature_d302a34c69f80d91",
+        "feature_84d946b3ed648857",
+        "feature_a2442160403c92dc"
+      ]
+    },
+    {
+      "edge_id": "edge_070f3a58300330bb",
+      "source_code": "12",
+      "target_code": "31",
+      "relation_type": "observation",
+      "weight": 0.8234,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_f3dbf12ee0dcd33b",
+        "feature_d302a34c69f80d91",
+        "feature_84d946b3ed648857",
+        "feature_a2442160403c92dc"
+      ]
+    },
+    {
+      "edge_id": "edge_d336418a997269ae",
+      "source_code": "12",
+      "target_code": "15",
+      "relation_type": "observation",
+      "weight": 0.781,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_f3dbf12ee0dcd33b",
+        "feature_d302a34c69f80d91",
+        "feature_84d946b3ed648857",
+        "feature_a2442160403c92dc"
+      ]
+    },
+    {
+      "edge_id": "edge_1990b7a93c03eb85",
+      "source_code": "12",
+      "target_code": "64",
+      "relation_type": "competition",
+      "weight": 0.9582,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_d302a34c69f80d91",
+        "feature_84d946b3ed648857",
+        "feature_a2442160403c92dc"
+      ]
+    },
+    {
+      "edge_id": "edge_dcdb4736bf21926f",
+      "source_code": "12",
+      "target_code": "63",
+      "relation_type": "competition",
+      "weight": 0.9279,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_d302a34c69f80d91",
+        "feature_84d946b3ed648857",
+        "feature_a2442160403c92dc"
+      ]
+    },
+    {
+      "edge_id": "edge_fbee3c500b713fc6",
+      "source_code": "12",
+      "target_code": "36",
+      "relation_type": "competition",
+      "weight": 0.9243,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_d302a34c69f80d91",
+        "feature_84d946b3ed648857",
+        "feature_a2442160403c92dc"
+      ]
+    },
+    {
+      "edge_id": "edge_f9c9c2d0858b512d",
+      "source_code": "13",
+      "target_code": "51",
+      "relation_type": "observation",
+      "weight": 0.9305,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_744ec3af7295b964",
+        "feature_de30b6f04d22c1b7",
+        "feature_2f0cd4d07e3667a1",
+        "feature_a29a3e69b6acb86c"
+      ]
+    },
+    {
+      "edge_id": "edge_b1ecbac5d5a6bf31",
+      "source_code": "13",
+      "target_code": "41",
+      "relation_type": "observation",
+      "weight": 0.9301,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_744ec3af7295b964",
+        "feature_de30b6f04d22c1b7",
+        "feature_2f0cd4d07e3667a1",
+        "feature_a29a3e69b6acb86c"
+      ]
+    },
+    {
+      "edge_id": "edge_7bbb4d6d6798d6be",
+      "source_code": "13",
+      "target_code": "43",
+      "relation_type": "observation",
+      "weight": 0.8904,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_744ec3af7295b964",
+        "feature_de30b6f04d22c1b7",
+        "feature_2f0cd4d07e3667a1",
+        "feature_a29a3e69b6acb86c"
+      ]
+    },
+    {
+      "edge_id": "edge_e7241b874717ea07",
+      "source_code": "13",
+      "target_code": "41",
+      "relation_type": "competition",
+      "weight": 0.9907,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_de30b6f04d22c1b7",
+        "feature_2f0cd4d07e3667a1",
+        "feature_a29a3e69b6acb86c"
+      ]
+    },
+    {
+      "edge_id": "edge_aee208523a5e9ff9",
+      "source_code": "13",
+      "target_code": "51",
+      "relation_type": "competition",
+      "weight": 0.9639,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_de30b6f04d22c1b7",
+        "feature_2f0cd4d07e3667a1",
+        "feature_a29a3e69b6acb86c"
+      ]
+    },
+    {
+      "edge_id": "edge_ccc5bbcc01604326",
+      "source_code": "13",
+      "target_code": "36",
+      "relation_type": "competition",
+      "weight": 0.9429,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_de30b6f04d22c1b7",
+        "feature_2f0cd4d07e3667a1",
+        "feature_a29a3e69b6acb86c"
+      ]
+    },
+    {
+      "edge_id": "edge_a530cd156a3bb392",
+      "source_code": "14",
+      "target_code": "15",
+      "relation_type": "observation",
+      "weight": 0.9375,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_57956d769a1d0d41",
+        "feature_707b9bef9f56a648",
+        "feature_0f5784e80cd30d51",
+        "feature_304a7c594de87a1c"
+      ]
+    },
+    {
+      "edge_id": "edge_195d79a7f569a5b4",
+      "source_code": "14",
+      "target_code": "65",
+      "relation_type": "observation",
+      "weight": 0.8964,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_57956d769a1d0d41",
+        "feature_707b9bef9f56a648",
+        "feature_0f5784e80cd30d51",
+        "feature_304a7c594de87a1c"
+      ]
+    },
+    {
+      "edge_id": "edge_9bcc60e6d8d1a5fb",
+      "source_code": "14",
+      "target_code": "36",
+      "relation_type": "observation",
+      "weight": 0.8771,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_57956d769a1d0d41",
+        "feature_707b9bef9f56a648",
+        "feature_0f5784e80cd30d51",
+        "feature_304a7c594de87a1c"
+      ]
+    },
+    {
+      "edge_id": "edge_ad616706a9385e3a",
+      "source_code": "14",
+      "target_code": "15",
+      "relation_type": "competition",
+      "weight": 0.9882,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_707b9bef9f56a648",
+        "feature_0f5784e80cd30d51",
+        "feature_304a7c594de87a1c"
+      ]
+    },
+    {
+      "edge_id": "edge_7e9c31f0fd80e34c",
+      "source_code": "14",
+      "target_code": "63",
+      "relation_type": "competition",
+      "weight": 0.9451,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_707b9bef9f56a648",
+        "feature_0f5784e80cd30d51",
+        "feature_304a7c594de87a1c"
+      ]
+    },
+    {
+      "edge_id": "edge_956ae74dbe778378",
+      "source_code": "14",
+      "target_code": "36",
+      "relation_type": "competition",
+      "weight": 0.9233,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_707b9bef9f56a648",
+        "feature_0f5784e80cd30d51",
+        "feature_304a7c594de87a1c"
+      ]
+    },
+    {
+      "edge_id": "edge_4ae0d6f36533fb38",
+      "source_code": "15",
+      "target_code": "14",
+      "relation_type": "observation",
+      "weight": 0.9375,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_9234932369024519",
+        "feature_9c3aa67d25f8d71c",
+        "feature_67e3db4052c3b366",
+        "feature_f66cac6e482fb155"
+      ]
+    },
+    {
+      "edge_id": "edge_6ec1ac4dd9385a79",
+      "source_code": "15",
+      "target_code": "65",
+      "relation_type": "observation",
+      "weight": 0.872,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_9234932369024519",
+        "feature_9c3aa67d25f8d71c",
+        "feature_67e3db4052c3b366",
+        "feature_f66cac6e482fb155"
+      ]
+    },
+    {
+      "edge_id": "edge_5c62dc35b591a0bb",
+      "source_code": "15",
+      "target_code": "64",
+      "relation_type": "observation",
+      "weight": 0.8533,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_9234932369024519",
+        "feature_9c3aa67d25f8d71c",
+        "feature_67e3db4052c3b366",
+        "feature_f66cac6e482fb155"
+      ]
+    },
+    {
+      "edge_id": "edge_eecd3b28e5931eec",
+      "source_code": "15",
+      "target_code": "14",
+      "relation_type": "competition",
+      "weight": 0.9882,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_9c3aa67d25f8d71c",
+        "feature_67e3db4052c3b366",
+        "feature_f66cac6e482fb155"
+      ]
+    },
+    {
+      "edge_id": "edge_78cf5d7800543f5a",
+      "source_code": "15",
+      "target_code": "63",
+      "relation_type": "competition",
+      "weight": 0.9378,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_9c3aa67d25f8d71c",
+        "feature_67e3db4052c3b366",
+        "feature_f66cac6e482fb155"
+      ]
+    },
+    {
+      "edge_id": "edge_e8f68b722e91c407",
+      "source_code": "15",
+      "target_code": "54",
+      "relation_type": "competition",
+      "weight": 0.9232,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_9c3aa67d25f8d71c",
+        "feature_67e3db4052c3b366",
+        "feature_f66cac6e482fb155"
+      ]
+    },
+    {
+      "edge_id": "edge_42c37c8f872da6d3",
+      "source_code": "21",
+      "target_code": "36",
+      "relation_type": "observation",
+      "weight": 0.9136,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_217bfdec738f996a",
+        "feature_6e08dd6aa6bbdb1d",
+        "feature_34f21e6dd5561be9",
+        "feature_7141bf6c7952831b"
+      ]
+    },
+    {
+      "edge_id": "edge_a7abaae2033201d9",
+      "source_code": "21",
+      "target_code": "43",
+      "relation_type": "observation",
+      "weight": 0.9096,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_217bfdec738f996a",
+        "feature_6e08dd6aa6bbdb1d",
+        "feature_34f21e6dd5561be9",
+        "feature_7141bf6c7952831b"
+      ]
+    },
+    {
+      "edge_id": "edge_9091146499448835",
+      "source_code": "21",
+      "target_code": "64",
+      "relation_type": "observation",
+      "weight": 0.8948,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_217bfdec738f996a",
+        "feature_6e08dd6aa6bbdb1d",
+        "feature_34f21e6dd5561be9",
+        "feature_7141bf6c7952831b"
+      ]
+    },
+    {
+      "edge_id": "edge_5e15cbf56f125513",
+      "source_code": "21",
+      "target_code": "11",
+      "relation_type": "competition",
+      "weight": 0.9786,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_6e08dd6aa6bbdb1d",
+        "feature_34f21e6dd5561be9",
+        "feature_7141bf6c7952831b"
+      ]
+    },
+    {
+      "edge_id": "edge_ecc0b02f4cbf9e2f",
+      "source_code": "21",
+      "target_code": "43",
+      "relation_type": "competition",
+      "weight": 0.9745,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_6e08dd6aa6bbdb1d",
+        "feature_34f21e6dd5561be9",
+        "feature_7141bf6c7952831b"
+      ]
+    },
+    {
+      "edge_id": "edge_b74eae655e203206",
+      "source_code": "21",
+      "target_code": "22",
+      "relation_type": "competition",
+      "weight": 0.9496,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_6e08dd6aa6bbdb1d",
+        "feature_34f21e6dd5561be9",
+        "feature_7141bf6c7952831b"
+      ]
+    },
+    {
+      "edge_id": "edge_00da3f5c553ef678",
+      "source_code": "22",
+      "target_code": "63",
+      "relation_type": "observation",
+      "weight": 0.8923,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_0fee2c6da779987a",
+        "feature_f84c6c6d1cfcfc9d",
+        "feature_30041e2db23c3807",
+        "feature_b4135eb9d033a105"
+      ]
+    },
+    {
+      "edge_id": "edge_1a774ae4422d593c",
+      "source_code": "22",
+      "target_code": "21",
+      "relation_type": "observation",
+      "weight": 0.8908,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_0fee2c6da779987a",
+        "feature_f84c6c6d1cfcfc9d",
+        "feature_30041e2db23c3807",
+        "feature_b4135eb9d033a105"
+      ]
+    },
+    {
+      "edge_id": "edge_4bf6b5d62e2c8fe1",
+      "source_code": "22",
+      "target_code": "64",
+      "relation_type": "observation",
+      "weight": 0.8905,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_0fee2c6da779987a",
+        "feature_f84c6c6d1cfcfc9d",
+        "feature_30041e2db23c3807",
+        "feature_b4135eb9d033a105"
+      ]
+    },
+    {
+      "edge_id": "edge_4b2bab9db672e625",
+      "source_code": "22",
+      "target_code": "11",
+      "relation_type": "competition",
+      "weight": 0.9696,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_f84c6c6d1cfcfc9d",
+        "feature_30041e2db23c3807",
+        "feature_b4135eb9d033a105"
+      ]
+    },
+    {
+      "edge_id": "edge_08c29c610803444c",
+      "source_code": "22",
+      "target_code": "21",
+      "relation_type": "competition",
+      "weight": 0.9496,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_f84c6c6d1cfcfc9d",
+        "feature_30041e2db23c3807",
+        "feature_b4135eb9d033a105"
+      ]
+    },
+    {
+      "edge_id": "edge_9ddcb8bd12ec3eb4",
+      "source_code": "22",
+      "target_code": "43",
+      "relation_type": "competition",
+      "weight": 0.9451,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_f84c6c6d1cfcfc9d",
+        "feature_30041e2db23c3807",
+        "feature_b4135eb9d033a105"
+      ]
+    },
+    {
+      "edge_id": "edge_23f02977f3ced1f4",
+      "source_code": "23",
+      "target_code": "62",
+      "relation_type": "observation",
+      "weight": 0.9095,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_3ee21c739a18e374",
+        "feature_b96b9e848f7d406a",
+        "feature_34570d092e8b47f4",
+        "feature_e14e101031eecc15"
+      ]
+    },
+    {
+      "edge_id": "edge_dbe693d1e69a3d1a",
+      "source_code": "23",
+      "target_code": "52",
+      "relation_type": "observation",
+      "weight": 0.8893,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_3ee21c739a18e374",
+        "feature_b96b9e848f7d406a",
+        "feature_34570d092e8b47f4",
+        "feature_e14e101031eecc15"
+      ]
+    },
+    {
+      "edge_id": "edge_deb2f9c1225df682",
+      "source_code": "23",
+      "target_code": "46",
+      "relation_type": "observation",
+      "weight": 0.887,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_3ee21c739a18e374",
+        "feature_b96b9e848f7d406a",
+        "feature_34570d092e8b47f4",
+        "feature_e14e101031eecc15"
+      ]
+    },
+    {
+      "edge_id": "edge_8f8c305c364b13cd",
+      "source_code": "23",
+      "target_code": "52",
+      "relation_type": "competition",
+      "weight": 0.9274,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_b96b9e848f7d406a",
+        "feature_34570d092e8b47f4",
+        "feature_e14e101031eecc15"
+      ]
+    },
+    {
+      "edge_id": "edge_c5cd5891f8afbbf7",
+      "source_code": "23",
+      "target_code": "53",
+      "relation_type": "competition",
+      "weight": 0.9238,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_b96b9e848f7d406a",
+        "feature_34570d092e8b47f4",
+        "feature_e14e101031eecc15"
+      ]
+    },
+    {
+      "edge_id": "edge_66b70e5d09c983f9",
+      "source_code": "23",
+      "target_code": "46",
+      "relation_type": "competition",
+      "weight": 0.9166,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_b96b9e848f7d406a",
+        "feature_34570d092e8b47f4",
+        "feature_e14e101031eecc15"
+      ]
+    },
+    {
+      "edge_id": "edge_35aff8fa2a43a51f",
+      "source_code": "31",
+      "target_code": "11",
+      "relation_type": "observation",
+      "weight": 0.8656,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_079a93240e9a2745",
+        "feature_9509b15a755c4931",
+        "feature_be92cf5571b07251",
+        "feature_1e4ecb3ed277f432"
+      ]
+    },
+    {
+      "edge_id": "edge_5f37787e6d473bab",
+      "source_code": "31",
+      "target_code": "12",
+      "relation_type": "observation",
+      "weight": 0.8234,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_079a93240e9a2745",
+        "feature_9509b15a755c4931",
+        "feature_be92cf5571b07251",
+        "feature_1e4ecb3ed277f432"
+      ]
+    },
+    {
+      "edge_id": "edge_3d47445e60c4c0ee",
+      "source_code": "31",
+      "target_code": "33",
+      "relation_type": "observation",
+      "weight": 0.7471,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_079a93240e9a2745",
+        "feature_9509b15a755c4931",
+        "feature_be92cf5571b07251",
+        "feature_1e4ecb3ed277f432"
+      ]
+    },
+    {
+      "edge_id": "edge_a10662d0387c033f",
+      "source_code": "31",
+      "target_code": "42",
+      "relation_type": "competition",
+      "weight": 0.9263,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_9509b15a755c4931",
+        "feature_be92cf5571b07251",
+        "feature_1e4ecb3ed277f432"
+      ]
+    },
+    {
+      "edge_id": "edge_e6ee191efe869534",
+      "source_code": "31",
+      "target_code": "50",
+      "relation_type": "competition",
+      "weight": 0.9096,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_9509b15a755c4931",
+        "feature_be92cf5571b07251",
+        "feature_1e4ecb3ed277f432"
+      ]
+    },
+    {
+      "edge_id": "edge_29254c38b7c66ac9",
+      "source_code": "31",
+      "target_code": "41",
+      "relation_type": "competition",
+      "weight": 0.8988,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_9509b15a755c4931",
+        "feature_be92cf5571b07251",
+        "feature_1e4ecb3ed277f432"
+      ]
+    },
+    {
+      "edge_id": "edge_e6f94b4681218105",
+      "source_code": "32",
+      "target_code": "44",
+      "relation_type": "observation",
+      "weight": 0.9262,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_b19135042fe5ebc6",
+        "feature_87144f6d304a863b",
+        "feature_02043190039ab3a2",
+        "feature_f174d30777e88c79"
+      ]
+    },
+    {
+      "edge_id": "edge_57edff08c9fb33d6",
+      "source_code": "32",
+      "target_code": "33",
+      "relation_type": "observation",
+      "weight": 0.8396,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_b19135042fe5ebc6",
+        "feature_87144f6d304a863b",
+        "feature_02043190039ab3a2",
+        "feature_f174d30777e88c79"
+      ]
+    },
+    {
+      "edge_id": "edge_ece1b71220e26036",
+      "source_code": "32",
+      "target_code": "37",
+      "relation_type": "observation",
+      "weight": 0.7947,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_b19135042fe5ebc6",
+        "feature_87144f6d304a863b",
+        "feature_02043190039ab3a2",
+        "feature_f174d30777e88c79"
+      ]
+    },
+    {
+      "edge_id": "edge_9354a7f6116e3d76",
+      "source_code": "32",
+      "target_code": "44",
+      "relation_type": "competition",
+      "weight": 0.9474,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_87144f6d304a863b",
+        "feature_02043190039ab3a2",
+        "feature_f174d30777e88c79"
+      ]
+    },
+    {
+      "edge_id": "edge_086e0ec94701b5c5",
+      "source_code": "32",
+      "target_code": "34",
+      "relation_type": "competition",
+      "weight": 0.8195,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_87144f6d304a863b",
+        "feature_02043190039ab3a2",
+        "feature_f174d30777e88c79"
+      ]
+    },
+    {
+      "edge_id": "edge_f3d584c993f6486a",
+      "source_code": "32",
+      "target_code": "33",
+      "relation_type": "competition",
+      "weight": 0.7863,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_87144f6d304a863b",
+        "feature_02043190039ab3a2",
+        "feature_f174d30777e88c79"
+      ]
+    },
+    {
+      "edge_id": "edge_3e6d0bd61a29dae1",
+      "source_code": "33",
+      "target_code": "37",
+      "relation_type": "observation",
+      "weight": 0.8607,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_0cbbf7ca569b6c9d",
+        "feature_fe5fe3de8f13fc79",
+        "feature_2b9b2fb0f77be601",
+        "feature_2095eec7252562a0"
+      ]
+    },
+    {
+      "edge_id": "edge_b138ec915f057922",
+      "source_code": "33",
+      "target_code": "32",
+      "relation_type": "observation",
+      "weight": 0.8396,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_0cbbf7ca569b6c9d",
+        "feature_fe5fe3de8f13fc79",
+        "feature_2b9b2fb0f77be601",
+        "feature_2095eec7252562a0"
+      ]
+    },
+    {
+      "edge_id": "edge_dcf689983c1b2ffd",
+      "source_code": "33",
+      "target_code": "44",
+      "relation_type": "observation",
+      "weight": 0.7923,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_0cbbf7ca569b6c9d",
+        "feature_fe5fe3de8f13fc79",
+        "feature_2b9b2fb0f77be601",
+        "feature_2095eec7252562a0"
+      ]
+    },
+    {
+      "edge_id": "edge_5d3a3c42aa405af4",
+      "source_code": "33",
+      "target_code": "37",
+      "relation_type": "competition",
+      "weight": 0.9618,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_fe5fe3de8f13fc79",
+        "feature_2b9b2fb0f77be601",
+        "feature_2095eec7252562a0"
+      ]
+    },
+    {
+      "edge_id": "edge_07407da8c5be43e5",
+      "source_code": "33",
+      "target_code": "50",
+      "relation_type": "competition",
+      "weight": 0.9548,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_fe5fe3de8f13fc79",
+        "feature_2b9b2fb0f77be601",
+        "feature_2095eec7252562a0"
+      ]
+    },
+    {
+      "edge_id": "edge_7e569acb1e776c23",
+      "source_code": "33",
+      "target_code": "34",
+      "relation_type": "competition",
+      "weight": 0.9458,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_fe5fe3de8f13fc79",
+        "feature_2b9b2fb0f77be601",
+        "feature_2095eec7252562a0"
+      ]
+    },
+    {
+      "edge_id": "edge_8983256eb5b3ad9f",
+      "source_code": "34",
+      "target_code": "50",
+      "relation_type": "observation",
+      "weight": 0.9022,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_874da241d8748ebf",
+        "feature_2061bd82fd944409",
+        "feature_2e401e6e8649cd1c",
+        "feature_383c5c2fe42c8c64"
+      ]
+    },
+    {
+      "edge_id": "edge_5b6226b55dc58178",
+      "source_code": "34",
+      "target_code": "42",
+      "relation_type": "observation",
+      "weight": 0.8849,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_874da241d8748ebf",
+        "feature_2061bd82fd944409",
+        "feature_2e401e6e8649cd1c",
+        "feature_383c5c2fe42c8c64"
+      ]
+    },
+    {
+      "edge_id": "edge_9d0b96b8ad98a6c0",
+      "source_code": "34",
+      "target_code": "61",
+      "relation_type": "observation",
+      "weight": 0.8612,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_874da241d8748ebf",
+        "feature_2061bd82fd944409",
+        "feature_2e401e6e8649cd1c",
+        "feature_383c5c2fe42c8c64"
+      ]
+    },
+    {
+      "edge_id": "edge_79424ac34dcba580",
+      "source_code": "34",
+      "target_code": "33",
+      "relation_type": "competition",
+      "weight": 0.9458,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_2061bd82fd944409",
+        "feature_2e401e6e8649cd1c",
+        "feature_383c5c2fe42c8c64"
+      ]
+    },
+    {
+      "edge_id": "edge_51e2a52491e16d1c",
+      "source_code": "34",
+      "target_code": "50",
+      "relation_type": "competition",
+      "weight": 0.9383,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_2061bd82fd944409",
+        "feature_2e401e6e8649cd1c",
+        "feature_383c5c2fe42c8c64"
+      ]
+    },
+    {
+      "edge_id": "edge_4cbd0b52e2fe1512",
+      "source_code": "34",
+      "target_code": "37",
+      "relation_type": "competition",
+      "weight": 0.9076,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_2061bd82fd944409",
+        "feature_2e401e6e8649cd1c",
+        "feature_383c5c2fe42c8c64"
+      ]
+    },
+    {
+      "edge_id": "edge_19b6a3faf28fbb70",
+      "source_code": "35",
+      "target_code": "21",
+      "relation_type": "observation",
+      "weight": 0.8576,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_d9695371506f608c",
+        "feature_9c53a48228bc1785",
+        "feature_5b093c61f0387f38",
+        "feature_e2d63a8f7fef5ade"
+      ]
+    },
+    {
+      "edge_id": "edge_93b1d33d9e5165af",
+      "source_code": "35",
+      "target_code": "36",
+      "relation_type": "observation",
+      "weight": 0.8508,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_d9695371506f608c",
+        "feature_9c53a48228bc1785",
+        "feature_5b093c61f0387f38",
+        "feature_e2d63a8f7fef5ade"
+      ]
+    },
+    {
+      "edge_id": "edge_7fe0dd488cf08d4c",
+      "source_code": "35",
+      "target_code": "13",
+      "relation_type": "observation",
+      "weight": 0.8385,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_d9695371506f608c",
+        "feature_9c53a48228bc1785",
+        "feature_5b093c61f0387f38",
+        "feature_e2d63a8f7fef5ade"
+      ]
+    },
+    {
+      "edge_id": "edge_bed1540f877e8cd5",
+      "source_code": "35",
+      "target_code": "13",
+      "relation_type": "competition",
+      "weight": 0.8697,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_9c53a48228bc1785",
+        "feature_5b093c61f0387f38",
+        "feature_e2d63a8f7fef5ade"
+      ]
+    },
+    {
+      "edge_id": "edge_e9da856517eb0921",
+      "source_code": "35",
+      "target_code": "36",
+      "relation_type": "competition",
+      "weight": 0.8686,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_9c53a48228bc1785",
+        "feature_5b093c61f0387f38",
+        "feature_e2d63a8f7fef5ade"
+      ]
+    },
+    {
+      "edge_id": "edge_42e7caed40f73556",
+      "source_code": "35",
+      "target_code": "41",
+      "relation_type": "competition",
+      "weight": 0.8662,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_9c53a48228bc1785",
+        "feature_5b093c61f0387f38",
+        "feature_e2d63a8f7fef5ade"
+      ]
+    },
+    {
+      "edge_id": "edge_11086c459e3e03e6",
+      "source_code": "36",
+      "target_code": "43",
+      "relation_type": "observation",
+      "weight": 0.9328,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_03c35c0011b9e92a",
+        "feature_09e434c904a9669d",
+        "feature_c6cca2933988de55",
+        "feature_8fac1932d92481a5"
+      ]
+    },
+    {
+      "edge_id": "edge_3c0cf8b7f5e01af1",
+      "source_code": "36",
+      "target_code": "21",
+      "relation_type": "observation",
+      "weight": 0.9136,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_03c35c0011b9e92a",
+        "feature_09e434c904a9669d",
+        "feature_c6cca2933988de55",
+        "feature_8fac1932d92481a5"
+      ]
+    },
+    {
+      "edge_id": "edge_eb4b5380fdf231b5",
+      "source_code": "36",
+      "target_code": "51",
+      "relation_type": "observation",
+      "weight": 0.9087,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_03c35c0011b9e92a",
+        "feature_09e434c904a9669d",
+        "feature_c6cca2933988de55",
+        "feature_8fac1932d92481a5"
+      ]
+    },
+    {
+      "edge_id": "edge_9d20f07f2e7b6a1d",
+      "source_code": "36",
+      "target_code": "13",
+      "relation_type": "competition",
+      "weight": 0.9429,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_09e434c904a9669d",
+        "feature_c6cca2933988de55",
+        "feature_8fac1932d92481a5"
+      ]
+    },
+    {
+      "edge_id": "edge_0d55da4a58e0254d",
+      "source_code": "36",
+      "target_code": "41",
+      "relation_type": "competition",
+      "weight": 0.9336,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_09e434c904a9669d",
+        "feature_c6cca2933988de55",
+        "feature_8fac1932d92481a5"
+      ]
+    },
+    {
+      "edge_id": "edge_eb53432726a60e8b",
+      "source_code": "36",
+      "target_code": "51",
+      "relation_type": "competition",
+      "weight": 0.9328,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_09e434c904a9669d",
+        "feature_c6cca2933988de55",
+        "feature_8fac1932d92481a5"
+      ]
+    },
+    {
+      "edge_id": "edge_368438dff358d66b",
+      "source_code": "37",
+      "target_code": "33",
+      "relation_type": "observation",
+      "weight": 0.8607,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_7fe8b3961d20b908",
+        "feature_820cc859b2759680",
+        "feature_b17dde73bbb3682a",
+        "feature_6f169ec9b8baf594"
+      ]
+    },
+    {
+      "edge_id": "edge_839cb2af147808a3",
+      "source_code": "37",
+      "target_code": "34",
+      "relation_type": "observation",
+      "weight": 0.8198,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_7fe8b3961d20b908",
+        "feature_820cc859b2759680",
+        "feature_b17dde73bbb3682a",
+        "feature_6f169ec9b8baf594"
+      ]
+    },
+    {
+      "edge_id": "edge_0f57d7e06aa6c772",
+      "source_code": "37",
+      "target_code": "44",
+      "relation_type": "observation",
+      "weight": 0.8174,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_7fe8b3961d20b908",
+        "feature_820cc859b2759680",
+        "feature_b17dde73bbb3682a",
+        "feature_6f169ec9b8baf594"
+      ]
+    },
+    {
+      "edge_id": "edge_e6169e6266f13425",
+      "source_code": "37",
+      "target_code": "33",
+      "relation_type": "competition",
+      "weight": 0.9618,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_820cc859b2759680",
+        "feature_b17dde73bbb3682a",
+        "feature_6f169ec9b8baf594"
+      ]
+    },
+    {
+      "edge_id": "edge_a596400a2bc8e42d",
+      "source_code": "37",
+      "target_code": "50",
+      "relation_type": "competition",
+      "weight": 0.9171,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_820cc859b2759680",
+        "feature_b17dde73bbb3682a",
+        "feature_6f169ec9b8baf594"
+      ]
+    },
+    {
+      "edge_id": "edge_2e4f74e20cfc9a6c",
+      "source_code": "37",
+      "target_code": "34",
+      "relation_type": "competition",
+      "weight": 0.9076,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_820cc859b2759680",
+        "feature_b17dde73bbb3682a",
+        "feature_6f169ec9b8baf594"
+      ]
+    },
+    {
+      "edge_id": "edge_6d71ff4ae1b32420",
+      "source_code": "41",
+      "target_code": "51",
+      "relation_type": "observation",
+      "weight": 0.9469,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_9c49bbe6b65e1b0b",
+        "feature_587805ae9a14bd9d",
+        "feature_d7123b78009f141a",
+        "feature_c9cd7751709b3fd5"
+      ]
+    },
+    {
+      "edge_id": "edge_09c927ac88156b15",
+      "source_code": "41",
+      "target_code": "13",
+      "relation_type": "observation",
+      "weight": 0.9301,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_9c49bbe6b65e1b0b",
+        "feature_587805ae9a14bd9d",
+        "feature_d7123b78009f141a",
+        "feature_c9cd7751709b3fd5"
+      ]
+    },
+    {
+      "edge_id": "edge_8f2d38c885e04d19",
+      "source_code": "41",
+      "target_code": "43",
+      "relation_type": "observation",
+      "weight": 0.8971,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_9c49bbe6b65e1b0b",
+        "feature_587805ae9a14bd9d",
+        "feature_d7123b78009f141a",
+        "feature_c9cd7751709b3fd5"
+      ]
+    },
+    {
+      "edge_id": "edge_9d672af904814ab2",
+      "source_code": "41",
+      "target_code": "13",
+      "relation_type": "competition",
+      "weight": 0.9907,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_587805ae9a14bd9d",
+        "feature_d7123b78009f141a",
+        "feature_c9cd7751709b3fd5"
+      ]
+    },
+    {
+      "edge_id": "edge_0ef2a68bd980f738",
+      "source_code": "41",
+      "target_code": "51",
+      "relation_type": "competition",
+      "weight": 0.9674,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_587805ae9a14bd9d",
+        "feature_d7123b78009f141a",
+        "feature_c9cd7751709b3fd5"
+      ]
+    },
+    {
+      "edge_id": "edge_ffabc080ced1f58b",
+      "source_code": "41",
+      "target_code": "36",
+      "relation_type": "competition",
+      "weight": 0.9336,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_587805ae9a14bd9d",
+        "feature_d7123b78009f141a",
+        "feature_c9cd7751709b3fd5"
+      ]
+    },
+    {
+      "edge_id": "edge_ba566ef57e27a92f",
+      "source_code": "42",
+      "target_code": "61",
+      "relation_type": "observation",
+      "weight": 0.9376,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_1992ae0c780286f9",
+        "feature_c76208b606b0e4f1",
+        "feature_23af53ae7c84f9bd",
+        "feature_aae9d95414dd2285"
+      ]
+    },
+    {
+      "edge_id": "edge_dc6068d100483310",
+      "source_code": "42",
+      "target_code": "51",
+      "relation_type": "observation",
+      "weight": 0.9,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_1992ae0c780286f9",
+        "feature_c76208b606b0e4f1",
+        "feature_23af53ae7c84f9bd",
+        "feature_aae9d95414dd2285"
+      ]
+    },
+    {
+      "edge_id": "edge_7e15da527156594a",
+      "source_code": "42",
+      "target_code": "43",
+      "relation_type": "observation",
+      "weight": 0.8981,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_1992ae0c780286f9",
+        "feature_c76208b606b0e4f1",
+        "feature_23af53ae7c84f9bd",
+        "feature_aae9d95414dd2285"
+      ]
+    },
+    {
+      "edge_id": "edge_8325b83b3f8f44f1",
+      "source_code": "42",
+      "target_code": "61",
+      "relation_type": "competition",
+      "weight": 0.9561,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_c76208b606b0e4f1",
+        "feature_23af53ae7c84f9bd",
+        "feature_aae9d95414dd2285"
+      ]
+    },
+    {
+      "edge_id": "edge_cc061292569d25f7",
+      "source_code": "42",
+      "target_code": "51",
+      "relation_type": "competition",
+      "weight": 0.9359,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_c76208b606b0e4f1",
+        "feature_23af53ae7c84f9bd",
+        "feature_aae9d95414dd2285"
+      ]
+    },
+    {
+      "edge_id": "edge_f0cc69c88aea79ec",
+      "source_code": "42",
+      "target_code": "31",
+      "relation_type": "competition",
+      "weight": 0.9263,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_c76208b606b0e4f1",
+        "feature_23af53ae7c84f9bd",
+        "feature_aae9d95414dd2285"
+      ]
+    },
+    {
+      "edge_id": "edge_f1443807696e95d4",
+      "source_code": "43",
+      "target_code": "36",
+      "relation_type": "observation",
+      "weight": 0.9328,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_f292953853924822",
+        "feature_35b4e9d160fbbf29",
+        "feature_d96f4c4f43d3d4a4",
+        "feature_5fcddb103e9de8ee"
+      ]
+    },
+    {
+      "edge_id": "edge_f12aa7b5a80c8422",
+      "source_code": "43",
+      "target_code": "51",
+      "relation_type": "observation",
+      "weight": 0.9233,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_f292953853924822",
+        "feature_35b4e9d160fbbf29",
+        "feature_d96f4c4f43d3d4a4",
+        "feature_5fcddb103e9de8ee"
+      ]
+    },
+    {
+      "edge_id": "edge_7c71300db29434bf",
+      "source_code": "43",
+      "target_code": "21",
+      "relation_type": "observation",
+      "weight": 0.9096,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_f292953853924822",
+        "feature_35b4e9d160fbbf29",
+        "feature_d96f4c4f43d3d4a4",
+        "feature_5fcddb103e9de8ee"
+      ]
+    },
+    {
+      "edge_id": "edge_4550f7d28ab16dfb",
+      "source_code": "43",
+      "target_code": "21",
+      "relation_type": "competition",
+      "weight": 0.9745,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_35b4e9d160fbbf29",
+        "feature_d96f4c4f43d3d4a4",
+        "feature_5fcddb103e9de8ee"
+      ]
+    },
+    {
+      "edge_id": "edge_06a6c798f674ac10",
+      "source_code": "43",
+      "target_code": "11",
+      "relation_type": "competition",
+      "weight": 0.9611,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_35b4e9d160fbbf29",
+        "feature_d96f4c4f43d3d4a4",
+        "feature_5fcddb103e9de8ee"
+      ]
+    },
+    {
+      "edge_id": "edge_8ece16bb36ab0d1a",
+      "source_code": "43",
+      "target_code": "22",
+      "relation_type": "competition",
+      "weight": 0.9451,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_35b4e9d160fbbf29",
+        "feature_d96f4c4f43d3d4a4",
+        "feature_5fcddb103e9de8ee"
+      ]
+    },
+    {
+      "edge_id": "edge_3d6fc303f81c8e7d",
+      "source_code": "44",
+      "target_code": "32",
+      "relation_type": "observation",
+      "weight": 0.9262,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_4115c2d03bcb3963",
+        "feature_218894e6fe9bdfcb",
+        "feature_bbdffbb9935d9c62",
+        "feature_970d9338159087e3"
+      ]
+    },
+    {
+      "edge_id": "edge_d41d62e962144ca2",
+      "source_code": "44",
+      "target_code": "37",
+      "relation_type": "observation",
+      "weight": 0.8174,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_4115c2d03bcb3963",
+        "feature_218894e6fe9bdfcb",
+        "feature_bbdffbb9935d9c62",
+        "feature_970d9338159087e3"
+      ]
+    },
+    {
+      "edge_id": "edge_cee706b5543f68ae",
+      "source_code": "44",
+      "target_code": "33",
+      "relation_type": "observation",
+      "weight": 0.7923,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_4115c2d03bcb3963",
+        "feature_218894e6fe9bdfcb",
+        "feature_bbdffbb9935d9c62",
+        "feature_970d9338159087e3"
+      ]
+    },
+    {
+      "edge_id": "edge_7c18261c09d96d72",
+      "source_code": "44",
+      "target_code": "32",
+      "relation_type": "competition",
+      "weight": 0.9474,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_218894e6fe9bdfcb",
+        "feature_bbdffbb9935d9c62",
+        "feature_970d9338159087e3"
+      ]
+    },
+    {
+      "edge_id": "edge_35fdde5150352731",
+      "source_code": "44",
+      "target_code": "34",
+      "relation_type": "competition",
+      "weight": 0.7673,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_218894e6fe9bdfcb",
+        "feature_bbdffbb9935d9c62",
+        "feature_970d9338159087e3"
+      ]
+    },
+    {
+      "edge_id": "edge_56812366bc33067b",
+      "source_code": "44",
+      "target_code": "33",
+      "relation_type": "competition",
+      "weight": 0.7341,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_218894e6fe9bdfcb",
+        "feature_bbdffbb9935d9c62",
+        "feature_970d9338159087e3"
+      ]
+    },
+    {
+      "edge_id": "edge_68fe97b9a8e2015b",
+      "source_code": "45",
+      "target_code": "53",
+      "relation_type": "observation",
+      "weight": 0.913,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_819159b7c789f363",
+        "feature_df42cb27a0f14653",
+        "feature_369a307302bbf47b",
+        "feature_4376ea5fb4ae6558"
+      ]
+    },
+    {
+      "edge_id": "edge_4c1fdbc0de1a2f9b",
+      "source_code": "45",
+      "target_code": "52",
+      "relation_type": "observation",
+      "weight": 0.908,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_819159b7c789f363",
+        "feature_df42cb27a0f14653",
+        "feature_369a307302bbf47b",
+        "feature_4376ea5fb4ae6558"
+      ]
+    },
+    {
+      "edge_id": "edge_6ae8b3bbc2aa243c",
+      "source_code": "45",
+      "target_code": "62",
+      "relation_type": "observation",
+      "weight": 0.8919,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_819159b7c789f363",
+        "feature_df42cb27a0f14653",
+        "feature_369a307302bbf47b",
+        "feature_4376ea5fb4ae6558"
+      ]
+    },
+    {
+      "edge_id": "edge_0c98882286a1cbd8",
+      "source_code": "45",
+      "target_code": "43",
+      "relation_type": "competition",
+      "weight": 0.9148,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_df42cb27a0f14653",
+        "feature_369a307302bbf47b",
+        "feature_4376ea5fb4ae6558"
+      ]
+    },
+    {
+      "edge_id": "edge_551ee73d6e806ece",
+      "source_code": "45",
+      "target_code": "15",
+      "relation_type": "competition",
+      "weight": 0.9137,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_df42cb27a0f14653",
+        "feature_369a307302bbf47b",
+        "feature_4376ea5fb4ae6558"
+      ]
+    },
+    {
+      "edge_id": "edge_918b26e31b855229",
+      "source_code": "45",
+      "target_code": "21",
+      "relation_type": "competition",
+      "weight": 0.9136,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_df42cb27a0f14653",
+        "feature_369a307302bbf47b",
+        "feature_4376ea5fb4ae6558"
+      ]
+    },
+    {
+      "edge_id": "edge_48b03186ba55d795",
+      "source_code": "46",
+      "target_code": "62",
+      "relation_type": "observation",
+      "weight": 0.8969,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_35d4e89f19972908",
+        "feature_6cd6b1fd361d2838",
+        "feature_03f4868ab3edb75a",
+        "feature_b750d8c9f10aa375"
+      ]
+    },
+    {
+      "edge_id": "edge_c296685733325932",
+      "source_code": "46",
+      "target_code": "65",
+      "relation_type": "observation",
+      "weight": 0.8939,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_35d4e89f19972908",
+        "feature_6cd6b1fd361d2838",
+        "feature_03f4868ab3edb75a",
+        "feature_b750d8c9f10aa375"
+      ]
+    },
+    {
+      "edge_id": "edge_d927dc9e7c4b36ed",
+      "source_code": "46",
+      "target_code": "23",
+      "relation_type": "observation",
+      "weight": 0.887,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_35d4e89f19972908",
+        "feature_6cd6b1fd361d2838",
+        "feature_03f4868ab3edb75a",
+        "feature_b750d8c9f10aa375"
+      ]
+    },
+    {
+      "edge_id": "edge_db80ace0c197af84",
+      "source_code": "46",
+      "target_code": "23",
+      "relation_type": "competition",
+      "weight": 0.9166,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_6cd6b1fd361d2838",
+        "feature_03f4868ab3edb75a",
+        "feature_b750d8c9f10aa375"
+      ]
+    },
+    {
+      "edge_id": "edge_6b9b2995f8556294",
+      "source_code": "46",
+      "target_code": "52",
+      "relation_type": "competition",
+      "weight": 0.9137,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_6cd6b1fd361d2838",
+        "feature_03f4868ab3edb75a",
+        "feature_b750d8c9f10aa375"
+      ]
+    },
+    {
+      "edge_id": "edge_d870b7981c366c83",
+      "source_code": "46",
+      "target_code": "53",
+      "relation_type": "competition",
+      "weight": 0.9101,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_6cd6b1fd361d2838",
+        "feature_03f4868ab3edb75a",
+        "feature_b750d8c9f10aa375"
+      ]
+    },
+    {
+      "edge_id": "edge_27e57c2cbb684b1e",
+      "source_code": "50",
+      "target_code": "61",
+      "relation_type": "observation",
+      "weight": 0.9391,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_201e8fd666ae2332",
+        "feature_c5f8cd82bc47179e",
+        "feature_81b995c1a72e5d13",
+        "feature_5075ac1f7fa4c3cc"
+      ]
+    },
+    {
+      "edge_id": "edge_9b58a7d3f9be725a",
+      "source_code": "50",
+      "target_code": "34",
+      "relation_type": "observation",
+      "weight": 0.9022,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_201e8fd666ae2332",
+        "feature_c5f8cd82bc47179e",
+        "feature_81b995c1a72e5d13",
+        "feature_5075ac1f7fa4c3cc"
+      ]
+    },
+    {
+      "edge_id": "edge_38d805420af59726",
+      "source_code": "50",
+      "target_code": "42",
+      "relation_type": "observation",
+      "weight": 0.8767,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_201e8fd666ae2332",
+        "feature_c5f8cd82bc47179e",
+        "feature_81b995c1a72e5d13",
+        "feature_5075ac1f7fa4c3cc"
+      ]
+    },
+    {
+      "edge_id": "edge_8ab321dba6cd4c22",
+      "source_code": "50",
+      "target_code": "33",
+      "relation_type": "competition",
+      "weight": 0.9548,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_c5f8cd82bc47179e",
+        "feature_81b995c1a72e5d13",
+        "feature_5075ac1f7fa4c3cc"
+      ]
+    },
+    {
+      "edge_id": "edge_04aec4e651a3eec4",
+      "source_code": "50",
+      "target_code": "34",
+      "relation_type": "competition",
+      "weight": 0.9383,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_c5f8cd82bc47179e",
+        "feature_81b995c1a72e5d13",
+        "feature_5075ac1f7fa4c3cc"
+      ]
+    },
+    {
+      "edge_id": "edge_f0a49c382925bcf4",
+      "source_code": "50",
+      "target_code": "37",
+      "relation_type": "competition",
+      "weight": 0.9171,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_c5f8cd82bc47179e",
+        "feature_81b995c1a72e5d13",
+        "feature_5075ac1f7fa4c3cc"
+      ]
+    },
+    {
+      "edge_id": "edge_5f4ce9a648e151bd",
+      "source_code": "51",
+      "target_code": "41",
+      "relation_type": "observation",
+      "weight": 0.9469,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_fa23fd8b9e3cf956",
+        "feature_9f3c0b86c6847184",
+        "feature_a509b7b0b0783e6d",
+        "feature_1a7c60af298cc59a"
+      ]
+    },
+    {
+      "edge_id": "edge_9b02617c0b8c81fb",
+      "source_code": "51",
+      "target_code": "13",
+      "relation_type": "observation",
+      "weight": 0.9305,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_fa23fd8b9e3cf956",
+        "feature_9f3c0b86c6847184",
+        "feature_a509b7b0b0783e6d",
+        "feature_1a7c60af298cc59a"
+      ]
+    },
+    {
+      "edge_id": "edge_5fdc9a477cd54407",
+      "source_code": "51",
+      "target_code": "43",
+      "relation_type": "observation",
+      "weight": 0.9233,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_fa23fd8b9e3cf956",
+        "feature_9f3c0b86c6847184",
+        "feature_a509b7b0b0783e6d",
+        "feature_1a7c60af298cc59a"
+      ]
+    },
+    {
+      "edge_id": "edge_7ca9d2fad4bc272a",
+      "source_code": "51",
+      "target_code": "41",
+      "relation_type": "competition",
+      "weight": 0.9674,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_9f3c0b86c6847184",
+        "feature_a509b7b0b0783e6d",
+        "feature_1a7c60af298cc59a"
+      ]
+    },
+    {
+      "edge_id": "edge_d4168ddddfc134b1",
+      "source_code": "51",
+      "target_code": "13",
+      "relation_type": "competition",
+      "weight": 0.9639,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_9f3c0b86c6847184",
+        "feature_a509b7b0b0783e6d",
+        "feature_1a7c60af298cc59a"
+      ]
+    },
+    {
+      "edge_id": "edge_d3fe3d966615bbe2",
+      "source_code": "51",
+      "target_code": "42",
+      "relation_type": "competition",
+      "weight": 0.9359,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_9f3c0b86c6847184",
+        "feature_a509b7b0b0783e6d",
+        "feature_1a7c60af298cc59a"
+      ]
+    },
+    {
+      "edge_id": "edge_ed72d651e9ac1b80",
+      "source_code": "52",
+      "target_code": "53",
+      "relation_type": "observation",
+      "weight": 0.9713,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_d3626ea3691bb885",
+        "feature_25f03e9b2bbab6ba",
+        "feature_8cb509c4ed268f6d",
+        "feature_8204d125b8ea31f6"
+      ]
+    },
+    {
+      "edge_id": "edge_188ba0103fcbce73",
+      "source_code": "52",
+      "target_code": "62",
+      "relation_type": "observation",
+      "weight": 0.933,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_d3626ea3691bb885",
+        "feature_25f03e9b2bbab6ba",
+        "feature_8cb509c4ed268f6d",
+        "feature_8204d125b8ea31f6"
+      ]
+    },
+    {
+      "edge_id": "edge_e8f5eb5438a4628e",
+      "source_code": "52",
+      "target_code": "65",
+      "relation_type": "observation",
+      "weight": 0.9177,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_d3626ea3691bb885",
+        "feature_25f03e9b2bbab6ba",
+        "feature_8cb509c4ed268f6d",
+        "feature_8204d125b8ea31f6"
+      ]
+    },
+    {
+      "edge_id": "edge_dc1ebf572df70c9a",
+      "source_code": "52",
+      "target_code": "53",
+      "relation_type": "competition",
+      "weight": 0.9901,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_25f03e9b2bbab6ba",
+        "feature_8cb509c4ed268f6d",
+        "feature_8204d125b8ea31f6"
+      ]
+    },
+    {
+      "edge_id": "edge_36e2ff81c1df7a4b",
+      "source_code": "52",
+      "target_code": "62",
+      "relation_type": "competition",
+      "weight": 0.9549,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_25f03e9b2bbab6ba",
+        "feature_8cb509c4ed268f6d",
+        "feature_8204d125b8ea31f6"
+      ]
+    },
+    {
+      "edge_id": "edge_8d06d1d5c612fd31",
+      "source_code": "52",
+      "target_code": "65",
+      "relation_type": "competition",
+      "weight": 0.9409,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_25f03e9b2bbab6ba",
+        "feature_8cb509c4ed268f6d",
+        "feature_8204d125b8ea31f6"
+      ]
+    },
+    {
+      "edge_id": "edge_84356038801ac097",
+      "source_code": "53",
+      "target_code": "52",
+      "relation_type": "observation",
+      "weight": 0.9713,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_5f2e1f4b7bdd48bf",
+        "feature_b0bda6e870cad97e",
+        "feature_9f55352eb7644626",
+        "feature_271c63f274af2564"
+      ]
+    },
+    {
+      "edge_id": "edge_70373db61c0f122f",
+      "source_code": "53",
+      "target_code": "62",
+      "relation_type": "observation",
+      "weight": 0.919,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_5f2e1f4b7bdd48bf",
+        "feature_b0bda6e870cad97e",
+        "feature_9f55352eb7644626",
+        "feature_271c63f274af2564"
+      ]
+    },
+    {
+      "edge_id": "edge_0331e4feb8cc177f",
+      "source_code": "53",
+      "target_code": "65",
+      "relation_type": "observation",
+      "weight": 0.9164,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_5f2e1f4b7bdd48bf",
+        "feature_b0bda6e870cad97e",
+        "feature_9f55352eb7644626",
+        "feature_271c63f274af2564"
+      ]
+    },
+    {
+      "edge_id": "edge_49cd0f993209bfbf",
+      "source_code": "53",
+      "target_code": "52",
+      "relation_type": "competition",
+      "weight": 0.9901,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_b0bda6e870cad97e",
+        "feature_9f55352eb7644626",
+        "feature_271c63f274af2564"
+      ]
+    },
+    {
+      "edge_id": "edge_ab262cc880f29612",
+      "source_code": "53",
+      "target_code": "62",
+      "relation_type": "competition",
+      "weight": 0.9603,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_b0bda6e870cad97e",
+        "feature_9f55352eb7644626",
+        "feature_271c63f274af2564"
+      ]
+    },
+    {
+      "edge_id": "edge_5dd1d3265ba8389b",
+      "source_code": "53",
+      "target_code": "65",
+      "relation_type": "competition",
+      "weight": 0.9464,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_b0bda6e870cad97e",
+        "feature_9f55352eb7644626",
+        "feature_271c63f274af2564"
+      ]
+    },
+    {
+      "edge_id": "edge_2a8a1f8c316c5aa8",
+      "source_code": "54",
+      "target_code": "63",
+      "relation_type": "observation",
+      "weight": 0.9392,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_04c4fb2e6b858c9f",
+        "feature_501d06158e795d67",
+        "feature_cd1d1076e0d674a5",
+        "feature_ddf66029b31899c0"
+      ]
+    },
+    {
+      "edge_id": "edge_30825c5abe97210b",
+      "source_code": "54",
+      "target_code": "53",
+      "relation_type": "observation",
+      "weight": 0.9052,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_04c4fb2e6b858c9f",
+        "feature_501d06158e795d67",
+        "feature_cd1d1076e0d674a5",
+        "feature_ddf66029b31899c0"
+      ]
+    },
+    {
+      "edge_id": "edge_363d03c41b8aad3e",
+      "source_code": "54",
+      "target_code": "52",
+      "relation_type": "observation",
+      "weight": 0.9031,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_04c4fb2e6b858c9f",
+        "feature_501d06158e795d67",
+        "feature_cd1d1076e0d674a5",
+        "feature_ddf66029b31899c0"
+      ]
+    },
+    {
+      "edge_id": "edge_93a4bd4310885352",
+      "source_code": "54",
+      "target_code": "63",
+      "relation_type": "competition",
+      "weight": 0.9375,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_501d06158e795d67",
+        "feature_cd1d1076e0d674a5",
+        "feature_ddf66029b31899c0"
+      ]
+    },
+    {
+      "edge_id": "edge_997c41e38f031d99",
+      "source_code": "54",
+      "target_code": "53",
+      "relation_type": "competition",
+      "weight": 0.9243,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_501d06158e795d67",
+        "feature_cd1d1076e0d674a5",
+        "feature_ddf66029b31899c0"
+      ]
+    },
+    {
+      "edge_id": "edge_a37e343d3c359399",
+      "source_code": "54",
+      "target_code": "15",
+      "relation_type": "competition",
+      "weight": 0.9232,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_501d06158e795d67",
+        "feature_cd1d1076e0d674a5",
+        "feature_ddf66029b31899c0"
+      ]
+    },
+    {
+      "edge_id": "edge_895f81d47c2516ab",
+      "source_code": "61",
+      "target_code": "50",
+      "relation_type": "observation",
+      "weight": 0.9391,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_1df5ba8fdc6999ac",
+        "feature_5389b4a31dbf16ce",
+        "feature_bb5993f2742d1042",
+        "feature_a1abae6f5e2042e5"
+      ]
+    },
+    {
+      "edge_id": "edge_1f316b5d088f11a6",
+      "source_code": "61",
+      "target_code": "42",
+      "relation_type": "observation",
+      "weight": 0.9376,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_1df5ba8fdc6999ac",
+        "feature_5389b4a31dbf16ce",
+        "feature_bb5993f2742d1042",
+        "feature_a1abae6f5e2042e5"
+      ]
+    },
+    {
+      "edge_id": "edge_8b635999d7661cd1",
+      "source_code": "61",
+      "target_code": "36",
+      "relation_type": "observation",
+      "weight": 0.8699,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_1df5ba8fdc6999ac",
+        "feature_5389b4a31dbf16ce",
+        "feature_bb5993f2742d1042",
+        "feature_a1abae6f5e2042e5"
+      ]
+    },
+    {
+      "edge_id": "edge_b5952c40397541d6",
+      "source_code": "61",
+      "target_code": "42",
+      "relation_type": "competition",
+      "weight": 0.9561,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_5389b4a31dbf16ce",
+        "feature_bb5993f2742d1042",
+        "feature_a1abae6f5e2042e5"
+      ]
+    },
+    {
+      "edge_id": "edge_0550a8c1fb8f7716",
+      "source_code": "61",
+      "target_code": "51",
+      "relation_type": "competition",
+      "weight": 0.8927,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_5389b4a31dbf16ce",
+        "feature_bb5993f2742d1042",
+        "feature_a1abae6f5e2042e5"
+      ]
+    },
+    {
+      "edge_id": "edge_c370b8d929671d54",
+      "source_code": "61",
+      "target_code": "50",
+      "relation_type": "competition",
+      "weight": 0.8895,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_5389b4a31dbf16ce",
+        "feature_bb5993f2742d1042",
+        "feature_a1abae6f5e2042e5"
+      ]
+    },
+    {
+      "edge_id": "edge_cfbda9645b5167e4",
+      "source_code": "62",
+      "target_code": "52",
+      "relation_type": "observation",
+      "weight": 0.933,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_cb7c05554b066388",
+        "feature_5defb19013cfeae6",
+        "feature_57f53a4caccc6e7a",
+        "feature_18d32b138df4130f"
+      ]
+    },
+    {
+      "edge_id": "edge_4ed297a575acadbe",
+      "source_code": "62",
+      "target_code": "53",
+      "relation_type": "observation",
+      "weight": 0.919,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_cb7c05554b066388",
+        "feature_5defb19013cfeae6",
+        "feature_57f53a4caccc6e7a",
+        "feature_18d32b138df4130f"
+      ]
+    },
+    {
+      "edge_id": "edge_817fb840d6e0a46e",
+      "source_code": "62",
+      "target_code": "23",
+      "relation_type": "observation",
+      "weight": 0.9095,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_cb7c05554b066388",
+        "feature_5defb19013cfeae6",
+        "feature_57f53a4caccc6e7a",
+        "feature_18d32b138df4130f"
+      ]
+    },
+    {
+      "edge_id": "edge_58a0676292a69e0d",
+      "source_code": "62",
+      "target_code": "53",
+      "relation_type": "competition",
+      "weight": 0.9603,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_5defb19013cfeae6",
+        "feature_57f53a4caccc6e7a",
+        "feature_18d32b138df4130f"
+      ]
+    },
+    {
+      "edge_id": "edge_e4e584c5a5bfe989",
+      "source_code": "62",
+      "target_code": "65",
+      "relation_type": "competition",
+      "weight": 0.9577,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_5defb19013cfeae6",
+        "feature_57f53a4caccc6e7a",
+        "feature_18d32b138df4130f"
+      ]
+    },
+    {
+      "edge_id": "edge_bc735e7c389261c8",
+      "source_code": "62",
+      "target_code": "52",
+      "relation_type": "competition",
+      "weight": 0.9549,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_5defb19013cfeae6",
+        "feature_57f53a4caccc6e7a",
+        "feature_18d32b138df4130f"
+      ]
+    },
+    {
+      "edge_id": "edge_282636e89282b726",
+      "source_code": "63",
+      "target_code": "54",
+      "relation_type": "observation",
+      "weight": 0.9392,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_29af3e59a20afe86",
+        "feature_1c0d83a35b79f304",
+        "feature_90cf12e2a2043f2a",
+        "feature_2ac2074afc2fcdf5"
+      ]
+    },
+    {
+      "edge_id": "edge_956e483033c39f47",
+      "source_code": "63",
+      "target_code": "64",
+      "relation_type": "observation",
+      "weight": 0.9138,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_29af3e59a20afe86",
+        "feature_1c0d83a35b79f304",
+        "feature_90cf12e2a2043f2a",
+        "feature_2ac2074afc2fcdf5"
+      ]
+    },
+    {
+      "edge_id": "edge_bdabd0aa3b2bdbb8",
+      "source_code": "63",
+      "target_code": "65",
+      "relation_type": "observation",
+      "weight": 0.8939,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_29af3e59a20afe86",
+        "feature_1c0d83a35b79f304",
+        "feature_90cf12e2a2043f2a",
+        "feature_2ac2074afc2fcdf5"
+      ]
+    },
+    {
+      "edge_id": "edge_bd62794dd564ca90",
+      "source_code": "63",
+      "target_code": "64",
+      "relation_type": "competition",
+      "weight": 0.9608,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_1c0d83a35b79f304",
+        "feature_90cf12e2a2043f2a",
+        "feature_2ac2074afc2fcdf5"
+      ]
+    },
+    {
+      "edge_id": "edge_2315068de5c83355",
+      "source_code": "63",
+      "target_code": "14",
+      "relation_type": "competition",
+      "weight": 0.9451,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_1c0d83a35b79f304",
+        "feature_90cf12e2a2043f2a",
+        "feature_2ac2074afc2fcdf5"
+      ]
+    },
+    {
+      "edge_id": "edge_5109b3ac4fed63ff",
+      "source_code": "63",
+      "target_code": "15",
+      "relation_type": "competition",
+      "weight": 0.9378,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_1c0d83a35b79f304",
+        "feature_90cf12e2a2043f2a",
+        "feature_2ac2074afc2fcdf5"
+      ]
+    },
+    {
+      "edge_id": "edge_7e32b72f6bad3388",
+      "source_code": "64",
+      "target_code": "63",
+      "relation_type": "observation",
+      "weight": 0.9138,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_89473ff0f2fb8402",
+        "feature_c076bfacbd0c208f",
+        "feature_1fa2372d25e2c5e7",
+        "feature_aebaf1514a034319"
+      ]
+    },
+    {
+      "edge_id": "edge_7c8b5c57f5ddc34d",
+      "source_code": "64",
+      "target_code": "21",
+      "relation_type": "observation",
+      "weight": 0.8948,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_89473ff0f2fb8402",
+        "feature_c076bfacbd0c208f",
+        "feature_1fa2372d25e2c5e7",
+        "feature_aebaf1514a034319"
+      ]
+    },
+    {
+      "edge_id": "edge_af76a1b23bb4ed3e",
+      "source_code": "64",
+      "target_code": "22",
+      "relation_type": "observation",
+      "weight": 0.8905,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_89473ff0f2fb8402",
+        "feature_c076bfacbd0c208f",
+        "feature_1fa2372d25e2c5e7",
+        "feature_aebaf1514a034319"
+      ]
+    },
+    {
+      "edge_id": "edge_4e5b0631a1b1d329",
+      "source_code": "64",
+      "target_code": "63",
+      "relation_type": "competition",
+      "weight": 0.9608,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_c076bfacbd0c208f",
+        "feature_1fa2372d25e2c5e7",
+        "feature_aebaf1514a034319"
+      ]
+    },
+    {
+      "edge_id": "edge_b8b04980a472ec9c",
+      "source_code": "64",
+      "target_code": "12",
+      "relation_type": "competition",
+      "weight": 0.9582,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_c076bfacbd0c208f",
+        "feature_1fa2372d25e2c5e7",
+        "feature_aebaf1514a034319"
+      ]
+    },
+    {
+      "edge_id": "edge_cd92a3ae56f7d595",
+      "source_code": "64",
+      "target_code": "43",
+      "relation_type": "competition",
+      "weight": 0.9389,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_c076bfacbd0c208f",
+        "feature_1fa2372d25e2c5e7",
+        "feature_aebaf1514a034319"
+      ]
+    },
+    {
+      "edge_id": "edge_4320697704abb33d",
+      "source_code": "65",
+      "target_code": "52",
+      "relation_type": "observation",
+      "weight": 0.9177,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_9ef75459fa9e902a",
+        "feature_9530cefb9516a3b3",
+        "feature_ceace2078279a78f",
+        "feature_b51d7ece84623bf1"
+      ]
+    },
+    {
+      "edge_id": "edge_535a625408c922d4",
+      "source_code": "65",
+      "target_code": "53",
+      "relation_type": "observation",
+      "weight": 0.9164,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_9ef75459fa9e902a",
+        "feature_9530cefb9516a3b3",
+        "feature_ceace2078279a78f",
+        "feature_b51d7ece84623bf1"
+      ]
+    },
+    {
+      "edge_id": "edge_79b0605d828c21d2",
+      "source_code": "65",
+      "target_code": "62",
+      "relation_type": "observation",
+      "weight": 0.9053,
+      "data_quality": "scenario_assumption",
+      "evidence_refs": [
+        "feature_9ef75459fa9e902a",
+        "feature_9530cefb9516a3b3",
+        "feature_ceace2078279a78f",
+        "feature_b51d7ece84623bf1"
+      ]
+    },
+    {
+      "edge_id": "edge_9ff3ceaa2d3cb3b9",
+      "source_code": "65",
+      "target_code": "62",
+      "relation_type": "competition",
+      "weight": 0.9577,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_9530cefb9516a3b3",
+        "feature_ceace2078279a78f",
+        "feature_b51d7ece84623bf1"
+      ]
+    },
+    {
+      "edge_id": "edge_fa326d04e678ac28",
+      "source_code": "65",
+      "target_code": "53",
+      "relation_type": "competition",
+      "weight": 0.9464,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_9530cefb9516a3b3",
+        "feature_ceace2078279a78f",
+        "feature_b51d7ece84623bf1"
+      ]
+    },
+    {
+      "edge_id": "edge_505efb4865b65014",
+      "source_code": "65",
+      "target_code": "52",
+      "relation_type": "competition",
+      "weight": 0.9409,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "feature_9530cefb9516a3b3",
+        "feature_ceace2078279a78f",
+        "feature_b51d7ece84623bf1"
+      ]
+    },
+    {
+      "edge_id": "edge_ae650c62de302c11",
+      "source_code": "33",
+      "target_code": "50",
+      "relation_type": "coordination",
+      "weight": 0.5977,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_adac5990047ca300"
+      ]
+    },
+    {
+      "edge_id": "edge_315f5ef56c235cc6",
+      "source_code": "33",
+      "target_code": "31",
+      "relation_type": "coordination",
+      "weight": 0.5986,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_1f09e2043b14ae78"
+      ]
+    },
+    {
+      "edge_id": "edge_2dc903d88ac3a369",
+      "source_code": "31",
+      "target_code": "50",
+      "relation_type": "coordination",
+      "weight": 0.6112,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_e0f017531b5228fd"
+      ]
+    },
+    {
+      "edge_id": "edge_6efc4a5f3ad6f190",
+      "source_code": "44",
+      "target_code": "32",
+      "relation_type": "coordination",
+      "weight": 0.8849,
+      "data_quality": "verified",
+      "evidence_refs": [
+        "relation_34a675c2bd4d07f8"
+      ]
+    },
+    {
+      "edge_id": "edge_98d482c78237c5ee",
+      "source_code": "32",
+      "target_code": "11",
+      "relation_type": "coordination",
+      "weight": 0.5316,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_d40f106936e8b65e"
+      ]
+    },
+    {
+      "edge_id": "edge_51e1c743de54c274",
+      "source_code": "35",
+      "target_code": "51",
+      "relation_type": "coordination",
+      "weight": 0.5941,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_d86d1e05ff842642"
+      ]
+    },
+    {
+      "edge_id": "edge_8db2bcae9a3eac7e",
+      "source_code": "45",
+      "target_code": "50",
+      "relation_type": "coordination",
+      "weight": 0.4861,
+      "data_quality": "verified",
+      "evidence_refs": [
+        "relation_fbe08982860b0665"
+      ]
+    },
+    {
+      "edge_id": "edge_eb32070e94d3798a",
+      "source_code": "13",
+      "target_code": "32",
+      "relation_type": "coordination",
+      "weight": 0.6625,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_630e3a434be714c8"
+      ]
+    },
+    {
+      "edge_id": "edge_eb0524eddc3d417a",
+      "source_code": "33",
+      "target_code": "37",
+      "relation_type": "coordination",
+      "weight": 0.563,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_b0b09333cbec4a08"
+      ]
+    },
+    {
+      "edge_id": "edge_7cd0f7577ea7064e",
+      "source_code": "34",
+      "target_code": "31",
+      "relation_type": "coordination",
+      "weight": 0.6292,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_99258cab60b059f4"
+      ]
+    },
+    {
+      "edge_id": "edge_17ed214cc6c1a728",
+      "source_code": "31",
+      "target_code": "34",
+      "relation_type": "coordination",
+      "weight": 0.6292,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_99258cab60b059f4"
+      ]
+    },
+    {
+      "edge_id": "edge_23d759199447da83",
+      "source_code": "50",
+      "target_code": "44",
+      "relation_type": "coordination",
+      "weight": 0.7702,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_e994aa35e5d92991"
+      ]
+    },
+    {
+      "edge_id": "edge_be37173b268a539c",
+      "source_code": "44",
+      "target_code": "50",
+      "relation_type": "coordination",
+      "weight": 0.7702,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_e994aa35e5d92991"
+      ]
+    },
+    {
+      "edge_id": "edge_6abf1e5c8278574f",
+      "source_code": "44",
+      "target_code": "50",
+      "relation_type": "coordination",
+      "weight": 0.7702,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_0321f399df87ffd4"
+      ]
+    },
+    {
+      "edge_id": "edge_f732a0fc30186ff2",
+      "source_code": "50",
+      "target_code": "44",
+      "relation_type": "coordination",
+      "weight": 0.7702,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_0321f399df87ffd4"
+      ]
+    },
+    {
+      "edge_id": "edge_70171149bdb0926d",
+      "source_code": "44",
+      "target_code": "34",
+      "relation_type": "coordination",
+      "weight": 0.7883,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_469c32fa63baec79"
+      ]
+    },
+    {
+      "edge_id": "edge_50945eca17c420a9",
+      "source_code": "34",
+      "target_code": "44",
+      "relation_type": "coordination",
+      "weight": 0.7883,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_469c32fa63baec79"
+      ]
+    },
+    {
+      "edge_id": "edge_7ffd4fd34cf85593",
+      "source_code": "33",
+      "target_code": "44",
+      "relation_type": "coordination",
+      "weight": 0.7577,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_a0cd34fe06ceff1a"
+      ]
+    },
+    {
+      "edge_id": "edge_0c594353e993648c",
+      "source_code": "44",
+      "target_code": "33",
+      "relation_type": "coordination",
+      "weight": 0.7577,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_a0cd34fe06ceff1a"
+      ]
+    },
+    {
+      "edge_id": "edge_c195339e58435b78",
+      "source_code": "44",
+      "target_code": "41",
+      "relation_type": "coordination",
+      "weight": 0.7123,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_0eb96d3c093646fd"
+      ]
+    },
+    {
+      "edge_id": "edge_3ea45f463a08a126",
+      "source_code": "44",
+      "target_code": "61",
+      "relation_type": "coordination",
+      "weight": 0.6701,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_6bcf2348f1d7cd78"
+      ]
+    },
+    {
+      "edge_id": "edge_0edb48c0a423fcdf",
+      "source_code": "50",
+      "target_code": "34",
+      "relation_type": "coordination",
+      "weight": 0.6282,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_3867442002cb2b65"
+      ]
+    },
+    {
+      "edge_id": "edge_7a98b50e14585baa",
+      "source_code": "34",
+      "target_code": "50",
+      "relation_type": "coordination",
+      "weight": 0.6282,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_3867442002cb2b65"
+      ]
+    },
+    {
+      "edge_id": "edge_270e19d653397e8c",
+      "source_code": "31",
+      "target_code": "32",
+      "relation_type": "coordination",
+      "weight": 0.7258,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_1af8b5270b26a52c"
+      ]
+    },
+    {
+      "edge_id": "edge_44fa1fb499d78ec5",
+      "source_code": "32",
+      "target_code": "31",
+      "relation_type": "coordination",
+      "weight": 0.7258,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_1af8b5270b26a52c"
+      ]
+    },
+    {
+      "edge_id": "edge_53442ca8752ab8e7",
+      "source_code": "31",
+      "target_code": "32",
+      "relation_type": "coordination",
+      "weight": 0.7258,
+      "data_quality": "verified",
+      "evidence_refs": [
+        "relation_b91d20937bffdfef"
+      ]
+    },
+    {
+      "edge_id": "edge_dd3aaa7871c12057",
+      "source_code": "11",
+      "target_code": "12",
+      "relation_type": "coordination",
+      "weight": 0.2868,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_45a9a5eccfed2a2a"
+      ]
+    },
+    {
+      "edge_id": "edge_d96b18e91d07f8a4",
+      "source_code": "12",
+      "target_code": "11",
+      "relation_type": "coordination",
+      "weight": 0.2868,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_45a9a5eccfed2a2a"
+      ]
+    },
+    {
+      "edge_id": "edge_be29795974c439ea",
+      "source_code": "51",
+      "target_code": "50",
+      "relation_type": "coordination",
+      "weight": 0.5074,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_02fef58774ad12c2"
+      ]
+    },
+    {
+      "edge_id": "edge_40c96351e9234b77",
+      "source_code": "50",
+      "target_code": "51",
+      "relation_type": "coordination",
+      "weight": 0.5074,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_02fef58774ad12c2"
+      ]
+    },
+    {
+      "edge_id": "edge_0586fb9fc6c74da4",
+      "source_code": "42",
+      "target_code": "43",
+      "relation_type": "coordination",
+      "weight": 0.3466,
+      "data_quality": "verified",
+      "evidence_refs": [
+        "relation_12a61c9f05586910"
+      ]
+    },
+    {
+      "edge_id": "edge_12b7e89b36ac5e88",
+      "source_code": "43",
+      "target_code": "42",
+      "relation_type": "coordination",
+      "weight": 0.3466,
+      "data_quality": "verified",
+      "evidence_refs": [
+        "relation_12a61c9f05586910"
+      ]
+    },
+    {
+      "edge_id": "edge_d8b526e732546b3f",
+      "source_code": "11",
+      "target_code": "42",
+      "relation_type": "coordination",
+      "weight": 0.3137,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_3b552defc5252e9e"
+      ]
+    },
+    {
+      "edge_id": "edge_f00b8cd634c08100",
+      "source_code": "42",
+      "target_code": "31",
+      "relation_type": "coordination",
+      "weight": 0.5079,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_e4864a64c67a749b"
+      ]
+    },
+    {
+      "edge_id": "edge_17c276c2109ae4f8",
+      "source_code": "34",
+      "target_code": "11",
+      "relation_type": "coordination",
+      "weight": 0.435,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_f573874be3f9fa8c"
+      ]
+    },
+    {
+      "edge_id": "edge_9c2a3dc676495007",
+      "source_code": "61",
+      "target_code": "34",
+      "relation_type": "coordination",
+      "weight": 0.5281,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_aa5b59b03e004a6c"
+      ]
+    },
+    {
+      "edge_id": "edge_7b14957b80e644a0",
+      "source_code": "36",
+      "target_code": "45",
+      "relation_type": "coordination",
+      "weight": 0.4046,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_5280e9ebb4618414"
+      ]
+    },
+    {
+      "edge_id": "edge_0bceb5abc1a77377",
+      "source_code": "52",
+      "target_code": "53",
+      "relation_type": "coordination",
+      "weight": 0.221,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_f97e8d5a5d68e665"
+      ]
+    },
+    {
+      "edge_id": "edge_e79e8788ba2c4728",
+      "source_code": "35",
+      "target_code": "52",
+      "relation_type": "coordination",
+      "weight": 0.504,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_32fa7669e5dc03b2"
+      ]
+    },
+    {
+      "edge_id": "edge_62db4eac75e596ce",
+      "source_code": "35",
+      "target_code": "41",
+      "relation_type": "coordination",
+      "weight": 0.639,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_14f2fc2c010e5f57"
+      ]
+    },
+    {
+      "edge_id": "edge_853411a7ff76e5e9",
+      "source_code": "36",
+      "target_code": "35",
+      "relation_type": "coordination",
+      "weight": 0.6154,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_9b969c0e7cbf90fa"
+      ]
+    },
+    {
+      "edge_id": "edge_79dfa7aa81ffb960",
+      "source_code": "36",
+      "target_code": "44",
+      "relation_type": "coordination",
+      "weight": 0.6887,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_9415524cb0ea50f3"
+      ]
+    },
+    {
+      "edge_id": "edge_0f9f2ee069422186",
+      "source_code": "63",
+      "target_code": "61",
+      "relation_type": "coordination",
+      "weight": 0.3729,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_894db7a096b1a2b7"
+      ]
+    },
+    {
+      "edge_id": "edge_300b0f746801008b",
+      "source_code": "52",
+      "target_code": "35",
+      "relation_type": "coordination",
+      "weight": 0.504,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_b698b4ef5b61a408"
+      ]
+    },
+    {
+      "edge_id": "edge_56173150aaac369a",
+      "source_code": "35",
+      "target_code": "32",
+      "relation_type": "coordination",
+      "weight": 0.8115,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_a93c1b0f0bfd1dfa"
+      ]
+    },
+    {
+      "edge_id": "edge_3612522821882513",
+      "source_code": "35",
+      "target_code": "51",
+      "relation_type": "coordination",
+      "weight": 0.5941,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_6e5f0755c7ab91a0"
+      ]
+    },
+    {
+      "edge_id": "edge_b0f18f8632e23cba",
+      "source_code": "35",
+      "target_code": "50",
+      "relation_type": "coordination",
+      "weight": 0.6969,
+      "data_quality": "verified",
+      "evidence_refs": [
+        "relation_5304448661542660"
+      ]
+    },
+    {
+      "edge_id": "edge_d97cce42b5ea31c8",
+      "source_code": "35",
+      "target_code": "50",
+      "relation_type": "coordination",
+      "weight": 0.6969,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_ab038877dc442e1f"
+      ]
+    },
+    {
+      "edge_id": "edge_7f3b63f18f5b9130",
+      "source_code": "35",
+      "target_code": "34",
+      "relation_type": "coordination",
+      "weight": 0.7149,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_9da3adbaae2baeda"
+      ]
+    },
+    {
+      "edge_id": "edge_cd963ba218fe046e",
+      "source_code": "35",
+      "target_code": "44",
+      "relation_type": "coordination",
+      "weight": 0.8569,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_e793690bd15e261c"
+      ]
+    },
+    {
+      "edge_id": "edge_99722abff77176bd",
+      "source_code": "32",
+      "target_code": "44",
+      "relation_type": "coordination",
+      "weight": 0.8849,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_916c637b45436c25"
+      ]
+    },
+    {
+      "edge_id": "edge_8e2779b93fa4e484",
+      "source_code": "32",
+      "target_code": "33",
+      "relation_type": "coordination",
+      "weight": 0.7123,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_09a99ef38ead5141"
+      ]
+    },
+    {
+      "edge_id": "edge_7108b37242021a17",
+      "source_code": "32",
+      "target_code": "13",
+      "relation_type": "coordination",
+      "weight": 0.6625,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_449e56ff9ef69ae7"
+      ]
+    },
+    {
+      "edge_id": "edge_67fda2d2855a11d1",
+      "source_code": "50",
+      "target_code": "22",
+      "relation_type": "coordination",
+      "weight": 0.4073,
+      "data_quality": "verified",
+      "evidence_refs": [
+        "relation_f35ff311e63cb525"
+      ]
+    },
+    {
+      "edge_id": "edge_05c78dae6794c6e2",
+      "source_code": "50",
+      "target_code": "44",
+      "relation_type": "coordination",
+      "weight": 0.7702,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_7c8359852c3296e9"
+      ]
+    },
+    {
+      "edge_id": "edge_ea4221fe2e1353e2",
+      "source_code": "34",
+      "target_code": "45",
+      "relation_type": "coordination",
+      "weight": 0.5041,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_56565311b670ed3f"
+      ]
+    },
+    {
+      "edge_id": "edge_19756f31d1ddebe4",
+      "source_code": "35",
+      "target_code": "32",
+      "relation_type": "coordination",
+      "weight": 0.8115,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_98682597cca1e2df"
+      ]
+    },
+    {
+      "edge_id": "edge_d0a5cb3d2dc08fea",
+      "source_code": "35",
+      "target_code": "50",
+      "relation_type": "coordination",
+      "weight": 0.6969,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_7c57f72a8a06a664"
+      ]
+    },
+    {
+      "edge_id": "edge_7f90c773050ba04f",
+      "source_code": "44",
+      "target_code": "50",
+      "relation_type": "coordination",
+      "weight": 0.7702,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_526ea6cf8bea8005"
+      ]
+    },
+    {
+      "edge_id": "edge_c29886d1ce4ca29c",
+      "source_code": "44",
+      "target_code": "34",
+      "relation_type": "coordination",
+      "weight": 0.7883,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_85eec8855a59581a"
+      ]
+    },
+    {
+      "edge_id": "edge_d4d36cddca88c012",
+      "source_code": "44",
+      "target_code": "11",
+      "relation_type": "coordination",
+      "weight": 0.5771,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_3b472312a9ecfe53"
+      ]
+    },
+    {
+      "edge_id": "edge_9ee880c497a39ddb",
+      "source_code": "44",
+      "target_code": "34",
+      "relation_type": "coordination",
+      "weight": 0.7883,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_21e5ee882f8f3f2c"
+      ]
+    },
+    {
+      "edge_id": "edge_605488b54455669c",
+      "source_code": "50",
+      "target_code": "44",
+      "relation_type": "coordination",
+      "weight": 0.7702,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_c0f3d6a1713296b2"
+      ]
+    },
+    {
+      "edge_id": "edge_ad348d3ce961d4c3",
+      "source_code": "11",
+      "target_code": "44",
+      "relation_type": "coordination",
+      "weight": 0.5771,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_74797269f928a24c"
+      ]
+    },
+    {
+      "edge_id": "edge_fe43d36a297e8016",
+      "source_code": "11",
+      "target_code": "50",
+      "relation_type": "coordination",
+      "weight": 0.417,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_72b5eff94366090c"
+      ]
+    },
+    {
+      "edge_id": "edge_1a8bb30d20944961",
+      "source_code": "32",
+      "target_code": "44",
+      "relation_type": "coordination",
+      "weight": 0.8849,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_43f24125d0d4e419"
+      ]
+    },
+    {
+      "edge_id": "edge_08bbdbec1d9ed45b",
+      "source_code": "32",
+      "target_code": "31",
+      "relation_type": "coordination",
+      "weight": 0.7258,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_9d7d6d0a802c3b95"
+      ]
+    },
+    {
+      "edge_id": "edge_7dbdc8875070d06c",
+      "source_code": "44",
+      "target_code": "45",
+      "relation_type": "coordination",
+      "weight": 0.6462,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_a437e41b4705a70d"
+      ]
+    },
+    {
+      "edge_id": "edge_0209811d7aff2bf3",
+      "source_code": "31",
+      "target_code": "34",
+      "relation_type": "coordination",
+      "weight": 0.6292,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_cc9f8168b7a4754e"
+      ]
+    },
+    {
+      "edge_id": "edge_1e8db7272c737ab8",
+      "source_code": "34",
+      "target_code": "31",
+      "relation_type": "coordination",
+      "weight": 0.6292,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_cc9f8168b7a4754e"
+      ]
+    },
+    {
+      "edge_id": "edge_18a44016d52517df",
+      "source_code": "32",
+      "target_code": "12",
+      "relation_type": "coordination",
+      "weight": 0.5947,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_4a87007400c90159"
+      ]
+    },
+    {
+      "edge_id": "edge_3a320a9ab46b93af",
+      "source_code": "31",
+      "target_code": "32",
+      "relation_type": "coordination",
+      "weight": 0.7258,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_34db6b521718fc72"
+      ]
+    },
+    {
+      "edge_id": "edge_f9627629b3df906f",
+      "source_code": "32",
+      "target_code": "31",
+      "relation_type": "coordination",
+      "weight": 0.7258,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_34db6b521718fc72"
+      ]
+    },
+    {
+      "edge_id": "edge_5613366f5e94a7b8",
+      "source_code": "11",
+      "target_code": "12",
+      "relation_type": "coordination",
+      "weight": 0.2868,
+      "data_quality": "verified",
+      "evidence_refs": [
+        "relation_9d45a629b32ffe42"
+      ]
+    },
+    {
+      "edge_id": "edge_ad31445630e4b11a",
+      "source_code": "12",
+      "target_code": "11",
+      "relation_type": "coordination",
+      "weight": 0.2868,
+      "data_quality": "verified",
+      "evidence_refs": [
+        "relation_9d45a629b32ffe42"
+      ]
+    },
+    {
+      "edge_id": "edge_b263f6beae396194",
+      "source_code": "11",
+      "target_code": "12",
+      "relation_type": "coordination",
+      "weight": 0.2868,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_da117531c81d4f5d"
+      ]
+    },
+    {
+      "edge_id": "edge_67c49a0361aa58da",
+      "source_code": "12",
+      "target_code": "11",
+      "relation_type": "coordination",
+      "weight": 0.2868,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_da117531c81d4f5d"
+      ]
+    },
+    {
+      "edge_id": "edge_ea9a7ea7563d4831",
+      "source_code": "51",
+      "target_code": "50",
+      "relation_type": "coordination",
+      "weight": 0.5074,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_fa2c58ca96fcb0b8"
+      ]
+    },
+    {
+      "edge_id": "edge_b6122745165d6df4",
+      "source_code": "50",
+      "target_code": "51",
+      "relation_type": "coordination",
+      "weight": 0.5074,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_fa2c58ca96fcb0b8"
+      ]
+    },
+    {
+      "edge_id": "edge_941d669be288adb3",
+      "source_code": "12",
+      "target_code": "11",
+      "relation_type": "coordination",
+      "weight": 0.2868,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_38dc83fe407403c1"
+      ]
+    },
+    {
+      "edge_id": "edge_339c82dcd31c6966",
+      "source_code": "11",
+      "target_code": "31",
+      "relation_type": "coordination",
+      "weight": 0.418,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_7ca2502c3513df90"
+      ]
+    },
+    {
+      "edge_id": "edge_fdbf89defe0b8e8b",
+      "source_code": "45",
+      "target_code": "51",
+      "relation_type": "coordination",
+      "weight": 0.3833,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_0443e02cacee0cb6"
+      ]
+    },
+    {
+      "edge_id": "edge_6dc40a310b46fbd2",
+      "source_code": "51",
+      "target_code": "50",
+      "relation_type": "coordination",
+      "weight": 0.5074,
+      "data_quality": "verified",
+      "evidence_refs": [
+        "relation_c03f9538e600a135"
+      ]
+    },
+    {
+      "edge_id": "edge_f9ed03b513f967fb",
+      "source_code": "31",
+      "target_code": "32",
+      "relation_type": "coordination",
+      "weight": 0.7258,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_5bf8bd634154db3d"
+      ]
+    },
+    {
+      "edge_id": "edge_f53452cf8085152b",
+      "source_code": "37",
+      "target_code": "44",
+      "relation_type": "coordination",
+      "weight": 0.7356,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_c4187c93b62fcee7"
+      ]
+    },
+    {
+      "edge_id": "edge_b27f3c790b80e805",
+      "source_code": "51",
+      "target_code": "50",
+      "relation_type": "coordination",
+      "weight": 0.5074,
+      "data_quality": "verified",
+      "evidence_refs": [
+        "relation_a35123b44b6019bf"
+      ]
+    },
+    {
+      "edge_id": "edge_c2d05c7ce507be84",
+      "source_code": "50",
+      "target_code": "51",
+      "relation_type": "coordination",
+      "weight": 0.5074,
+      "data_quality": "verified",
+      "evidence_refs": [
+        "relation_a35123b44b6019bf"
+      ]
+    },
+    {
+      "edge_id": "edge_1d638452fa1fb0ec",
+      "source_code": "35",
+      "target_code": "36",
+      "relation_type": "coordination",
+      "weight": 0.6154,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_e9914bdc75a3f99f"
+      ]
+    },
+    {
+      "edge_id": "edge_4756bf73c8bd4d07",
+      "source_code": "31",
+      "target_code": "32",
+      "relation_type": "coordination",
+      "weight": 0.7258,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_946711b3408238dd"
+      ]
+    },
+    {
+      "edge_id": "edge_e0d9b8f9478153e9",
+      "source_code": "32",
+      "target_code": "31",
+      "relation_type": "coordination",
+      "weight": 0.7258,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_946711b3408238dd"
+      ]
+    },
+    {
+      "edge_id": "edge_28ce4957081ef794",
+      "source_code": "51",
+      "target_code": "50",
+      "relation_type": "coordination",
+      "weight": 0.5074,
+      "data_quality": "verified",
+      "evidence_refs": [
+        "relation_e653b115a51bdc2a"
+      ]
+    },
+    {
+      "edge_id": "edge_7421aae3ff55b1d0",
+      "source_code": "50",
+      "target_code": "51",
+      "relation_type": "coordination",
+      "weight": 0.5074,
+      "data_quality": "verified",
+      "evidence_refs": [
+        "relation_e653b115a51bdc2a"
+      ]
+    },
+    {
+      "edge_id": "edge_985bf34208f78ead",
+      "source_code": "11",
+      "target_code": "12",
+      "relation_type": "coordination",
+      "weight": 0.2868,
+      "data_quality": "verified",
+      "evidence_refs": [
+        "relation_38d06742f8be69b0"
+      ]
+    },
+    {
+      "edge_id": "edge_79f5a820365f7480",
+      "source_code": "12",
+      "target_code": "11",
+      "relation_type": "coordination",
+      "weight": 0.2868,
+      "data_quality": "verified",
+      "evidence_refs": [
+        "relation_38d06742f8be69b0"
+      ]
+    },
+    {
+      "edge_id": "edge_b1dc166c83c33e5c",
+      "source_code": "35",
+      "target_code": "36",
+      "relation_type": "coordination",
+      "weight": 0.6154,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_285b05c8a46227c7"
+      ]
+    },
+    {
+      "edge_id": "edge_38c8519cb1ea4c36",
+      "source_code": "36",
+      "target_code": "35",
+      "relation_type": "coordination",
+      "weight": 0.6154,
+      "data_quality": "proxy",
+      "evidence_refs": [
+        "relation_285b05c8a46227c7"
+      ]
+    }
+  ]
+}

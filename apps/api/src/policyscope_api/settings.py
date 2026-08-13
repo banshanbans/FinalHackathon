@@ -19,11 +19,11 @@ class Settings(BaseSettings):
     # Safe default for local/direct starts. Production must opt in to live mode
     # explicitly through POLICYSCOPE_RUN_MODE=live.
     run_mode: RunMode = RunMode.FAKE
-    llm_base_url: str = "https://api.deepseek.com"
+    llm_base_url: str = "https://api.openai.com/v1"
     llm_api_key: SecretStr = SecretStr("")
-    central_model: str = Field(default="deepseek-v4-flash", alias="POLICYSCOPE_CENTRAL_MODEL")
-    province_model: str = Field(default="deepseek-v4-flash", alias="POLICYSCOPE_PROVINCE_MODEL")
-    automaker_model: str = Field(default="deepseek-v4-flash", alias="POLICYSCOPE_AUTOMAKER_MODEL")
+    central_model: str = Field(default="gpt-5.6-luna", alias="POLICYSCOPE_CENTRAL_MODEL")
+    province_model: str = Field(default="gpt-5.6-luna", alias="POLICYSCOPE_PROVINCE_MODEL")
+    automaker_model: str = Field(default="gpt-5.6-luna", alias="POLICYSCOPE_AUTOMAKER_MODEL")
 
     @property
     def enterprise_model(self) -> str:

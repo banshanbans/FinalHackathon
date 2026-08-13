@@ -17,7 +17,7 @@ def _client(tmp_path):
 
 def test_complete_v3_api_flow_and_idempotency(tmp_path):
     with _client(tmp_path) as client:
-        assert client.get("/api/health").json()["version"] == "0.5.0"
+        assert client.get("/api/health").json()["version"] == "0.6.0"
         assert len(client.get("/api/meta/provinces").json()) == 31
         assert len(client.get("/api/meta/automakers").json()) == 10
         assert len(client.get("/api/meta/event-scenarios").json()) == 5

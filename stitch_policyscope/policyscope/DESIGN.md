@@ -170,6 +170,12 @@ Overlay layers can be independently toggled:
 - selected automaker sales activity
 - simulated plant/expansion activity
 
+Every China map keeps the national silhouette visually complete. Hong Kong,
+Macao and Taiwan use the same frozen Ministry of Natural Resources map source
+as a neutral `territory-context` layer. They remain visible and labelled but
+never inherit the 31-province metric scale, missing-data texture, selection,
+interaction glow or simulation semantics.
+
 Battery nodes use neutral supply-chain icons. Automaker activity uses text labels, initials or neutral markers. Simulated plant activity must include a visible “模拟” state and must never be styled as a confirmed factory announcement.
 
 ## Elevation & Shapes
@@ -228,3 +234,23 @@ Forbidden content includes:
 - Comparison proof is a four-cell evidence row before maps: active difference, parent Checkpoint, same policy, same event.
 - Event counterfactual labels are “无事件基线 / 事件情景”; policy comparison labels remain “原始方案 / 干预方案”.
 - Scenario approval is visually irreversible after submission: controls disabled, lock status visible, and no edit affordance.
+
+## M33 Presentation Hall Addendum
+
+The Presentation Hall is a separate full-screen surface, not a dark theme applied to the existing SaaS shell. It borrows the cinematic spatial hierarchy of the approved Earth Map reference while retaining PolicyScope's evidence-led product boundaries.
+
+- The China map occupies 70–80% of the visible stage. Navigation becomes a floating HUD and a right-side tool dock; the permanent SaaS sidebar is removed.
+- The palette shifts to near-black navy surfaces with restrained policy indigo, evidence teal, event amber and competition red. Color still encodes provenance and state, never automaker brands.
+- Glass treatment is limited to HUD, timeline and floating panels. Text-bearing panels require sufficient opaque backing and WCAG AA contrast; decorative glow must not obscure province boundaries.
+- The bottom timeline is a first-class control with a draggable thumb, frozen frame nodes, diamond event markers, speed controls and current-frame labeling.
+- Motion follows a fixed grammar: camera, province fill, relation draw, subject marker, narrative panel, metric. Reduced-motion mode replaces spatial transitions with short fades.
+- The opening is a single 3–5 second spatial sentence: a real vector globe rotates in deep space, the camera approaches China, all 31 provinces gain a restrained teal focus, and the flat national simulation map crossfades into the same focal area. It contains no business metrics or synthetic run state.
+- Keep the opening skippable and replayable. Under `prefers-reduced-motion`, replace orbit and long camera travel with a sub-second focus-and-fade handoff.
+- Use the GovSim Glass UI Kit as a spatial control language, not a page material. The map and live relationships stay visually dominant; glass is reserved for floating panels, pills, segmented controls, context popovers, the command/scenario bar, timeline rail, and sheets.
+- Base glass token: `rgba(18,18,22,.55)`, `blur(24px) saturate(140%)`, `1px solid rgba(255,255,255,.10)`, `22px` radius, `0 12px 40px rgba(0,0,0,.22)` shadow, and a restrained inset/top-edge highlight. Use an extremely subtle vertical white highlight gradient for environmental light.
+- Never arrange these surfaces into a dashboard card matrix. Preserve 70–80% of the stage for the map and reveal information progressively: spatial action first, one large metric second, detail and evidence only after an explicit click.
+- Copy inside floating glass is aggressively compressed: subject, action label, one dominant value, one state chip. Long policy explanations and structured Agent rationale belong in a side or bottom sheet.
+- Event scenes use amber/indigo emphasis and map propagation, not breaking-news tickers, sirens or war imagery. Geopolitical examples remain neutral simulation scenarios.
+- MapLibre GL JS and deck.gl may be used only with locally packaged, provenance-preserving geometry derived from the frozen standard map. The verified ECharts/SVG map remains the compatibility renderer.
+- Target presentation canvases are 1920×1080, 2560×1440 and 3840×2160, with 1536×864 and 1366×768 retained for operator fallback checks.
+- M33 is frozen: high-resolution canvases scale the floating controls without scaling the map geometry; WebGL loss switches to the local 31-province SVG compatibility renderer; offline and fake rehearsals retain the last frozen frame and show `OFFLINE` / `FAKE / FALLBACK` explicitly.

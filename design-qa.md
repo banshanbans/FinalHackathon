@@ -1,5 +1,41 @@
 # PolicyScope Design QA
 
+## V3.2 / M30 verification status
+
+> Contract: 前置直接 A/B 与上下文驱动的省级 Agent 自主协作
+> QA date: 2026-08-13
+> Runtime: React Router + V3.2 REST/SSE + 本地标准地图资源
+> Data / mechanism / seed: `nev-m29-2025-v2` / `nev-policy-env-v4` / `20260812`
+> M30 mock / fallback result: **passed**
+> M30 Luna cache result: **pending — 当前环境未配置 API Key**
+
+正式 React/FastAPI 运行时已走通政策对比、政策压力测试和事件反事实。六步旅程在刷新后可恢复；两分支同轮门禁、3A 全量冻结后才进入 3B、DecisionTrace v2、代理数据标签、SSE 重连与结论优先 Compare 均由 Playwright 或契约测试覆盖。当前结果来自显式规则故障兜底，不标记为 Luna 生成结果。
+
+| 检查项 | 当前状态 |
+|---|---|
+| 六步旅程与五项导航 | Passed |
+| 三种实验唯一主动差异 | Passed |
+| Live 三栏、初始/最终切换与选中省份有限关系 | Passed |
+| Province / Automaker 决策记录 | Passed |
+| 每省 3 个 Peer 行动、10 家车企评价 | Passed |
+| 双分支 226 次主体调用与 3A/3B 屏障 | Passed |
+| 自主合作与网外对象证据通路 | Passed：关系是软先验，代码扫描无序号、相邻或固定名单配对 |
+| 全国资源迁移与机会成本 | Passed：最终轮真实守恒转移，画面显示 0.04/0.08 最大变化 |
+| Compare 结论优先、Methods 工程证明 | Passed |
+| 主页面机器码与禁止文案扫描 | Passed |
+| SSE 重连、Replay、Audit、Evidence | Passed |
+| 三画布无遮挡与无横向滚动 | Passed：每次截图前校验 `scrollWidth <= innerWidth` |
+
+截图目录为 `output/playwright/v32/chromium-{1536,1440,1280}/`。每个画布包含 Live ready/complete、Province、Automaker、Compare、Methods 六张主旅程截图；1440 另含政策压力测试、事件反事实与 SSE 重连，共 21 张。视觉复核发现并修复了省级企业信号空卡和车企迁移显示为零的问题；最终省级页面列出 10 家反馈主体，Compare 显示实际资源让渡。Methods 继续允许显示模型、版本、哈希、fallback 与 Replay 技术字段。
+
+全量证据：`make test` 为 48 项 Python 测试和 5 项前端测试；`make test-sim` 41 项、`make test-api` 7 项；6 项 Playwright 实际通过。三类独立 M30 fallback 缓存各包含双分支五轮、226 次调用和 164 条 DecisionTrace；Ruff、格式、ESLint、TypeScript 构建、M29 的 4,527 条事实/711 项特征/282 条关系边、31 省数据和标准地图校验通过。当前省级与车企派生字段仍明确标记为 `proxy`。
+
+独立 `gpt-5.6-luna` Codex 线程已完成只读 mock 编排审阅：确认 620 条企业评价、62 条提议、62 条响应和 13 个匹配，并定位了缓存命名歧义与演示链第 4 幕关联不足；主线程已将缓存容器改为中性 `v32-m30-agent-cache-v1`，并让资源迁移优先从入选合作双方中选择、复用同一 Match 证据引用，相关 API/缓存测试通过。
+
+由于本机没有 `POLICYSCOPE_LLM_API_KEY`，尚未生成或验收 226 次真实 `gpt-5.6-luna` Provider 输出；因此不得恢复“V3.2 完成并冻结”的表述。现场可稳定回放当前明确标记的 fallback 演示缓存，不会在 Schema 上冒充 Luna。真实 Luna 缓存仍是唯一外部条件项。
+
+---
+
 ## V3.1 verification status
 
 > Contract: 事件驱动省际协同增量
@@ -162,3 +198,140 @@ V2 地图来自自然资源部标准地图 GS(2016)1609，已记录原始校验�
 `V2 final result: passed`
 
 该结论只证明 V2 历史基线，不证明 V2.1 或 V3.0。
+
+---
+
+## M33.3 Globe Intro Design QA
+
+> QA date: 2026-08-13
+> Scope: M33.3 开场镜头先行子项，不代表完整大屏壳层验收。
+
+### Evidence and tested state
+
+| Item | Evidence |
+|---|---|
+| Source visual truth | `https://earth-map-kohl.vercel.app/`；本地截图 `outputs/m33-globe-intro/reference-earth-map-1920x1080.png` |
+| Runtime implementation | `http://127.0.0.1:4180/`；`outputs/m33-globe-intro/policyscope-globe-intro-1920x1080.png` |
+| Side-by-side comparison | `outputs/m33-globe-intro/source-vs-implementation.png` |
+| Primary viewport | 1920×1080 CSS px，deviceScaleFactor 1，开场 approach/中国聚焦状态 |
+| Fallback viewport | 1366×768 CSS px，deviceScaleFactor 1，开场 approach/中国聚焦状态 |
+| Performance viewport | 3840×2160 CSS px，主舞台交接后连续播放 |
+
+全屏构图已覆盖本子项全部关键区域：左侧标题、右侧地球、中国高亮、底部进度和跳过操作，因此不需要额外裁切图作为判断依据。
+
+### Visual comparison
+
+- Typography：本地 Inter + Noto Sans SC，双行主标题层级清楚；1920×1080 与 1366×768 均无裁切、溢出或被地球遮挡。
+- Spacing and layout rhythm：保持参考页的左文案、右主视觉、底部进度关系；地球放大后仍保留足够深空负空间，并与接管后的全国地图焦点一致。
+- Color and token fidelity：使用近黑海军蓝、克制青色中国焦点、少量琥珀阶段提示；没有引入新闻直播红或企业品牌色。
+- Asset fidelity：使用 MapLibre 真实 globe 投影、本地 Natural Earth 矢量陆地和冻结 31 省几何。相对参考页的照片级卫星纹理，PolicyScope 有意采用证据可追溯的制度化矢量表达；未使用截图仿制、远程瓦片、CDN 或 iframe。
+- Copy：文案只表达机制推演与中国焦点，不出现现实战争、价格、投资承诺或权威业务结果。
+
+### Interaction and reliability
+
+- 自动播放：约 4.5 秒完成 orbit → approach → handoff，并卸载开场图层交接全国主舞台。
+- 跳过与重播：开场可立即跳过，主舞台“重播地球开场”可再次进入完整序列。
+- Reduced motion：关闭旋转与长距离飞行，在 1 秒内完成中国聚焦与淡入交接。
+- Browser console：错误 0，警告 0。
+- 4K：交接后 60.1 FPS，P95 17.7 ms。
+
+### Iteration history
+
+1. 第一轮地球比例偏小且夜面过暗；提高初始/推进 zoom，并重新平衡大气、海洋和方向光后复测。
+2. 第一轮回调引用不稳定导致开场提前卸载；稳定完成与错误回调后，重新验证正常序列、跳过、重播和低动效。
+3. 修复后生成 1920×1080、1366×768 与源参考并排证据，未发现 P0/P1/P2 视觉或交互缺陷。
+
+### Findings
+
+- P0/P1/P2：无。
+- P3：实现有意不复制参考页的卫星栅格纹理，以保持离线、可追溯和政策演示语义；不影响开场目标。
+
+final result: passed
+
+### China map completeness addendum
+
+- WebGL 主图与 SVG 兼容图均显示香港、澳门、台湾的冻结轮廓/比例标记及名称；浏览器实测为 31 个可交互省域和 3 个非交互 `territory-context`。
+- 港澳台不接收指标填色、缺失值纹理、hover 选中、键盘焦点或点击详情。状态栏和方法面板明确区分“全国版图完整 / 31 省计算”。
+- SVG 兼容图新增视口等比约束，1280×720 下完整落在 HUD 与时间轴之间，三处版图上下文均未被遮挡。
+- P0/P1/P2/P3：无。
+
+---
+
+## M33.3 Full Presentation Shell Design QA
+
+> QA date: 2026-08-13
+> Scope: `/experiments/:id/present` 正式全景推演壳层、事件帧与真实时间轴。
+
+### Evidence and tested state
+
+| Item | Evidence |
+|---|---|
+| Source visual truth | `outputs/m33-globe-intro/reference-earth-map-1280x720.png`（Earth Map 空间叙事与悬浮控制语言） |
+| Runtime implementation | `outputs/m33-globe-intro/m33-shell-event-1280x720-v2.jpg` |
+| Same-input comparison | `outputs/m33-globe-intro/m33-shell-reference-comparison-2560x720.jpg` |
+| Secondary viewport | `outputs/m33-globe-intro/m33-shell-1366x768.jpg` |
+| Primary state | 低强度“国际冲突情景下油价上涨”事件帧；Story 模式；Side Sheet 收起 |
+| Pixel / viewport | 1280×720 CSS px 与 1366×768 CSS px；devicePixelRatio 2；本地 IAB |
+
+### Visual comparison
+
+- 两图保持相同空间语法：近黑主舞台、顶部中央悬浮分段控制、左侧短叙事、右侧垂直圆角工具坞和底部宽时间轴；PolicyScope 的全国省域图取代参考页地球是业务状态差异，不是构图偏差。
+- 地图始终是主内容，玻璃只作用 HUD、叙事、单指标、工具坞、Popover、Timeline 与 Sheet；没有 SaaS 卡片矩阵或大面积内容模糊。
+- Inter + Noto Sans SC、近黑海军蓝、青色主语义、少量琥珀事件色与紫色差值色形成清晰层级；事件未使用新闻直播红。
+- 1280×720 与 1366×768 均无裁切、核心遮挡或页面级滚动。1366×768 实测 `scrollWidth/scrollHeight` 与 viewport 完全一致。
+
+### Interaction and data truth
+
+- 真实 API 创建 V3.2 同源 A/B 压力测试；事件、11 个冻结帧、省域值、覆盖层和六指标均来自 M33.2 DTO。
+- 右侧事件面板显示 LOW、双方案和 `relative_use_cost / wtp_demand`；事件时间轴节点可跳转。
+- 时间轴点击与拖动吸附、播放/暂停、前后帧、四档速度和复位通过；一次拖动从 01/11 到 07/11 并同步“车企报价与反报价”。
+- 地图点击命中山西并显示 Context Popover；结果模式打开六指标 Delta Sheet；同时只保留一个主面板。
+- Browser console：error 0，warning 0。
+
+### Iteration history
+
+1. 第一轮正式壳层完成后，参考图与实现并排显示构图关系已一致；保留矢量中国地图而非复制卫星地球纹理，以满足本地资产和业务真实性边界。
+2. 第一轮时间轴透明 range 覆盖了节点按钮；提高节点交互层级，并加入 pointer capture 与位置吸附，随后复测节点点击和实际拖动。
+3. 第一版演示事件为 medium，确定性预算校验拒绝该组合；改用合法 low 强度并保留 `scenario_assumption`，重新运行后事件帧和结果完整冻结。
+4. 最终重新执行 1280×720/1366×768 截图、同画布对照、核心交互与 console 检查，未发现 P0/P1/P2。
+
+### Findings
+
+- P0/P1/P2：无。
+- P3：无；后续 M33.4–M33.6 已在最终 QA 中补齐。
+
+final result: passed
+
+---
+
+## M33.4–M33.6 Final Presentation Hall Design QA
+
+> QA date: 2026-08-13
+> Scope: 事件与七轮闭环、五幕路演、结果 A/B、降级与高分辨率冻结。
+
+### Evidence
+
+| Canvas / state | Evidence |
+|---|---|
+| 1280×720 功能 E2E | `apps/web/e2e/presentation-m33.spec.ts`：七轮、SSE、断网、五幕、键盘、Delta/A-B、连续播放、SVG 降级 |
+| 1920×1080 | `outputs/m33-resolution/presentation-1080p.png` |
+| 2560×1440 | `outputs/m33-resolution/presentation-2k.png` |
+| 3840×2160 | `outputs/m33-resolution/presentation-4k.png` |
+| 开场北京光点 | `outputs/m33-globe-intro/beijing-focus-corrected-1280x720.jpg` |
+| SVG 宽高比校准 | `outputs/m33-globe-intro/svg-aspect-corrected-1280x720.jpg` |
+
+### Final review
+
+- 五项事件目录在启动屏清晰可选，强度、触发边界、对照范围和提前通知不离开大屏；情景免责语可见且无新闻化战争视觉。
+- 七轮运行每轮只有一个主命令，SSE 更新后左侧叙事、地图、事件帧与时间轴一致；断网期间最后冻结帧不消失。
+- 五幕回放保留固定章节标签，并使用后端动态摘要作为主标题；键盘单步、跨幕、播放和复位无焦点陷阱。
+- Compare 的 Delta 单图为默认，同步 A/B 切换后两图保持同镜头和选择；结果 Sheet 首先显示 Gap、财政代价、受益/承压省份和三机制链。
+- 1080p、2K、4K 无页面级滚动或核心越界；4K 仅放大悬浮 UI，不缩放或修改地图几何。
+- WebGL 容错展示 `SVG COMPAT`，仍覆盖 31 省并保留点击/键盘可达；Fake 彩排明确显示 `FAKE / FALLBACK`。
+
+### Findings
+
+- P0/P1/P2/P3：无。
+- 非阻塞工程提示：Vite 仍报告主包体积建议，不影响本地演示、交互或冻结契约。
+
+final result: passed
