@@ -68,7 +68,7 @@ proposed → countered | accepted | rejected | deferred
 ## 5. Agent、环境与缓存边界
 
 - 中央 Agent 只在创建时生成一次结构化政策解读，并在 Q4 Comparison 后生成一次年度复盘；季度内不得修改政策或 WorldState。
-- Live/Cache Prompt 不包含确定性候选行动。确定性候选只在 Fake、缓存缺失、模型失败、Schema 或资源校验失败时接管，并标记 fallback。
+- Live/Cache Prompt 不包含确定性候选行动。公网 Cache-first 的缓存缺失必须先由 DeepSeek Live Provider 补齐并回写；确定性候选只在 Fake、模型失败、Schema、身份或资源校验失败时接管，并标记 fallback。
 - 决策记录保存结构化观察、行动、替代项、机会成本、条件和 Evidence，不保存思维链。
 - 环境以纯函数 `settle_quarter(previous_checkpoint, committed_actions, settled_interactions, active_events)` 每季结算并产生不可变 Checkpoint；Gap、HHI、财政、需求与产业结果仍只有环境可计算。
 - Cache Replay 必须通过输出哈希校验；Fresh Live Run 不承诺位级复现。Fake 输出始终是 fallback，禁止写入 Luna 缓存。

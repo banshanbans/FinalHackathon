@@ -6,6 +6,7 @@ import type {
   M34Timeline,
   M34World,
   MacroTick,
+  PresentationWorldLandmarks,
 } from "./m34Contracts";
 
 const configuredBase = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, "");
@@ -85,6 +86,7 @@ function designPayload(draft: M34Draft) {
 
 export const m34Api = {
   eventCatalog: () => request<PresentationEventCatalog>("/meta/presentation-event-catalog"),
+  worldLandmarks: () => request<PresentationWorldLandmarks>("/meta/presentation-world-landmarks"),
   state: (experimentId: string) => request<M34World>(`/experiments/${experimentId}/state`),
   timeline: (experimentId: string) =>
     request<M34Timeline>(`/experiments/${experimentId}/presentation/timeline`),

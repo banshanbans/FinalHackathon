@@ -32,7 +32,9 @@ def _create_and_confirm_interpretation(client: TestClient):
 
 def test_m34_metadata_and_create_idempotency(tmp_path):
     with _client(tmp_path) as client:
-        assert client.get("/api/health").json()["run_mode"] == "fake"
+        health = client.get("/api/health").json()
+        assert health["run_mode"] == "fake"
+        assert health["cache_miss_mode"] == "fake"
         assert len(client.get("/api/meta/provinces").json()) == 31
         assert len(client.get("/api/meta/automakers").json()) == 10
         assert [

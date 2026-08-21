@@ -13,6 +13,34 @@ const WORLD_TOPOLOGY = worldLandTopology as unknown as Topology<{
 const WORLD_LAND = feature(WORLD_TOPOLOGY, WORLD_TOPOLOGY.objects.land);
 const BEIJING_COORDINATES: [number, number] = [116.4074, 39.9042];
 
+function provinceVisualAnchor(collection: PresentationMapCollection, provinceCode: string): [number, number] {
+  const province = collection.features.find((item) => item.properties.province_code === provinceCode);
+  const outerRings = province?.geometry.coordinates
+    .map((polygon) => polygon[0])
+    .filter((ring): ring is number[][] => Boolean(ring?.length)) ?? [];
+  const centroid = (ring: number[][]) => {
+    let signedArea = 0;
+    let longitude = 0;
+    let latitude = 0;
+    for (let index = 0; index < ring.length; index += 1) {
+      const current = ring[index]!;
+      const next = ring[(index + 1) % ring.length]!;
+      const cross = current[0]! * next[1]! - next[0]! * current[1]!;
+      signedArea += cross;
+      longitude += (current[0]! + next[0]!) * cross;
+      latitude += (current[1]! + next[1]!) * cross;
+    }
+    return {
+      area: signedArea / 2,
+      point: Math.abs(signedArea) > Number.EPSILON
+        ? [longitude / (3 * signedArea), latitude / (3 * signedArea)] as [number, number]
+        : BEIJING_COORDINATES,
+    };
+  };
+  return outerRings.map(centroid).sort((left, right) => Math.abs(right.area) - Math.abs(left.area))[0]?.point
+    ?? BEIJING_COORDINATES;
+}
+
 type IntroPhase = "ready" | "orbit" | "approach" | "handoff";
 
 maplibregl.setWorkerUrl(maplibreWorkerUrl);
@@ -23,17 +51,20 @@ export function GlobeIntro({
   runId,
   onComplete,
   onError,
+  onHandoff,
 }: {
   collection: PresentationMapCollection;
   reducedMotion: boolean;
   runId: number;
   onComplete: () => void;
   onError: (message: string) => void;
+  onHandoff?: () => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const onCompleteRef = useRef(onComplete);
   const onErrorRef = useRef(onError);
+  const onHandoffRef = useRef(onHandoff);
   const [phase, setPhase] = useState<IntroPhase>("ready");
 
   useEffect(() => {
@@ -45,15 +76,33 @@ export function GlobeIntro({
   }, [onError]);
 
   useEffect(() => {
+    onHandoffRef.current = onHandoff;
+  }, [onHandoff]);
+
+  useEffect(() => {
     if (!containerRef.current) return;
     let active = true;
+    let completed = false;
+    let handedOff = false;
     const timers: number[] = [];
 
     const schedule = (callback: () => void, delay: number) => {
       timers.push(window.setTimeout(callback, delay));
     };
+    const complete = () => {
+      if (!active || completed) return;
+      completed = true;
+      onCompleteRef.current();
+    };
+    const handoff = () => {
+      if (!active || handedOff) return;
+      handedOff = true;
+      setPhase("handoff");
+      onHandoffRef.current?.();
+    };
 
     try {
+      const beijingVisualAnchor = provinceVisualAnchor(collection, "11");
       const map = new maplibregl.Map({
         container: containerRef.current,
         style: {
@@ -79,8 +128,12 @@ export function GlobeIntro({
               type: "geojson",
               data: {
                 type: "Feature",
-                properties: { name: "北京" },
-                geometry: { type: "Point", coordinates: BEIJING_COORDINATES },
+                properties: {
+                  name: "北京",
+                  geographic_coordinates: BEIJING_COORDINATES,
+                  visual_anchor_source: "province-11-centroid",
+                },
+                geometry: { type: "Point", coordinates: beijingVisualAnchor },
               },
             },
           },
@@ -155,8 +208,8 @@ export function GlobeIntro({
       map.on("error", (event: maplibregl.ErrorEvent) => {
         if (!active) return;
         onErrorRef.current(event.error?.message ?? "地球开场渲染失败");
-        onCompleteRef.current();
       });
+      schedule(complete, 6200);
       map.on("load", () => {
         if (!active) return;
         if (reducedMotion) {
@@ -164,8 +217,8 @@ export function GlobeIntro({
           map.jumpTo({ center: [104.2, 35.8], zoom: 2.65, bearing: 0 });
           map.setPaintProperty("china-focus-fill", "fill-opacity", 0.72);
           map.setPaintProperty("china-focus-outline", "line-opacity", 0.82);
-          schedule(() => setPhase("handoff"), 520);
-          schedule(() => onCompleteRef.current(), 880);
+          schedule(handoff, 280);
+          schedule(complete, 650);
           return;
         }
 
@@ -185,20 +238,20 @@ export function GlobeIntro({
           map.setPaintProperty("china-focus-outline", "line-opacity", 0.9);
           map.flyTo({
             center: [104.2, 35.8],
-            zoom: 2.72,
+            zoom: 3.42,
             bearing: 0,
             pitch: 8,
-            duration: 2750,
+            duration: 3200,
             curve: 1.28,
             essential: true,
           });
         }, 820);
-        schedule(() => setPhase("handoff"), 3400);
-        schedule(() => onCompleteRef.current(), 4050);
+        schedule(handoff, 3900);
+        schedule(complete, 4900);
       });
     } catch (error) {
       onErrorRef.current(error instanceof Error ? error.message : "地球开场初始化失败");
-      onCompleteRef.current();
+      complete();
     }
 
     return () => {

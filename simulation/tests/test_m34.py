@@ -7,15 +7,19 @@ from simulation.adapters.asyncio_adapter import AsyncioSimulationAdapter
 from simulation.envs.quarterly_policy_env import settle_quarter
 from simulation.llm.fake_provider import FakeLLMProvider
 from simulation.models.m34 import (
+    EngagementMode,
     EventPlanV2,
     ExperimentDesignV2,
+    InteractionSession,
     InteractionWave,
     MacroTick,
+    MessageKind,
     MessageVisibility,
     TransactionState,
 )
 from simulation.models.v32 import ExperimentType, PolicyV4
 from simulation.services.m34_orchestrator import M34Orchestrator
+from simulation.services.replay import canonical_hash
 
 
 def policy(policy_id: str, values: tuple[float, float, float]) -> PolicyV4:
@@ -130,6 +134,18 @@ async def test_q1_wave_zero_has_41_agents_per_branch_and_authorized_inboxes(
         ]
         assert len(wave_zero) == 41
         assert len({item.agent_id for item in wave_zero}) == 41
+        assert branch.messages
+        assert branch.sessions
+        assert all(
+            item.outgoing_messages
+            for item in branch.decisions
+            if item.engagement.value == "initiate"
+        )
+        assert all(
+            item.no_action_reason
+            for item in branch.decisions
+            if item.engagement.value in {"ignore", "monitor"}
+        )
         messages = {item.message_id: item for item in branch.messages}
         for inbox in branch.inboxes:
             for message_id in inbox.message_ids:
@@ -141,6 +157,202 @@ async def test_q1_wave_zero_has_41_agents_per_branch_and_authorized_inboxes(
                         or inbox.agent_id in message.recipient_ids
                     )
         assert all(item.fallback_used for item in branch.decisions)
+
+
+async def test_domain_validation_rejects_empty_initiate_and_unexplained_monitor(
+    tmp_path: Path,
+) -> None:
+    orchestrator = service(tmp_path)
+    world = await prepare(orchestrator)
+    world = await orchestrator.run(world.experiment_id, until_tick=MacroTick.Q1)
+    branch = world.branches["control"]
+    original = branch.decisions[0]
+    inbox = next(item for item in branch.inboxes if item.inbox_id == original.inbox_id)
+
+    with pytest.raises(ValueError, match="INITIATE_MESSAGE_REQUIRED"):
+        orchestrator._validate_decision(
+            branch,
+            inbox,
+            original.model_copy(
+                update={
+                    "engagement": EngagementMode.INITIATE,
+                    "outgoing_messages": [],
+                    "no_action_reason": None,
+                }
+            ),
+        )
+
+    with pytest.raises(ValueError, match="NO_ACTION_REASON_REQUIRED"):
+        orchestrator._validate_decision(
+            branch,
+            inbox,
+            original.model_copy(
+                update={
+                    "engagement": EngagementMode.MONITOR,
+                    "outgoing_messages": [],
+                    "no_action_reason": None,
+                }
+            ),
+        )
+
+    interactive = next(item for item in branch.decisions if item.outgoing_messages)
+    interactive_inbox = next(
+        item for item in branch.inboxes if item.inbox_id == interactive.inbox_id
+    )
+    original_message = interactive.outgoing_messages[0]
+    other_recipient = next(
+        code
+        for code in ("11", "12", "13")
+        if code not in {interactive.agent_id, *original_message.recipient_ids}
+    )
+    invalid_message = original_message.model_copy(
+        update={
+            "message_id": "message-invalid-multiple-recipients",
+            "recipient_ids": [original_message.recipient_ids[0], other_recipient],
+        }
+    )
+    with pytest.raises(ValueError, match="TRANSACTION_SINGLE_COUNTERPART_REQUIRED"):
+        orchestrator._validate_decision(
+            branch,
+            interactive_inbox,
+            interactive.model_copy(update={"outgoing_messages": [invalid_message]}),
+        )
+
+
+async def test_q1_automaker_counteroffer_fallback_has_a_summary(tmp_path: Path) -> None:
+    orchestrator = service(tmp_path)
+    world = await prepare(orchestrator)
+    branch = world.branches["control"]
+    sender_inbox = orchestrator._build_inbox(
+        world,
+        branch,
+        MacroTick.Q1,
+        InteractionWave.WAVE_0,
+        "11",
+    )
+    session_id = next(
+        candidate
+        for index in range(256)
+        if int(
+            canonical_hash(((candidate := f"session-q1-counter-{index}"), "byd"))[:2],
+            16,
+        )
+        % 4
+        == 0
+    )
+    proposal = orchestrator._message(
+        branch,
+        sender_inbox,
+        kind=MessageKind.PROVINCE_AUTOMAKER_PACKAGE,
+        visibility=MessageVisibility.PRIVATE,
+        recipients=["byd"],
+        session_id=session_id,
+        state=TransactionState.PROPOSED,
+        resource_amount=0.02,
+        summary="北京向比亚迪模拟主体提出首轮资源包。",
+    )
+    branch.messages.append(proposal)
+    branch.sessions.append(
+        InteractionSession(
+            session_id=session_id,
+            branch_id=branch.branch_id,
+            tick=MacroTick.Q1,
+            participant_ids=["11", "byd"],
+            initiator_id="11",
+            state=TransactionState.PROPOSED,
+            message_ids=[proposal.message_id],
+            reserved_resource=proposal.resource_amount,
+        )
+    )
+    automaker_inbox = orchestrator._build_inbox(
+        world,
+        branch,
+        MacroTick.Q1,
+        InteractionWave.WAVE_1,
+        "byd",
+    )
+
+    responses = orchestrator._fallback_automaker_messages(branch, automaker_inbox)
+
+    assert responses[0].transaction_state is TransactionState.COUNTERED
+    assert "首轮验证" in responses[0].public_summary
+
+    next_quarter_inbox = orchestrator._build_inbox(
+        world,
+        branch,
+        MacroTick.Q2,
+        InteractionWave.WAVE_0,
+        "byd",
+    )
+    cross_quarter_response = orchestrator._fallback_decision(world, branch, next_quarter_inbox)
+    assert cross_quarter_response.attended_message_ids == [proposal.message_id]
+    assert next_quarter_inbox.pending_session_ids == [session_id]
+    orchestrator._validate_decision(branch, next_quarter_inbox, cross_quarter_response)
+    initiator_inbox = orchestrator._build_inbox(
+        world,
+        branch,
+        MacroTick.Q2,
+        InteractionWave.WAVE_0,
+        "11",
+    )
+    assert initiator_inbox.pending_session_ids == []
+
+
+async def test_live_context_reports_remaining_automaker_message_budget(tmp_path: Path) -> None:
+    orchestrator = service(tmp_path)
+    world = await prepare(orchestrator)
+    branch = world.branches["control"]
+    automaker_inbox = orchestrator._build_inbox(
+        world,
+        branch,
+        MacroTick.Q1,
+        InteractionWave.WAVE_0,
+        "byd",
+    )
+    for index, recipient in enumerate(("11", "12", "13"), 1):
+        branch.messages.append(
+            orchestrator._message(
+                branch,
+                automaker_inbox,
+                kind=MessageKind.AUTOMAKER_PROVINCE_INTENT,
+                visibility=MessageVisibility.PRIVATE,
+                recipients=[recipient],
+                session_id=f"session-budget-{index}",
+                state=TransactionState.PROPOSED,
+                resource_amount=0.01,
+                summary=f"第 {index} 条已发送互动。",
+            )
+        )
+    next_inbox = orchestrator._build_inbox(
+        world,
+        branch,
+        MacroTick.Q1,
+        InteractionWave.WAVE_1,
+        "byd",
+    )
+
+    context = orchestrator._live_authorized_context(branch, next_inbox)
+
+    assert context.output_constraints.max_automaker_private_messages == 2
+
+
+async def test_province_fallback_action_respects_remaining_budget(tmp_path: Path) -> None:
+    orchestrator = service(tmp_path)
+    world = await prepare(orchestrator)
+    branch = world.branches["control"]
+    branch.remaining_province_budget["11"] = 0.08
+    inbox = orchestrator._build_inbox(
+        world,
+        branch,
+        MacroTick.Q1,
+        InteractionWave.WAVE_0,
+        "11",
+    )
+
+    decision = orchestrator._fallback_decision(world, branch, inbox)
+
+    assert decision.province_action is not None
+    assert decision.province_action.overall_support_intensity <= 0.08
 
 
 async def test_quarter_settlement_is_order_independent_and_checkpoint_is_immutable(
@@ -173,6 +385,15 @@ async def test_quarter_settlement_is_order_independent_and_checkpoint_is_immutab
     )
     assert first.state_hash == second.state_hash
     checkpoint = branch.checkpoints[MacroTick.Q1]
+    carried = settle_quarter(
+        checkpoint,
+        (branch.policy, branch.latest_province_actions, branch.latest_automaker_actions),
+        [],
+        [],
+        branch_id=branch.branch_id,
+        tick=MacroTick.Q2,
+    )
+    assert carried.tick is MacroTick.Q2
     with pytest.raises(ValidationError):
         checkpoint.tick = MacroTick.Q2
 

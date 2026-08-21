@@ -13,7 +13,7 @@ from uuid import uuid4
 from pydantic import BaseModel
 
 from simulation.adapters.asyncio_adapter import AsyncioSimulationAdapter
-from simulation.catalog import automaker_catalog
+from simulation.catalog import automaker_catalog, policy_region_catalog
 from simulation.domain_constants import AUTOMAKER_IDS, MAINLAND_PROVINCE_CODES
 from simulation.envs.quarterly_policy_env import settle_quarter
 from simulation.llm.m34_provider import M34AgentProvider, build_m34_agent_provider
@@ -37,6 +37,8 @@ from simulation.models.m34 import (
     InteractionMessage,
     InteractionSession,
     InteractionWave,
+    M34LiveAuthorizedContext,
+    M34OutputConstraints,
     MacroTick,
     MessageKind,
     MessageVisibility,
@@ -73,6 +75,111 @@ RUNTIME_SNAPSHOT_SCHEMA = "runtime-snapshot-v2"
 MAX_CALLS_PER_TICK = 180
 MAX_MESSAGES_PER_TICK = 500
 MAX_CONDITION_ROUNDS_PER_PAIR = 2
+
+# M35's presentation demo needs a complete, legible story across all four
+# quarters.  These are deterministic FAKE interactions, curated from a Luna
+# narrative pass and then constrained to the frozen 31-province / 10-automaker
+# contract.  They never write environment results; they only seed legal agent
+# proposals that the existing transaction and settlement machinery validates.
+M35_SHOWCASE_OUTREACH: dict[tuple[MacroTick, str], tuple[MessageKind, str, float, str]] = {
+    (MacroTick.Q1, "51"): (
+        MessageKind.INTERPROVINCIAL_PROPOSAL,
+        "50",
+        0.040,
+        "提出川渝联合测试与回收能力共享，先消除重复建设。",
+    ),
+    (MacroTick.Q1, "34"): (
+        MessageKind.INTERPROVINCIAL_PROPOSAL,
+        "31",
+        0.032,
+        "提出研发参数与高标准验证分工，保留失败回退路径。",
+    ),
+    (MacroTick.Q1, "44"): (
+        MessageKind.INTERPROVINCIAL_PROPOSAL,
+        "33",
+        0.036,
+        "提出跨场景接口联调，减少平台与应用端的重复适配。",
+    ),
+    (MacroTick.Q2, "50"): (
+        MessageKind.PROVINCE_AUTOMAKER_PACKAGE,
+        "changan",
+        0.038,
+        "提出分阶段导入模拟协同包，先验证关键零部件适配。",
+    ),
+    (MacroTick.Q2, "42"): (
+        MessageKind.PROVINCE_AUTOMAKER_PACKAGE,
+        "seres",
+        0.034,
+        "提出研发确认与场景测试双层验证，避免接口重复。",
+    ),
+    (MacroTick.Q2, "44"): (
+        MessageKind.PROVINCE_AUTOMAKER_PACKAGE,
+        "byd",
+        0.039,
+        "提出多场景适配试运行，并把高风险场景单独复核。",
+    ),
+    (MacroTick.Q3, "61"): (
+        MessageKind.INTERPROVINCIAL_PROPOSAL,
+        "34",
+        0.030,
+        "提出材料追溯与回收验证协同，以条件触发替代长期倾斜。",
+    ),
+    (MacroTick.Q3, "41"): (
+        MessageKind.PROVINCE_AUTOMAKER_PACKAGE,
+        "xiaomi_auto",
+        0.031,
+        "提出物流追踪、回收验证和数据归档的小规模闭环。",
+    ),
+    (MacroTick.Q3, "33"): (
+        MessageKind.PROVINCE_AUTOMAKER_PACKAGE,
+        "geely",
+        0.035,
+        "提出制造数据与服务数据分层接入，并设置异常退出条件。",
+    ),
+    (MacroTick.Q4, "50"): (
+        MessageKind.INTERPROVINCIAL_PROPOSAL,
+        "51",
+        0.028,
+        "提出保留统一测试底座，把新增任务转向共享运维。",
+    ),
+    (MacroTick.Q4, "34"): (
+        MessageKind.PROVINCE_AUTOMAKER_PACKAGE,
+        "nio",
+        0.029,
+        "提出保留基础闭环，以追踪、安全和协同三项条件决定扩展。",
+    ),
+    (MacroTick.Q4, "31"): (
+        MessageKind.PROVINCE_AUTOMAKER_PACKAGE,
+        "geely",
+        0.030,
+        "提出维持公共接口与高标准验证，暂停低确定性扩张。",
+    ),
+}
+
+M35_PROVINCE_THEMES = {
+    "31": "高标准验证与边际财政约束",
+    "33": "开放平台与分层数据接口",
+    "34": "研发协同与中部节点分工",
+    "41": "物流回流与再制造闭环",
+    "42": "电池安全与场景化验证",
+    "44": "规模应用与跨场景兼容",
+    "50": "整车通道与西部配套效率",
+    "51": "共享测试与供应链协同",
+    "61": "材料追溯与区域差距修复",
+}
+
+M35_AUTOMAKER_THEMES = {
+    "byd": "多场景兼容与规模渠道",
+    "geely": "多车型接口与制造协同",
+    "changan": "整车节奏与关键零部件适配",
+    "sgmw": "大众市场覆盖与渠道效率",
+    "nio": "服务网络与权限隔离",
+    "chery": "跨区域渠道与供应链韧性",
+    "leapmotor": "资源效率与渐进扩张",
+    "seres": "验证周期与车型适配",
+    "xiaomi_auto": "物流回流与数字接口",
+    "li_auto": "产品节奏与服务覆盖",
+}
 
 
 def _stable_id(prefix: str, *parts: object) -> str:
@@ -242,6 +349,7 @@ class M34Orchestrator:
                 "province_agent_model": self.agent_provider.model_name_for("province_tick"),
                 "automaker_agent_model": self.agent_provider.model_name_for("automaker_tick"),
                 "agent_provider_mode": self.agent_provider.run_mode,
+                "agent_provider_miss_mode": getattr(self.agent_provider, "miss_mode", "fallback"),
             }
         )
         runtime = M34Runtime(world=world)
@@ -623,6 +731,15 @@ class M34Orchestrator:
         agent_id: str,
     ) -> AuthorizedInbox:
         is_province = agent_id in MAINLAND_PROVINCE_CODES
+        pending_session_messages: list[InteractionMessage] = []
+        for session in branch.sessions:
+            if session.state in TERMINAL_TRANSACTION_STATES:
+                continue
+            latest = next(
+                item for item in reversed(branch.messages) if item.session_id == session.session_id
+            )
+            if latest.sender_id != agent_id and agent_id in latest.recipient_ids:
+                pending_session_messages.append(latest)
         visible_messages = [
             item
             for item in branch.messages
@@ -630,6 +747,12 @@ class M34Orchestrator:
             and item.wave.order < wave.order
             and self._message_visible_to(branch, item, agent_id)
         ]
+        visible_by_id = {item.message_id: item for item in visible_messages}
+        for message in pending_session_messages:
+            visible_by_id[message.message_id] = message
+        visible_messages = sorted(
+            visible_by_id.values(), key=lambda item: (item.logical_sequence, item.message_id)
+        )
         previous_checkpoint = (
             branch.checkpoints.get(list(MacroTick)[tick.order - 1]) if tick.order else None
         )
@@ -656,11 +779,7 @@ class M34Orchestrator:
         previous_decision = next(
             (item for item in reversed(branch.decisions) if item.agent_id == agent_id), None
         )
-        pending_sessions = [
-            item.session_id
-            for item in branch.sessions
-            if agent_id in item.participant_ids and item.state not in TERMINAL_TRANSACTION_STATES
-        ]
+        pending_sessions = [item.session_id for item in pending_session_messages]
         visible_events = [
             item.event_plan_id
             for item in self._events_released(world, branch, tick, wave, exact=False)
@@ -743,15 +862,19 @@ class M34Orchestrator:
         def fallback() -> AgentTickDecision:
             return self._fallback_decision(world, branch, inbox)
 
+        live_context = self._live_authorized_context(branch, inbox)
         decision = await self.agent_provider.resolve(
             kind=f"{inbox.agent_kind.value}_tick",
             instruction=(
                 "基于授权 Inbox 决定 ignore、monitor、initiate、respond 或 revise；"
                 "消息与资源必须满足 Schema 和年度剩余预算。"
+                "Q1 首次行动时，省级主体必须返回 province_action，"
+                "车企主体必须返回 automaker_action。"
             ),
-            authorized_context=inbox.model_dump(mode="json"),
+            authorized_context=live_context.model_dump(mode="json"),
             response_type=AgentTickDecision,
             fallback=fallback,
+            validate=lambda value: self._validate_decision(branch, inbox, value),
         )
         try:
             self._validate_decision(branch, inbox, decision)
@@ -779,6 +902,76 @@ class M34Orchestrator:
         )
         return decision
 
+    def _live_authorized_context(
+        self,
+        branch: BranchRuntimeStateV9,
+        inbox: AuthorizedInbox,
+    ) -> M34LiveAuthorizedContext:
+        visible_message_ids = set(inbox.message_ids)
+        pending_session_ids = set(inbox.pending_session_ids)
+        visible_messages = [
+            item for item in branch.messages if item.message_id in visible_message_ids
+        ]
+        pending_sessions = [
+            item for item in branch.sessions if item.session_id in pending_session_ids
+        ]
+        sent_this_tick = [
+            item
+            for item in branch.messages
+            if item.tick is inbox.tick and item.sender_id == inbox.agent_id
+        ]
+        previous_action: ProvinceQuarterAction | AutomakerQuarterAction | None
+        if inbox.agent_kind is AgentKindM34.PROVINCE:
+            envelope = branch.province_resource_envelopes[inbox.agent_id]
+            previous_action = branch.latest_province_actions.get(inbox.agent_id)
+            constraints = M34OutputConstraints(
+                required_action=("province_action" if inbox.tick is MacroTick.Q1 else "optional"),
+                authorized_agent_ids=[*MAINLAND_PROVINCE_CODES, *AUTOMAKER_IDS],
+                authorized_province_codes=list(MAINLAND_PROVINCE_CODES),
+                available_policy_budget=envelope.available_policy_budget,
+                remaining_policy_budget=branch.remaining_province_budget.get(
+                    inbox.agent_id, envelope.available_policy_budget
+                ),
+                max_interprovincial_proposals=max(
+                    0,
+                    2
+                    - sum(
+                        item.kind is MessageKind.INTERPROVINCIAL_PROPOSAL for item in sent_this_tick
+                    ),
+                ),
+                max_province_automaker_packages=max(
+                    0,
+                    2
+                    - sum(
+                        item.kind is MessageKind.PROVINCE_AUTOMAKER_PACKAGE
+                        for item in sent_this_tick
+                    ),
+                ),
+            )
+        else:
+            envelope = branch.automaker_resource_envelopes[inbox.agent_id]
+            previous_action = branch.latest_automaker_actions.get(inbox.agent_id)
+            constraints = M34OutputConstraints(
+                required_action=("automaker_action" if inbox.tick is MacroTick.Q1 else "optional"),
+                authorized_agent_ids=[*MAINLAND_PROVINCE_CODES, *AUTOMAKER_IDS],
+                authorized_province_codes=list(MAINLAND_PROVINCE_CODES),
+                national_market_budget=envelope.national_market_budget,
+                remaining_market_budget=branch.remaining_automaker_budget.get(
+                    inbox.agent_id, envelope.national_market_budget
+                ),
+                max_facility_targets=envelope.max_facility_targets,
+                max_automaker_private_messages=max(
+                    0, 5 - sum(item.session_id is not None for item in sent_this_tick)
+                ),
+            )
+        return M34LiveAuthorizedContext(
+            inbox=inbox,
+            output_constraints=constraints,
+            visible_messages=visible_messages,
+            pending_sessions=pending_sessions,
+            previous_action=previous_action,
+        )
+
     def _fallback_decision(
         self,
         world: WorldStateV10,
@@ -791,24 +984,20 @@ class M34Orchestrator:
         previous = next(
             (item for item in reversed(branch.decisions) if item.agent_id == agent_id), None
         )
-        engagement = (
-            EngagementMode.RESPOND
-            if inbox.pending_session_ids or inbox.message_ids
-            else EngagementMode.REVISE
-            if previous
-            else EngagementMode.INITIATE
-        )
         if inbox.agent_kind is AgentKindM34.PROVINCE:
             profile = self.profiles[agent_id]
             envelope = branch.province_resource_envelopes[agent_id]
             prior = branch.latest_province_actions.get(agent_id)
             event_shift = 0.015 * len(inbox.visible_event_ids)
+            remaining_budget = branch.remaining_province_budget.get(
+                agent_id, envelope.available_policy_budget
+            )
             support = _clamp(
                 prior.overall_support_intensity
                 if prior
                 else envelope.available_policy_budget * 0.82,
-                0.05,
-                envelope.available_policy_budget,
+                0,
+                remaining_budget,
             )
             mix = (
                 prior.subsidy_mix
@@ -826,9 +1015,19 @@ class M34Orchestrator:
                 province_code=agent_id,
                 overall_support_intensity=support,
                 subsidy_mix=mix,
-                public_summary="在年度财政空间内维持或重配三类支持。",
+                public_summary=self._province_action_summary(branch, inbox),
             )
             messages = self._fallback_province_messages(branch, inbox)
+            engagement = (
+                EngagementMode.RESPOND
+                if messages and (inbox.pending_session_ids or inbox.message_ids)
+                else EngagementMode.INITIATE
+                if messages
+                else EngagementMode.REVISE
+                if previous
+                else EngagementMode.MONITOR
+            )
+            alternatives, opportunity_costs = self._province_tradeoffs(inbox)
             return AgentTickDecision(
                 decision_id=_stable_id("decision", branch.branch_id, tick, wave, agent_id),
                 branch_id=branch.branch_id,
@@ -839,11 +1038,16 @@ class M34Orchestrator:
                 inbox_id=inbox.inbox_id,
                 engagement=engagement,
                 attended_message_ids=inbox.message_ids,
-                noticed_facts=[*inbox.visible_event_ids, *inbox.pending_session_ids][:12],
+                noticed_facts=self._noticed_facts(branch, inbox),
                 province_action=action,
                 outgoing_messages=messages,
-                alternatives=["维持上一季度配置", "重配消费端与产业端支持"],
-                opportunity_costs=["提高一类工具份额会压缩其他工具空间"],
+                no_action_reason=(
+                    None
+                    if messages
+                    else "当前授权上下文不足以形成合法互动，保留政策行动并等待新信号。"
+                ),
+                alternatives=alternatives,
+                opportunity_costs=opportunity_costs,
                 reconsideration_conditions=[
                     ReconsiderationCondition(
                         condition_id=_stable_id("condition", agent_id, tick, "next"),
@@ -864,6 +1068,16 @@ class M34Orchestrator:
             )
         action = self._fallback_automaker_action(branch, inbox)
         messages = self._fallback_automaker_messages(branch, inbox)
+        engagement = (
+            EngagementMode.RESPOND
+            if messages and (inbox.pending_session_ids or inbox.message_ids)
+            else EngagementMode.INITIATE
+            if messages
+            else EngagementMode.REVISE
+            if previous
+            else EngagementMode.MONITOR
+        )
+        alternatives, opportunity_costs = self._automaker_tradeoffs(inbox)
         return AgentTickDecision(
             decision_id=_stable_id("decision", branch.branch_id, tick, wave, agent_id),
             branch_id=branch.branch_id,
@@ -874,11 +1088,16 @@ class M34Orchestrator:
             inbox_id=inbox.inbox_id,
             engagement=engagement,
             attended_message_ids=inbox.message_ids,
-            noticed_facts=[*inbox.visible_event_ids, *inbox.pending_session_ids][:12],
+            noticed_facts=self._noticed_facts(branch, inbox),
             automaker_action=action,
             outgoing_messages=messages,
-            alternatives=["维持全国投入组合", "在现有资源内重配省份投入"],
-            opportunity_costs=["增加一个省份的战略投入会挤占全国资源包"],
+            no_action_reason=(
+                None
+                if messages
+                else "当前授权上下文不足以形成合法互动，维持全国行动组合并等待新信号。"
+            ),
+            alternatives=alternatives,
+            opportunity_costs=opportunity_costs,
             reconsideration_conditions=[
                 ReconsiderationCondition(
                     condition_id=_stable_id("condition", agent_id, tick, "next"),
@@ -896,17 +1115,99 @@ class M34Orchestrator:
             fallback_reason="fake_provider_deterministic_fallback",
         )
 
+    def _noticed_facts(self, branch: BranchRuntimeStateV9, inbox: AuthorizedInbox) -> list[str]:
+        role = "原始方案" if branch.kind is BranchKind.CONTROL else "干预方案"
+        facts = [
+            f"{role}的{inbox.tick.value}资源边界已冻结",
+            f"当前为{inbox.wave.order + 1}/3 次逻辑互动机会",
+        ]
+        if inbox.pending_session_ids:
+            facts.append(f"有 {len(inbox.pending_session_ids)} 组授权协商等待回应")
+        if inbox.visible_event_ids:
+            facts.append(f"有 {len(inbox.visible_event_ids)} 项冻结事件已进入当前上下文")
+        return facts[:6]
+
+    def _province_action_summary(self, branch: BranchRuntimeStateV9, inbox: AuthorizedInbox) -> str:
+        name = policy_region_catalog()[inbox.agent_id].short_name
+        theme = M35_PROVINCE_THEMES.get(
+            inbox.agent_id,
+            "消费激活、产业承载与运营成本的平衡",
+        )
+        phase = {
+            MacroTick.Q1: "冻结起步组合",
+            MacroTick.Q2: "根据首轮互动重配工具",
+            MacroTick.Q3: "根据中期反馈校正节奏",
+            MacroTick.Q4: "在年度收尾中保留有效节点",
+        }[inbox.tick]
+        branch_note = (
+            "并使用新增财政空间" if branch.kind is BranchKind.TREATMENT else "并严守参考基线"
+        )
+        return f"{name}围绕{theme}{phase}{branch_note}。"
+
+    @staticmethod
+    def _province_tradeoffs(inbox: AuthorizedInbox) -> tuple[list[str], list[str]]:
+        alternatives = {
+            MacroTick.Q1: ["单省独立建设", "共享接口但保留分省执行"],
+            MacroTick.Q2: ["立即扩大协同范围", "先做小规模验证"],
+            MacroTick.Q3: ["维持原资源排序", "按条件向相对滞后节点倾斜"],
+            MacroTick.Q4: ["继续全面扩张", "仅保留已验证的公共能力"],
+        }[inbox.tick]
+        costs = {
+            MacroTick.Q1: ["共享底座会减少单省短期控制权"],
+            MacroTick.Q2: ["分阶段验证会牺牲短期扩展速度"],
+            MacroTick.Q3: ["增加追赶节点权重会挤占成熟节点任务"],
+            MacroTick.Q4: ["收缩边际扩张会放弃部分短期效率"],
+        }[inbox.tick]
+        return alternatives, costs
+
+    @staticmethod
+    def _automaker_tradeoffs(inbox: AuthorizedInbox) -> tuple[list[str], list[str]]:
+        alternatives = {
+            MacroTick.Q1: ["维持全国均衡投入", "聚焦已验证区域"],
+            MacroTick.Q2: ["单点快速验证", "跨省分层验证"],
+            MacroTick.Q3: ["拒绝新节点", "以小规模接口保留选项"],
+            MacroTick.Q4: ["继续扩张深层接口", "仅保留稳定的基础接入"],
+        }[inbox.tick]
+        return alternatives, ["新增一个区域协同会挤占全国资源包与管理容量"]
+
     def _fallback_province_messages(
         self, branch: BranchRuntimeStateV9, inbox: AuthorizedInbox
     ) -> list[InteractionMessage]:
         messages: list[InteractionMessage] = []
-        pending = [item for item in branch.sessions if item.session_id in inbox.pending_session_ids]
+        pending = []
+        for session in branch.sessions:
+            if session.session_id not in inbox.pending_session_ids:
+                continue
+            latest = next(
+                item for item in reversed(branch.messages) if item.session_id == session.session_id
+            )
+            if latest.sender_id != inbox.agent_id and inbox.agent_id in latest.recipient_ids:
+                pending.append(session)
         for session in pending[:2]:
             previous_message = next(
                 item for item in reversed(branch.messages) if item.session_id == session.session_id
             )
-            accept = int(canonical_hash((session.session_id, inbox.agent_id))[:2], 16) % 3 != 0
+            initial_sender = next(
+                item.sender_id for item in branch.messages if item.session_id == session.session_id
+            )
+            showcase_pair = (session.tick, initial_sender, inbox.agent_id)
+            accept = (
+                previous_message.kind is MessageKind.AUTOMAKER_COUNTEROFFER
+                or showcase_pair
+                not in {
+                    (MacroTick.Q1, "44", "33"),
+                    (MacroTick.Q3, "61", "34"),
+                }
+                or branch.kind is BranchKind.TREATMENT
+            )
             state = TransactionState.ACCEPTED if accept else TransactionState.REJECTED
+            summary = (
+                "接受条件调整，保留共享接口并进入资源校验。"
+                if previous_message.kind is MessageKind.AUTOMAKER_COUNTEROFFER and accept
+                else "接受分工，但要求后续继续使用统一数据协议。"
+                if accept
+                else "当前条件下拒绝扩展，保留分省验证路径。"
+            )
             messages.append(
                 self._message(
                     branch,
@@ -918,76 +1219,91 @@ class M34Orchestrator:
                     state=state,
                     reply_to=previous_message.message_id,
                     resource_amount=previous_message.resource_amount,
-                    summary="接受并进入资源校验。" if accept else "在当前资源约束下拒绝。",
+                    summary=summary,
                 )
             )
-        if not pending and inbox.tick is MacroTick.Q1 and inbox.wave is InteractionWave.WAVE_0:
-            peers = sorted(
-                relation.target_code
-                for relation in self.relation_network.relations
-                if relation.source_code == inbox.agent_id
-                and relation.relation_type == "coordination"
+        scenario = M35_SHOWCASE_OUTREACH.get((inbox.tick, inbox.agent_id))
+        if not pending and inbox.wave is InteractionWave.WAVE_0 and scenario:
+            kind, target, resource_amount, summary = scenario
+            session_id = _stable_id("session", branch.branch_id, inbox.tick, inbox.agent_id, target)
+            messages.append(
+                self._message(
+                    branch,
+                    inbox,
+                    kind=kind,
+                    visibility=MessageVisibility.PRIVATE,
+                    recipients=[target],
+                    session_id=session_id,
+                    state=TransactionState.PROPOSED,
+                    resource_amount=resource_amount,
+                    summary=summary,
+                )
             )
-            if peers and int(inbox.agent_id) % 11 == 0:
-                target = peers[0]
-                session_id = _stable_id(
-                    "session", branch.branch_id, inbox.tick, inbox.agent_id, target
-                )
-                messages.append(
-                    self._message(
-                        branch,
-                        inbox,
-                        kind=MessageKind.INTERPROVINCIAL_PROPOSAL,
-                        visibility=MessageVisibility.PRIVATE,
-                        recipients=[target],
-                        session_id=session_id,
-                        state=TransactionState.PROPOSED,
-                        resource_amount=0.04,
-                        summary="提出供应链与运营网络协同意向。",
-                    )
-                )
-            if int(inbox.agent_id) % 13 == 0:
-                target = AUTOMAKER_IDS[int(inbox.agent_id) % len(AUTOMAKER_IDS)]
-                session_id = _stable_id(
-                    "session", branch.branch_id, inbox.tick, inbox.agent_id, target
-                )
-                messages.append(
-                    self._message(
-                        branch,
-                        inbox,
-                        kind=MessageKind.PROVINCE_AUTOMAKER_PACKAGE,
-                        visibility=MessageVisibility.PRIVATE,
-                        recipients=[target],
-                        session_id=session_id,
-                        state=TransactionState.PROPOSED,
-                        resource_amount=0.035,
-                        summary="在现有三类工具内提出模拟协同资源包。",
-                    )
-                )
         return messages
 
     def _fallback_automaker_messages(
         self, branch: BranchRuntimeStateV9, inbox: AuthorizedInbox
     ) -> list[InteractionMessage]:
         messages: list[InteractionMessage] = []
-        pending = [item for item in branch.sessions if item.session_id in inbox.pending_session_ids]
-        for session in pending[:5]:
+        sent_private_count = sum(
+            item.tick is inbox.tick
+            and item.sender_id == inbox.agent_id
+            and item.session_id is not None
+            for item in branch.messages
+        )
+        remaining_message_budget = max(0, 5 - sent_private_count)
+        pending = []
+        for session in branch.sessions:
+            if session.session_id not in inbox.pending_session_ids:
+                continue
+            latest = next(
+                item for item in reversed(branch.messages) if item.session_id == session.session_id
+            )
+            if latest.sender_id != inbox.agent_id and inbox.agent_id in latest.recipient_ids:
+                pending.append(session)
+        for session in pending[:remaining_message_budget]:
             previous = next(
                 item for item in reversed(branch.messages) if item.session_id == session.session_id
             )
+            planned = {
+                (MacroTick.Q2, "50", "changan"): TransactionState.ACCEPTED,
+                (MacroTick.Q2, "42", "seres"): TransactionState.COUNTERED,
+                (MacroTick.Q2, "44", "byd"): TransactionState.ACCEPTED,
+                (MacroTick.Q3, "41", "xiaomi_auto"): TransactionState.DEFERRED,
+                (MacroTick.Q3, "33", "geely"): TransactionState.COUNTERED,
+                (MacroTick.Q4, "34", "nio"): TransactionState.COUNTERED,
+                (MacroTick.Q4, "31", "geely"): TransactionState.DEFERRED,
+            }.get((session.tick, previous.sender_id, inbox.agent_id))
             selector = int(canonical_hash((session.session_id, inbox.agent_id))[:2], 16) % 4
-            if selector == 0 and session.condition_rounds < MAX_CONDITION_ROUNDS_PER_PAIR:
+            if planned is TransactionState.COUNTERED or (
+                planned is None
+                and selector == 0
+                and session.condition_rounds < MAX_CONDITION_ROUNDS_PER_PAIR
+            ):
                 state = TransactionState.COUNTERED
                 kind = MessageKind.AUTOMAKER_COUNTEROFFER
-                summary = "在既有资源包内提出条件调整。"
-            elif selector == 1:
+                summary = {
+                    MacroTick.Q1: "反报价：先限定资源包范围，并以统一接口完成首轮验证。",
+                    MacroTick.Q2: "反报价：先做小范围双层验证，并保留失败回退机制。",
+                    MacroTick.Q3: "反报价：同意分层接入，但需增加异常退出与压力测试。",
+                    MacroTick.Q4: "反报价：保留基础闭环，深层服务接口暂不扩展。",
+                }[inbox.tick]
+            elif planned is TransactionState.DEFERRED or (planned is None and selector == 1):
                 state = TransactionState.DEFERRED
                 kind = MessageKind.TRANSACTION_RESPONSE
-                summary = "暂缓至后续季度复评。"
+                summary = (
+                    "暂缓扩容，先观察追踪完整性与安全复核。"
+                    if inbox.tick is MacroTick.Q3
+                    else "保留基础接入，暂缓低确定性的深层扩张。"
+                )
             else:
                 state = TransactionState.ACCEPTED
                 kind = MessageKind.TRANSACTION_RESPONSE
-                summary = "接受并进入资源校验。"
+                summary = (
+                    "接受分阶段适配，测试结果按统一接口回传。"
+                    if inbox.tick is MacroTick.Q2
+                    else "接受并进入资源校验。"
+                )
             messages.append(
                 self._message(
                     branch,
@@ -1052,7 +1368,6 @@ class M34Orchestrator:
         self, branch: BranchRuntimeStateV9, inbox: AuthorizedInbox
     ) -> AutomakerQuarterAction:
         automaker_id = inbox.agent_id
-        persona = self.automaker_personas[automaker_id]
         envelope = branch.automaker_resource_envelopes[automaker_id]
         scores = []
         for code in MAINLAND_PROVINCE_CODES:
@@ -1102,12 +1417,22 @@ class M34Orchestrator:
             automaker_id=automaker_id,
             province_market_actions=actions,
             facility_actions=facilities,
-            public_summary=(
-                "在冻结全国资源包内维持或重配市场、渠道与模拟产能意向。"
-                if persona.cashflow_constraint < 0.7
-                else "受现金流代理约束，保持审慎的全国资源组合。"
-            ),
+            public_summary=self._automaker_action_summary(branch, inbox),
         )
+
+    def _automaker_action_summary(
+        self, branch: BranchRuntimeStateV9, inbox: AuthorizedInbox
+    ) -> str:
+        name = automaker_catalog()[inbox.agent_id].display_name
+        theme = M35_AUTOMAKER_THEMES[inbox.agent_id]
+        phase = {
+            MacroTick.Q1: "形成全国资源起点",
+            MacroTick.Q2: "评估省企协同条件",
+            MacroTick.Q3: "根据中期信号调整组合",
+            MacroTick.Q4: "收缩低确定性扩张",
+        }[inbox.tick]
+        branch_note = "干预方案" if branch.kind is BranchKind.TREATMENT else "原始方案"
+        return f"{name}模拟主体在{branch_note}中围绕{theme}{phase}。"
 
     def _validate_decision(
         self,
@@ -1123,23 +1448,79 @@ class M34Orchestrator:
             or decision.agent_kind is not inbox.agent_kind
             or decision.inbox_id != inbox.inbox_id
         ):
-            raise ValueError("agent decision identity does not match authorized inbox")
+            raise ValueError("IDENTITY_MISMATCH: copy all identity fields from authorized inbox")
         if not set(decision.attended_message_ids) <= set(inbox.message_ids):
-            raise ValueError("decision attended unauthorized message")
+            raise ValueError("UNAUTHORIZED_MESSAGE: attended_message_ids must be a subset")
+        if decision.engagement is EngagementMode.INITIATE and not decision.outgoing_messages:
+            raise ValueError(
+                "INITIATE_MESSAGE_REQUIRED: initiate engagement requires an outgoing message"
+            )
+        if decision.engagement is EngagementMode.RESPOND:
+            if not decision.attended_message_ids and not inbox.pending_session_ids:
+                raise ValueError(
+                    "RESPOND_CONTEXT_REQUIRED: respond engagement requires an authorized "
+                    "attended message or pending session"
+                )
+            if not decision.outgoing_messages:
+                raise ValueError(
+                    "RESPOND_MESSAGE_REQUIRED: respond engagement requires an outgoing message"
+                )
+        if decision.engagement in {EngagementMode.IGNORE, EngagementMode.MONITOR}:
+            if decision.outgoing_messages:
+                raise ValueError(
+                    "PASSIVE_ENGAGEMENT_MESSAGE_FORBIDDEN: ignore or monitor cannot send messages"
+                )
+            if not decision.no_action_reason:
+                raise ValueError(
+                    "NO_ACTION_REASON_REQUIRED: ignore or monitor requires no_action_reason"
+                )
+        authorized_agent_ids = {*MAINLAND_PROVINCE_CODES, *AUTOMAKER_IDS}
+        existing_message_ids = {item.message_id for item in branch.messages}
+        decision_message_ids: set[str] = set()
         for message in decision.outgoing_messages:
             if (
                 message.branch_id != branch.branch_id
                 or message.tick is not inbox.tick
                 or message.wave is not inbox.wave
+                or message.sender_kind is not inbox.agent_kind
                 or message.sender_id != inbox.agent_id
             ):
-                raise ValueError("outgoing message violates branch/tick/sender authorization")
+                raise ValueError("MESSAGE_IDENTITY_MISMATCH: copy branch/tick/wave/sender fields")
+            if (
+                message.message_id in existing_message_ids
+                or message.message_id in decision_message_ids
+            ):
+                raise ValueError("MESSAGE_ID_DUPLICATE: message_id must be unique in the branch")
+            decision_message_ids.add(message.message_id)
+            if len(message.recipient_ids) != len(set(message.recipient_ids)):
+                raise ValueError("RECIPIENT_DUPLICATE: recipient_ids must contain unique agents")
+            if (
+                not set(message.recipient_ids) <= authorized_agent_ids
+                or inbox.agent_id in message.recipient_ids
+            ):
+                raise ValueError("UNAUTHORIZED_RECIPIENT: use only authorized_agent_ids")
+            if message.session_id and len(message.recipient_ids) != 1:
+                raise ValueError(
+                    "TRANSACTION_SINGLE_COUNTERPART_REQUIRED: transaction messages require "
+                    "exactly one recipient"
+                )
+            if message.transaction_state is TransactionState.PROPOSED:
+                if any(item.session_id == message.session_id for item in branch.sessions):
+                    raise ValueError(
+                        "SESSION_ID_DUPLICATE: a proposed transaction requires a new session_id"
+                    )
+            elif message.session_id and message.session_id not in inbox.pending_session_ids:
+                raise ValueError(
+                    "UNAUTHORIZED_SESSION_RESPONSE: response session_id must be pending in inbox"
+                )
         sent_this_tick = [
             item
             for item in branch.messages
             if item.tick is inbox.tick and item.sender_id == inbox.agent_id
         ]
         if inbox.agent_kind is AgentKindM34.PROVINCE:
+            if inbox.tick is MacroTick.Q1 and decision.province_action is None:
+                raise ValueError("PROVINCE_ACTION_REQUIRED: Q1 requires province_action")
             interprovincial_count = sum(
                 item.kind is MessageKind.INTERPROVINCIAL_PROPOSAL
                 for item in [*sent_this_tick, *decision.outgoing_messages]
@@ -1149,31 +1530,57 @@ class M34Orchestrator:
                 for item in [*sent_this_tick, *decision.outgoing_messages]
             )
             if interprovincial_count > 2 or province_automaker_count > 2:
-                raise ValueError("province cumulative per-tick interaction budget exceeded")
+                raise ValueError("PROVINCE_MESSAGE_BUDGET_EXCEEDED: return fewer messages")
         else:
+            if inbox.tick is MacroTick.Q1 and decision.automaker_action is None:
+                raise ValueError("AUTOMAKER_ACTION_REQUIRED: Q1 requires automaker_action")
             private_transaction_count = sum(
                 item.session_id is not None
                 for item in [*sent_this_tick, *decision.outgoing_messages]
             )
             if private_transaction_count > 5:
-                raise ValueError("automaker cumulative per-tick interaction budget exceeded")
+                raise ValueError("AUTOMAKER_MESSAGE_BUDGET_EXCEEDED: return fewer messages")
         if decision.province_action:
-            envelope = branch.province_resource_envelopes[inbox.agent_id]
             if (
-                decision.province_action.overall_support_intensity
-                > envelope.available_policy_budget
+                decision.province_action.branch_id != branch.branch_id
+                or decision.province_action.tick is not inbox.tick
             ):
-                raise ValueError("province action exceeds annual resource envelope")
+                raise ValueError("PROVINCE_ACTION_IDENTITY_MISMATCH: copy branch and tick")
+            envelope = branch.province_resource_envelopes[inbox.agent_id]
+            remaining_budget = branch.remaining_province_budget.get(
+                inbox.agent_id, envelope.available_policy_budget
+            )
+            if decision.province_action.overall_support_intensity > remaining_budget + 1e-9:
+                raise ValueError(
+                    "PROVINCE_BUDGET_EXCEEDED: overall_support_intensity must not exceed "
+                    f"{remaining_budget:.6f}"
+                )
         if decision.automaker_action:
+            if (
+                decision.automaker_action.branch_id != branch.branch_id
+                or decision.automaker_action.tick is not inbox.tick
+            ):
+                raise ValueError("AUTOMAKER_ACTION_IDENTITY_MISMATCH: copy branch and tick")
             envelope = branch.automaker_resource_envelopes[inbox.agent_id]
+            remaining_budget = branch.remaining_automaker_budget.get(
+                inbox.agent_id, envelope.national_market_budget
+            )
             if (
                 sum(
                     item.sales_investment_intensity
                     for item in decision.automaker_action.province_market_actions
                 )
-                > envelope.national_market_budget + 1e-4
+                > remaining_budget + 1e-4
             ):
-                raise ValueError("automaker action exceeds national market budget")
+                raise ValueError(
+                    "AUTOMAKER_BUDGET_EXCEEDED: sum of 31 sales_investment_intensity values "
+                    f"must not exceed {remaining_budget:.6f}"
+                )
+            if len(decision.automaker_action.facility_actions) > envelope.max_facility_targets:
+                raise ValueError(
+                    "AUTOMAKER_FACILITY_TARGETS_EXCEEDED: facility_actions count must not exceed "
+                    f"{envelope.max_facility_targets}"
+                )
 
     def _commit_wave(
         self,

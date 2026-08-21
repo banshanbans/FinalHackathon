@@ -1,0 +1,26 @@
+{
+	admin off
+}
+
+shot.socialdog.cn {
+	encode zstd gzip
+	reverse_proxy anju-app:8080
+}
+
+shotapi.socialdog.cn {
+	encode zstd gzip
+
+	@api path /api/* /health
+	handle @api {
+		reverse_proxy anju-app:8080
+	}
+
+	handle {
+		respond "Not Found" 404
+	}
+}
+
+final.socialdog.cn {
+	encode zstd gzip
+	reverse_proxy m35-web:8080
+}

@@ -3,8 +3,10 @@
 > 对应 PRD：[PRD_省域政策多智能体推演平台.md](./PRD_省域政策多智能体推演平台.md)
 > 前端规范：[STITCH_FRONTEND_SPEC.md](./STITCH_FRONTEND_SPEC.md)
 > 计划版本：V3.2 M35（Presentation 因果舞台重建）
-> 更新日期：2026-08-13
+> 更新日期：2026-08-14
 > 当前门禁：只以 `apps/presentation` 为产品界面，完成强类型展示投影、因果链、博弈层、分支隔离、字段泄漏扫描、三类 E2E 和四画布 Design QA
+
+2026-08-14 公网维护项：Presentation 原始方案保持 `95%/90%/85%`，新建实验的干预方案预设保持 `96%/93%/82%`。旧缓存因早期互动校验缺口已隔离；`m34-decision-quality-v1` 门禁重建后，公网冷/热两次同语义全年度运行均为 530 次调用零 fallback，消息/会话完整，第二次缓存文件数 `1487→1487`，退出条件已满足。详见 `ADR-374-m354-deepseek-cache-quality-gate.md`。
 
 ---
 
@@ -666,8 +668,8 @@ make smoke
 运行模式入口固定为：
 
 - `make dev-api`：本地开发，强制 `POLICYSCOPE_RUN_MODE=fake`。
-- `make start-api`：线上部署，强制 `POLICYSCOPE_RUN_MODE=live`，并要求部署环境注入模型 API Key。
-- `cache`：只供预计算、回归和离线可复现验证，不作为本地 Web/API 默认模式。
+- `make start-api`：线上部署默认 `POLICYSCOPE_RUN_MODE=cache` 与 `POLICYSCOPE_CACHE_MISS_MODE=live`，并要求部署环境安全注入 DeepSeek API Key。
+- `cache`：本地仍只供预计算、回归和离线可复现验证；公网作为默认主链路，miss 时 DeepSeek 生成、强校验并回写，模型失败才显式 fallback。
 
 V3 实现后必须让这些命令覆盖新领域；不得为了通过门禁跳过旧断言、隐藏 fallback 或硬编码结果。
 
@@ -843,7 +845,7 @@ M29 v2 对用户统一显示“可信数据”；直接来源和具备合理置�
 
 - `apps/presentation` 已切换为正式 `/experiments/:id/present`，并提供无实验 ID 时的真实演示实验启动流程。
 - 根入口已重排为“地球开场 → 全国版图接管 → 约 2 秒后配置弹窗”；配置以东中西中央承担比例为首 Tab，突发事件为默认关闭的可选 Tab，无事件与有事件分别走真实 `policy_comparison` / `policy_stress_test` 设计。
-- 配置后顺序经过“中央政策解读 → A/B 实验设计与唯一主动差异 → 代理数据基线”三个显式人工确认门禁，不再由 `createDemo` 静默代办。
+- 根入口用户可见旅程收敛为“实验配置 → A/B 实验设计与唯一主动差异”两页。配置提交后顺序确认中央政策解读，设计确认后顺序冻结代理数据基线；原 API 门禁与幂等性保留。
 - TanStack Query 分别读取 Timeline 与当前 Frame；地图值、覆盖层、事件节点、关键变化、六指标和哈希均来自 M33.2 冻结投影。
 - GovSim Glass UI Kit、三模式、十入口工具坞、单主面板、Context Popover、Side Sheet 和地图主内容比例落地，未重建 SaaS 卡片网格。
 - 时间轴的拖动吸附、播放/暂停、前后帧、节点跳转、变速和复位通过；突发事件帧和省域点击与当前帧联动。
@@ -895,11 +897,11 @@ M34 保持 M32 七轮、308 次调用和 `world-state-v9` 不变。所有备选�
 
 实施顺序固定为：文档与 Schema → 旧实验 410/季度持久化 → Inbox/消息/调度屏障 → Provider 与季度环境 → REST/SSE → Presentation 与工作台 → 独立缓存和总验收。旧 `exp_m32_*` 只保留文件，不做转换或删除。
 
-2026-08-13 验收记录：`make test`（71 Python + 5 Web）、`make test-sim`（63）、`make test-api`（8）、`make lint`、`make validate-data`、`make test-e2e`（5）、`make test-e2e-presentation`（7）和 `make verify-cache-m34` 均通过；活动 M34 文件禁止文案扫描无命中。因当前环境未配置 Luna API Key，未生成或伪造 `v3_2_m34_luna`。
+2026-08-13 原始冻结验收记录：`make test`（71 Python + 5 Web）、`make test-sim`（63）、`make test-api`（8）、`make lint`、`make validate-data`、`make test-e2e`（5）、`make test-e2e-presentation`（7）和 `make verify-cache-m34` 均通过；活动 M34 文件禁止文案扫描无命中。后续经用户授权完成公网 DeepSeek 接入与 `v3_2_m34_luna` 持久缓存，详见 M35.6 和 ADR-372。
 
 ## 28. M35：Presentation Narrative & Game Layer Rebuild
 
-状态：Implementation active（2026-08-13）。用户已选定“因果舞台”视觉稿；普通 Web 前端不进入本里程碑。
+状态：Complete（2026-08-13）。用户已选定并验收“因果舞台”视觉稿；普通 Web 前端不进入本里程碑。
 
 | 子项 | 状态 | 退出条件 |
 |---|---|---|
@@ -909,5 +911,12 @@ M34 保持 M32 七轮、308 次调用和 `world-state-v9` 不变。所有备选�
 | M35.3 Game Layer 与动画 | Complete | Province/Automaker/Event 关系可绘制；提议、反报价、回应、达成/拒绝与结算按因果节拍播放，低动效可用 |
 | M35.4 A/B 与探索 | Complete | Control/Treatment 严格隔离，同域 A/B、差值、主体/事件探索和 Evidence 下钻一致 |
 | M35.5 验收与启动 | Complete | Projection/DOM 单测、三类 E2E、字段泄漏扫描、1920/2560/3840/SVG QA 和 10 秒可理解性通过；API 与 Presentation 保持启动 |
+| M35.6 Cache-first 公网链路 | Complete | 公网 health 为 `cache + live miss`；修改比例的全新实验完成双分支 Q1，合法 DeepSeek 输出回写持久卷，密钥不进镜像/缓存/日志；模型耗尽时显式 fallback |
+| M35.7 全国版图补齐 | Complete | WebGL 与 SVG 容错均显示同一冻结标准地图的南海诸岛附图，且不进入 31 省计算或交互；1920×1080 本地与公网画布通过 |
+| M35.8 因果侧视镜头 | Complete | Presentation 提供自动/俯视/侧视；行动/回应自动倾斜，结算/差值/年度比较锁定俯视；WebGL、SVG、低动效、测试和 1280/1920 画布 QA 通过 |
+| M35.9 DeepSeek 缓存质量门禁 | Complete | v3 cache envelope 与互动一致性校验上线；旧缓存隔离；默认 96/93/82 冷/热全年均 530 次、零 fallback、消息/会话完整且缓存 1487→1487 |
+| M35.10 南海诸岛标准地图内标注 | Complete | WebGL 与 SVG 共用的标准地图裁切内容固定于地图画布左下角，不跟随相机、分支或 A/B 视角移动，并与右下角图例分区；采用方角虚线框且无说明卡底色/阴影/外置标题，内部名称、岛礁与断续线继续来自 GS(2016)1609 冻结原件 |
+| M35.11 中国地图南海断续线 | Complete | 中国地图本体按参考图比例显示从台湾、海南下方向南延伸的 GS(2016)1609 高对比南海断续线；左下角附图保持视口固定，主地图断续线已机械转换为 46 个地理坐标要素并与版图共用拖动、缩放、俯视、侧视的全部相机变换；WebGL 浏览器联动、SVG 变换组、1280/1920 画布、TypeScript、几何契约与生产构建通过，且不进入计算或交互 |
+| M35.14 南海断续线线型与位置修正 | Complete | 移除 46 条官方填充字形直接上图造成的粗重 I/锤形轮廓；从同一 46 条冻结路径按 12 个官方断续符号分组机械求取主轴，生成 12 条细长圆头 LineString，并按项目台湾、海南几何校准东侧—南部—西侧 U 形展示范围；全国俯视、东南放大、拖动与立体侧视均保持地图地理锚定，左下角附图继续视口固定；TypeScript、几何契约与生产构建通过 |
 
 实施顺序固定为：文档与视觉目标 → 后端强类型投影 → 前端显示映射 → 因果舞台 → Game Layer/动画 → A/B/Evidence → 专项验收与启动。M34 Orchestrator、消息权限、季度环境、Checkpoint、Comparison 和缓存不得为展示方便而修改。

@@ -43,6 +43,10 @@ export interface PresentationOverlayRecord {
   evidence_refs: string[];
   relation_semantic?: "proposal" | "counteroffer" | "accepted" | "settled" | "rejected" | "deferred" | "invalid" | "event_impact";
   line_style?: "solid" | "dashed" | "thick" | "faded" | "pulse";
+  emphasized?: boolean;
+  session_id?: string | null;
+  reveal_order?: number;
+  message_order?: number;
 }
 
 export type BranchRole = "control" | "treatment";

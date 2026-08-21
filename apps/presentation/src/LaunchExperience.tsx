@@ -14,6 +14,7 @@ import type {
   EventTriggerPoint,
   PresentationEventCatalog,
 } from "./contracts";
+import { CACHED_TREATMENT_SHARES } from "./presentationDefaults";
 import { eventFamilyLabel } from "./presentationLabels";
 import { GlobeIntro } from "./tech-spike/GlobeIntro";
 import type { PresentationMapCollection } from "./tech-spike/types";
@@ -135,9 +136,9 @@ export function LaunchExperience({
 }) {
   const [showConfiguration, setShowConfiguration] = useState(!introActive);
   const [tab, setTab] = useState<ConfigurationTab>("policy");
-  const [westShare, setWestShare] = useState(98);
-  const [centralShare, setCentralShare] = useState(92);
-  const [eastShare, setEastShare] = useState(86);
+  const [westShare, setWestShare] = useState<number>(CACHED_TREATMENT_SHARES.west);
+  const [centralShare, setCentralShare] = useState<number>(CACHED_TREATMENT_SHARES.central);
+  const [eastShare, setEastShare] = useState<number>(CACHED_TREATMENT_SHARES.east);
   const [eventEnabled, setEventEnabled] = useState(false);
   const [templateId, setTemplateId] = useState("oil_price_rise");
   const [triggerPoint, setTriggerPoint] = useState<EventTriggerPoint>("after_automaker_initial");

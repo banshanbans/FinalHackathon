@@ -91,7 +91,7 @@ def test_m34_quarter_api_idempotency_interactions_and_presentation(tmp_path) -> 
             f"/api/experiments/{experiment_id}/presentation/frames/{settlement['node_id']}"
         )
         assert frame.status_code == 200
-        assert frame.json()["schema_version"] == "presentation-frame-v4"
+        assert frame.json()["schema_version"] == "presentation-frame-v5"
         assert set(frame.json()["branches"]) == {"control", "treatment"}
         assert frame.json()["question"]
         assert frame.json()["disclaimer"].startswith("模拟季度")
@@ -136,3 +136,29 @@ def test_legacy_m32_runtime_is_gone_without_deleting_files(tmp_path) -> None:
             assert response.status_code == 410
             assert response.json()["detail"]["error_code"] == "LEGACY_V32_RUNTIME_UNSUPPORTED"
     assert marker.read_text(encoding="utf-8") == '{"legacy": true}'
+
+
+def test_presentation_world_landmarks_are_stable_proxy_aggregates(tmp_path) -> None:
+    with TestClient(create_app(settings=Settings(runtime_dir=tmp_path))) as client:
+        first = client.get("/api/meta/presentation-world-landmarks")
+        second = client.get("/api/meta/presentation-world-landmarks")
+        province_codes = {
+            item["province_code"] for item in client.get("/api/meta/v32/provinces").json()
+        }
+
+    assert first.status_code == second.status_code == 200
+    assert first.json() == second.json()
+    payload = first.json()
+    assert payload["schema_version"] == "presentation-world-landmarks-v1"
+    assert payload["items"]
+    assert {item["kind"] for item in payload["items"]} == {
+        "battery_capability",
+        "industrial_facility",
+    }
+    assert all(item["data_quality"] == "proxy" for item in payload["items"])
+    assert all(item["node_count"] >= len(item["node_names"]) for item in payload["items"])
+    assert all(item["province_code"].isdigit() for item in payload["items"])
+    assert {item["province_code"] for item in payload["items"]} <= province_codes
+    assert payload["items"] == sorted(
+        payload["items"], key=lambda item: (item["kind"], item["province_code"])
+    )

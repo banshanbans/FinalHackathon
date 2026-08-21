@@ -23,6 +23,8 @@ from policyscope_api.schemas import (
     ConfirmBaselineRequest,
     CreateBranchRequest,
     CreateExperimentRequest,
+    PresentationWorldLandmarkResponse,
+    PresentationWorldLandmarksResponse,
     RejectInterventionRequest,
     RunBranchRequest,
     RunExperimentRequest,
@@ -32,6 +34,7 @@ from simulation.adapters.asyncio_adapter import AsyncioSimulationAdapter
 from simulation.catalog import automaker_catalog, event_scenario_catalog, policy_region_catalog
 from simulation.models.audit import AuditRecordType
 from simulation.models.common import Phase, PolicyRegion, ProvincePersonaType
+from simulation.models.m29 import M29FacilityFact
 from simulation.models.m34 import (
     ExperimentDesignV2,
     InteractionWave,
@@ -200,6 +203,7 @@ def create_app(
             "status": "ok",
             "runtime": "asyncio",
             "run_mode": app_settings.run_mode.value,
+            "cache_miss_mode": app_settings.cache_miss_mode,
             "version": "0.6.0",
         }
 
@@ -278,6 +282,39 @@ def create_app(
     @application.get("/api/meta/presentation-event-catalog")
     async def presentation_events() -> dict[str, object]:
         return presentation_event_catalog().model_dump(mode="json")
+
+    @application.get(
+        "/api/meta/presentation-world-landmarks",
+        response_model=PresentationWorldLandmarksResponse,
+    )
+    async def presentation_world_landmarks() -> PresentationWorldLandmarksResponse:
+        battery_terms = ("电池", "电芯", "材料")
+        industrial_terms = ("整车", "零部件", "工厂")
+        grouped: dict[tuple[str, str], list[M29FacilityFact]] = {}
+        for fact in application.state.m34.m29.facility_facts.values():
+            kinds: list[str] = []
+            if any(term in fact.facility_type for term in battery_terms):
+                kinds.append("battery_capability")
+            if any(term in fact.facility_type for term in industrial_terms):
+                kinds.append("industrial_facility")
+            for kind in kinds:
+                grouped.setdefault((kind, fact.province_code), []).append(fact)
+
+        items = []
+        for (kind, province_code), facts in sorted(grouped.items()):
+            first = facts[0]
+            items.append(
+                PresentationWorldLandmarkResponse(
+                    landmark_id=f"{kind}:{province_code}",
+                    kind=kind,
+                    province_code=province_code,
+                    province_name=first.province_name,
+                    node_count=len(facts),
+                    node_names=sorted({fact.name for fact in facts}),
+                    data_quality="proxy",
+                )
+            )
+        return PresentationWorldLandmarksResponse(items=items)
 
     @application.get("/api/meta/v32/baseline")
     async def v32_baseline_metadata() -> dict[str, object]:

@@ -80,11 +80,13 @@ def settle_quarter(
     if set(automaker_actions) != set(AUTOMAKER_IDS):
         raise ValueError("quarter settlement requires 10 automaker actions")
     if any(
-        item.branch_id != branch_id or item.tick is not tick for item in province_actions.values()
+        item.branch_id != branch_id or item.tick.order > tick.order
+        for item in province_actions.values()
     ):
         raise ValueError("province quarter action branch/tick mismatch")
     if any(
-        item.branch_id != branch_id or item.tick is not tick for item in automaker_actions.values()
+        item.branch_id != branch_id or item.tick.order > tick.order
+        for item in automaker_actions.values()
     ):
         raise ValueError("automaker quarter action branch/tick mismatch")
     if any(

@@ -100,6 +100,8 @@ class CachedLLMProvider:
                         "fallback_reason": None,
                     }
                 )
+            if getattr(value, "run_mode", None) is RunMode.LIVE:
+                return value
             return value.model_copy(
                 update={
                     "run_mode": RunMode.FALLBACK,

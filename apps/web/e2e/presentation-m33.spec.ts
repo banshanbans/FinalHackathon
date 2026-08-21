@@ -87,15 +87,15 @@ async function createCompletedExperiment(request: APIRequestContext, type: Exper
 }
 
 async function expectCanvasFits(page: Page) {
-  await expect(page.getByText("年度已冻结")).toBeVisible();
+  await expect(page.getByText("年度事实已冻结")).toBeVisible();
   await expect(page.getByText("模拟季度与互动顺序，不代表现实响应日期")).toBeVisible();
-  await expect(page.locator(".m34-quarter-bands > span")).toHaveCount(4);
+  await expect(page.locator(".quarter-bands > span")).toHaveCount(4);
   const layout = await page.evaluate(() => ({
     width: window.innerWidth,
     height: window.innerHeight,
     scrollWidth: document.documentElement.scrollWidth,
     scrollHeight: document.documentElement.scrollHeight,
-    timelineBottom: document.querySelector(".m34-timeline")?.getBoundingClientRect().bottom ?? 0,
+    timelineBottom: document.querySelector(".quarter-timeline")?.getBoundingClientRect().bottom ?? 0,
   }));
   expect(layout.scrollWidth).toBeLessThanOrEqual(layout.width);
   expect(layout.scrollHeight).toBeLessThanOrEqual(layout.height);
@@ -123,11 +123,11 @@ for (const experimentType of ["policy_comparison", "policy_stress_test", "event_
 
     await page.goto(`/experiments/${experimentId}/present`);
     await expectCanvasFits(page);
-    await page.getByRole("button", { name: "Q1 wave 0 互动", exact: true }).click();
-    await expect(page.getByRole("heading", { name: "Q1 wave 0 互动", exact: true })).toBeVisible();
-    await page.getByRole("button", { name: "互动", exact: true }).click();
-    await expect(page.getByRole("heading", { name: "互动下钻" })).toBeVisible();
-    await expect(page.locator(".m34-message").first()).toBeVisible();
+    await page.getByRole("button", { name: "Q1 · 首次行动", exact: true }).click();
+    await expect(page.locator(".quarter-track > footer")).toContainText("Q1 · 首次行动");
+    await expect(page.locator(".game-panel")).toContainText("本季度关键问题");
+    await page.locator(".beat-list > button").nth(3).click();
+    await expect(page.locator(".game-action.action-proposal")).toBeVisible();
   });
 }
 

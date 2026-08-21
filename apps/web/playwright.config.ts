@@ -33,7 +33,7 @@ export default defineConfig({
   webServer: [
     {
       command:
-        "POLICYSCOPE_RUN_MODE=fake PYTHONPATH=.:apps/api/src .venv/bin/uvicorn policyscope_api.main:app --app-dir apps/api/src --port 8000",
+        "POLICYSCOPE_RUN_MODE=fake PYTHONPATH=.:apps/api/src .venv/bin/python -m uvicorn policyscope_api.main:app --app-dir apps/api/src --port 8000",
       cwd: "../..",
       url: "http://127.0.0.1:8000/api/health",
       reuseExistingServer: true,

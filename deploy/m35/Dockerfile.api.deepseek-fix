@@ -1,0 +1,17 @@
+FROM policyscope-m35-api:20260813-showcase6
+
+USER root
+WORKDIR /app
+
+COPY simulation/llm/m34_provider.py ./simulation/llm/m34_provider.py
+COPY simulation/envs/quarterly_policy_env.py ./simulation/envs/quarterly_policy_env.py
+COPY simulation/models/m34.py ./simulation/models/m34.py
+COPY simulation/services/m34_orchestrator.py ./simulation/services/m34_orchestrator.py
+
+RUN chown appuser:appuser \
+    /app/simulation/llm/m34_provider.py \
+    /app/simulation/envs/quarterly_policy_env.py \
+    /app/simulation/models/m34.py \
+    /app/simulation/services/m34_orchestrator.py
+
+USER appuser

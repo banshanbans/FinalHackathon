@@ -5,6 +5,23 @@ export type InteractionWave = "wave_0" | "wave_1" | "wave_2";
 export type BranchScope = "both" | "treatment_only";
 export type BranchView = "control" | "treatment" | "delta";
 export type CausalBeatId = "focus" | "observe" | "decide" | "action" | "response" | "settle";
+export type PresentationWorldLandmarkKind = "battery_capability" | "industrial_facility";
+
+export interface PresentationWorldLandmark {
+  schema_version: "presentation-world-landmark-v1";
+  landmark_id: string;
+  kind: PresentationWorldLandmarkKind;
+  province_code: string;
+  province_name: string;
+  node_count: number;
+  node_names: string[];
+  data_quality: "proxy";
+}
+
+export interface PresentationWorldLandmarks {
+  schema_version: "presentation-world-landmarks-v1";
+  items: PresentationWorldLandmark[];
+}
 
 export interface M34EventSelection {
   selectionId: string;
@@ -140,7 +157,31 @@ export interface PresentationActionV4 {
   message_id: string | null;
 }
 
-export interface PresentationSpotlightV4 {
+export interface PresentationMetricChangeV5 {
+  metric_id: "regional_development_gap" | "local_fiscal_pressure";
+  label: string;
+  current_value: number;
+  quarterly_change: number | null;
+}
+
+export interface PresentationProvinceChangeV5 {
+  province_code: string;
+  province_name: string;
+  current_value: number;
+  quarterly_change: number | null;
+}
+
+export interface PresentationSettlementV5 {
+  contributed: boolean;
+  contribution: number;
+  result_summary: string;
+  direct_contribution_label: string;
+  province_changes: PresentationProvinceChangeV5[];
+  national_changes: PresentationMetricChangeV5[];
+  attribution_note: string;
+}
+
+export interface PresentationSpotlightV5 {
   spotlight_id: string;
   branch_id: "control" | "treatment";
   tick: MacroTick;
@@ -158,13 +199,15 @@ export interface PresentationSpotlightV4 {
   reconsideration_conditions: string[];
   action: PresentationActionV4;
   response: PresentationActionV4 | null;
-  settlement: { contributed: boolean; contribution: number; result_summary: string };
+  settlement: PresentationSettlementV5;
   beats: PresentationCausalBeatV4[];
   fallback: boolean;
   evidence_refs: string[];
 }
 
-export interface PresentationGameEdgeV4 {
+export type PresentationSpotlightV4 = PresentationSpotlightV5;
+
+export interface PresentationGameEdgeV5 {
   edge_id: string;
   branch_id: "control" | "treatment";
   source: PresentationSubjectV4;
@@ -175,6 +218,8 @@ export interface PresentationGameEdgeV4 {
   weight: number;
   summary: string;
   session_id: string | null;
+  reveal_order: number;
+  message_order: number;
   evidence_refs: string[];
 }
 
@@ -184,13 +229,13 @@ export interface M34BranchFrame {
   tick: MacroTick | null;
   national_metrics: NationalMetrics;
   province_values: Array<{ province_code: string; value: number | null }>;
-  game_edges: PresentationGameEdgeV4[];
-  spotlights: PresentationSpotlightV4[];
+  game_edges: PresentationGameEdgeV5[];
+  spotlights: PresentationSpotlightV5[];
   fallback_count: number;
 }
 
 export interface M34Frame {
-  schema_version: "presentation-frame-v4";
+  schema_version: "presentation-frame-v5";
   frame_id: string;
   experiment_id: string;
   sequence: number;
@@ -205,9 +250,12 @@ export interface M34Frame {
   branches: Record<"control" | "treatment", M34BranchFrame>;
   divergences: Array<{
     divergence_id: string;
+    divergence_type: "control_only" | "treatment_only" | "state_changed" | "decision_changed";
     participants: PresentationSubjectV4[];
     control_state_label: string;
     treatment_state_label: string;
+    control_decision_summary: string;
+    treatment_decision_summary: string;
     summary: string;
   }>;
   shared_scale: SharedScale;

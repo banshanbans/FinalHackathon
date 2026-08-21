@@ -1,0 +1,16 @@
+ARG BASE_IMAGE=policyscope-m35-api:20260813
+FROM ${BASE_IMAGE}
+
+USER root
+WORKDIR /app
+
+COPY simulation ./simulation
+COPY apps/api ./apps/api
+COPY data ./data
+COPY runtime/m34/exp_m34_35ca2026081a ./runtime/m34/exp_m34_35ca2026081a
+
+RUN mkdir -p /app/runtime/cache/v3_2_m34_luna/decisions \
+    && chown -R appuser:appuser /app/runtime
+
+USER appuser
+ENV PYTHONPATH=/app:/app/apps/api/src

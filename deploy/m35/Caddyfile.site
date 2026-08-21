@@ -1,0 +1,4 @@
+final.socialdog.cn {
+	encode zstd gzip
+	reverse_proxy m35-web:8080
+}

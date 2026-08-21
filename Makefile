@@ -4,7 +4,7 @@ PY := $(VENV)/bin/python
 PIP := $(VENV)/bin/pip
 NPM_CACHE := $(CURDIR)/.cache/npm
 
-.PHONY: setup setup-backend setup-web setup-presentation dev dev-api start-api dev-web dev-presentation test test-sim test-api test-e2e test-e2e-presentation capture-v3 lint validate-data precompute precompute-v32 precompute-v32-luna precompute-m34 precompute-m34-luna verify-cache verify-cache-v32 verify-cache-v32-luna verify-cache-m34 verify-cache-m34-luna demo smoke spike-agentsociety clean
+.PHONY: setup setup-backend setup-web setup-presentation dev dev-api start-api dev-web dev-presentation test test-sim test-api test-e2e test-e2e-presentation capture-v3 lint validate-data precompute precompute-v32 precompute-v32-luna precompute-m34 precompute-m34-luna showcase-m35 verify-cache verify-cache-v32 verify-cache-v32-luna verify-cache-m34 verify-cache-m34-luna demo smoke spike-agentsociety clean
 
 setup: setup-backend setup-web setup-presentation
 
@@ -24,10 +24,10 @@ dev:
 	@echo "Run 'make dev-api' with 'make dev-web' or 'make dev-presentation' in separate terminals."
 
 dev-api:
-	PYTHONPATH="$(CURDIR):$(CURDIR)/apps/api/src" POLICYSCOPE_RUN_MODE=fake $(VENV)/bin/uvicorn policyscope_api.main:app --app-dir apps/api/src --reload --port 8000
+	PYTHONPATH="$(CURDIR):$(CURDIR)/apps/api/src" POLICYSCOPE_RUN_MODE=fake $(PY) -m uvicorn policyscope_api.main:app --app-dir apps/api/src --reload --port 8000
 
 start-api:
-	PYTHONPATH="$(CURDIR):$(CURDIR)/apps/api/src" POLICYSCOPE_RUN_MODE=live $(VENV)/bin/uvicorn policyscope_api.main:app --app-dir apps/api/src --host 0.0.0.0 --port 8000
+	PYTHONPATH="$(CURDIR):$(CURDIR)/apps/api/src" POLICYSCOPE_RUN_MODE=cache POLICYSCOPE_CACHE_MISS_MODE=live $(PY) -m uvicorn policyscope_api.main:app --app-dir apps/api/src --host 0.0.0.0 --port 8000
 
 dev-web:
 	npm --prefix apps/web run dev
@@ -80,6 +80,9 @@ precompute-m34:
 
 precompute-m34-luna:
 	PYTHONPATH="$(CURDIR):$(CURDIR)/apps/api/src" POLICYSCOPE_RUN_MODE=live $(PY) scripts/precompute_m34_demo.py --luna
+
+showcase-m35:
+	PYTHONPATH="$(CURDIR):$(CURDIR)/apps/api/src" $(PY) scripts/build_m35_showcase.py
 
 verify-cache:
 	PYTHONPATH="$(CURDIR):$(CURDIR)/apps/api/src" $(PY) scripts/verify_v31_cache.py

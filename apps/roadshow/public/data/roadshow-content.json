@@ -1,0 +1,67 @@
+{
+  "schema_version": "roadshow-content-v3",
+  "hero": {
+    "brand": "13110",
+    "descriptor": "新能源汽车产业协同推演",
+    "slogan": "让政策影响，被看见。",
+    "cta": "进入年度推演"
+  },
+  "explainer": {
+    "consumer": {
+      "eyebrow": "以旧换新",
+      "product": "高性能笔记本电脑",
+      "subsidy_label": "国家补贴",
+      "subsidy_rate": "20%",
+      "price_label": "补贴后到手价"
+    },
+    "funding": {
+      "question": "一笔补贴，由谁承担？",
+      "central_label": "中央承担",
+      "local_label": "地方承担",
+      "pool_label": "消费补贴资金",
+      "unit_label": "份"
+    },
+    "presets": [
+      { "region": "西部", "central_share": 95, "local_share": 5 },
+      { "region": "中部", "central_share": 90, "local_share": 10 },
+      { "region": "东部", "central_share": 85, "local_share": 15 }
+    ],
+    "ignition_question": "如果改变承担比例？",
+    "impacts": ["财政空间", "地方政策", "企业行动", "产业布局"]
+  },
+  "identity": {
+    "items": [
+      { "value": 1, "label": "中央政策研判" },
+      { "value": 31, "label": "省份模拟主体" },
+      { "value": 10, "label": "车企模拟主体" }
+    ],
+    "handoff_label": "全国政策因果舞台",
+    "decision_question": "当前主体为何行动，对方如何回应？"
+  },
+  "chapters": [
+    {
+      "id": "scene-00-orbital",
+      "index": 1,
+      "label": "产品出现",
+      "title": "13110"
+    },
+    {
+      "id": "scene-01-china-focus",
+      "index": 2,
+      "label": "聚焦中国",
+      "title": "镜头从全球视角进入中国"
+    },
+    {
+      "id": "scene-02-identity-reveal",
+      "index": 3,
+      "label": "名称解释",
+      "title": "1个中央研判 · 31个省份 · 10家车企"
+    },
+    {
+      "id": "scene-03-causal-handoff",
+      "index": 4,
+      "label": "因果舞台",
+      "title": "进入年度推演"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="339.6141 672.0004 46.4572 65.2880" role="img" aria-label="南海断续线标准地图标注" data-map-source="MNR-standard-map-GS2016-1609" data-derivation="principal-axes-from-official-discontinuous-line-symbols" width="46.4572" height="65.2880">
+  <title>南海断续线</title>
+  <g data-layer="south-china-sea-discontinuous-line" fill="none" stroke="#bceeed" stroke-linecap="round" stroke-width=".42">
+    <line x1="347.3129" y1="690.2953" x2="349.0125" y2="693.3898" data-source-path-indexes="20,21,22,23" fill="none" stroke="#bceeed" stroke-linecap="round" stroke-width=".42" />
+    <line x1="349.6371" y1="706.5219" x2="350.6322" y2="703.1355" data-source-path-indexes="24,25,26,27" fill="none" stroke="#bceeed" stroke-linecap="round" stroke-width=".42" />
+    <line x1="343.5830" y1="722.7675" x2="343.5927" y2="719.2181" data-source-path-indexes="28,29,30,31" fill="none" stroke="#bceeed" stroke-linecap="round" stroke-width=".42" />
+    <line x1="378.4419" y1="690.5872" x2="378.4426" y2="693.9329" data-source-path-indexes="36,37,38,39" fill="none" stroke="#bceeed" stroke-linecap="round" stroke-width=".42" />
+    <line x1="383.6467" y1="675.1481" x2="385.6213" y2="672.4504" data-source-path-indexes="40,41,42,43" fill="none" stroke="#bceeed" stroke-linecap="round" stroke-width=".42" />
+    <line x1="340.0641" y1="725.4061" x2="343.2189" y2="725.1310" data-source-path-indexes="44,45,46,47" fill="none" stroke="#bceeed" stroke-linecap="round" stroke-width=".42" />
+    <line x1="347.6596" y1="731.8365" x2="347.7252" y2="734.9240" data-source-path-indexes="48,49,50,51" fill="none" stroke="#bceeed" stroke-linecap="round" stroke-width=".42" />
+    <line x1="378.1763" y1="728.3816" x2="381.4359" y2="728.7346" data-source-path-indexes="52,53,54,55" fill="none" stroke="#bceeed" stroke-linecap="round" stroke-width=".42" />
+    <line x1="367.1053" y1="731.8148" x2="368.5052" y2="728.4093" data-source-path-indexes="102,103,104" fill="none" stroke="#bceeed" stroke-linecap="round" stroke-width=".42" />
+    <line x1="364.9262" y1="736.8384" x2="365.7324" y2="733.5772" data-source-path-indexes="106,107,108" fill="none" stroke="#bceeed" stroke-linecap="round" stroke-width=".42" />
+    <line x1="379.1722" y1="683.9252" x2="380.5512" y2="680.8315" data-source-path-indexes="129,130,131,132" fill="none" stroke="#bceeed" stroke-linecap="round" stroke-width=".42" />
+    <line x1="376.9999" y1="707.2785" x2="378.3325" y2="704.1433" data-source-path-indexes="133,134,135,136" fill="none" stroke="#bceeed" stroke-linecap="round" stroke-width=".42" />
+  </g>
+</svg>

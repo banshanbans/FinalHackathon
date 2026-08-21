@@ -176,6 +176,31 @@ as a neutral `territory-context` layer. They remain visible and labelled but
 never inherit the 31-province metric scale, missing-data texture, selection,
 interaction glow or simulation semantics.
 
+Every national map also displays the South China Sea islands inset cropped
+directly from the same frozen Ministry of Natural Resources standard-map SVG.
+It is a non-interactive national-map context layer: it never enters the
+31-province scale, events, agents, relationship overlays or comparisons, and
+must not be manually redrawn. The standard-map content is fixed to the lower
+left of the map viewport with a square-corner dashed frame; it does not move
+with top/side camera, zoom, pan, branch or A/B layouts, and it remains separate
+from the lower-right legends. It is map cartography rather than an annotation
+card: it has no card background, shadow or external caption plate. The
+“南海诸岛” label, islands and discontinuous-line geometry all continue to come
+only from the frozen standard-map source.
+
+The China map also carries a high-contrast discontinuous-line overlay
+mechanically extracted from those same frozen standard-map ink paths. Following
+the approved visual reference, it extends south from Taiwan and Hainan at a
+readable proportion. The renderer groups the official filled dash glyphs and
+mechanically derives one slender round-ended principal-axis segment per symbol;
+it does not render the source glyphs as thick I-shaped fills. The display envelope
+is calibrated to the east of Taiwan, the deep South China Sea and the southwest
+of Hainan so the segments form the expected U-shaped cartographic relationship
+without adding hand-authored points. This line is national-map cartography, not a legend or a
+screen-fixed overlay. It is georeferenced into the map and receives the exact
+same pan, zoom, pitch, bearing, branch and A/B camera transform as the China
+geometry, preserving a rigid spatial relationship with Taiwan and Hainan.
+
 Battery nodes use neutral supply-chain icons. Automaker activity uses text labels, initials or neutral markers. Simulated plant activity must include a visible “模拟” state and must never be styled as a confirmed factory announcement.
 
 ## Elevation & Shapes
@@ -274,9 +299,11 @@ The Presentation Hall is a separate full-screen surface, not a dark theme applie
 
 ## M35 13110 Causal Stage Addendum
 
+- The public launch dialog keeps `95 / 90 / 85` as the reference Control and initializes Treatment to the fully warmed production-cache preset `96 / 93 / 82`. This is an operational rehearsal preset, never an optimum or recommendation claim.
 - The public product name is `13110`. PolicyScope remains only in code packages and historical version provenance.
 - The selected “Causal Stage” visual is the implementation source of truth: a compact top HUD, six-step causal spine, subdued national map, branch-isolated game panel, and one-year Q1–Q4 timeline.
 - Story is the default layer. Explore and Evidence are progressive disclosures rather than competing dashboard columns.
 - Wave and event frames reveal relation paths only when the matching causal beat becomes active; a replayed frame never reveals its own future quarter settlement.
 - Annual and quarterly result frames use the same absolute color domain for both branches. Difference mode uses a fixed symmetric domain and never displays a single-branch Spotlight.
 - All visible subjects, actions, responses and states use Chinese business labels. Raw IDs, schema names and snake_case stay out of the main stage DOM.
+- The map stage exposes Auto Camera, National Top View and Causal Side View. Auto Camera tilts only for Action and Response beats, then returns to top view for settlement and comparison. Side view is a narrative camera over the same authoritative geometry, never a separate data layer or simulated state.

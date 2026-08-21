@@ -13,14 +13,16 @@ from simulation.models.m34 import (
     MessageKind,
     PresentationActionV4,
     PresentationBranchProvinceValueV4,
-    PresentationBranchViewV4,
+    PresentationBranchViewV5,
     PresentationCausalBeatV4,
-    PresentationDivergenceV4,
-    PresentationFrameV4,
-    PresentationGameEdgeV4,
-    PresentationSettlementV4,
+    PresentationDivergenceV5,
+    PresentationFrameV5,
+    PresentationGameEdgeV5,
+    PresentationMetricChangeV5,
+    PresentationProvinceChangeV5,
+    PresentationSettlementV5,
     PresentationSharedScaleV4,
-    PresentationSpotlightV4,
+    PresentationSpotlightV5,
     PresentationSubjectV4,
     PresentationTimelineNodeV3,
     PresentationTimelineV4,
@@ -265,7 +267,7 @@ class M34PresentationProjection:
             source_world_hash=canonical_hash(self.world),
         )
 
-    def get_frame(self, frame_id: str) -> PresentationFrameV4:
+    def get_frame(self, frame_id: str) -> PresentationFrameV5:
         node = next((item for item in self._nodes() if item.node_id == frame_id), None)
         if node is None:
             raise KeyError(f"presentation frame not found: {frame_id}")
@@ -425,6 +427,92 @@ class M34PresentationProjection:
         return [item.action_if_met for item in decision.reconsideration_conditions[:4]]
 
     @staticmethod
+    def _previous_checkpoint(
+        branch: BranchRuntimeStateV9, tick: MacroTick
+    ) -> TickCheckpoint | None:
+        previous = [item for item in MacroTick if item.order < tick.order]
+        return branch.checkpoints.get(previous[-1]) if previous else None
+
+    def _settlement_view(
+        self,
+        branch: BranchRuntimeStateV9,
+        node: PresentationTimelineNodeV3,
+        *,
+        participant_ids: list[str],
+        contributed: bool,
+        contribution: float,
+        result_summary: str,
+    ) -> PresentationSettlementV5:
+        province_changes: list[PresentationProvinceChangeV5] = []
+        national_changes: list[PresentationMetricChangeV5] = []
+        if node.kind in {"settlement", "comparison"} and node.tick is not None:
+            checkpoint = branch.checkpoints.get(node.tick)
+            previous = self._previous_checkpoint(branch, node.tick)
+            if checkpoint is not None:
+                province_catalog = policy_region_catalog()
+                for province_code in dict.fromkeys(participant_ids):
+                    if province_code not in province_catalog:
+                        continue
+                    current_state = checkpoint.settlement.province_states[province_code]
+                    previous_state = (
+                        previous.settlement.province_states[province_code]
+                        if previous is not None
+                        else None
+                    )
+                    province_changes.append(
+                        PresentationProvinceChangeV5(
+                            province_code=province_code,
+                            province_name=province_catalog[province_code].short_name,
+                            current_value=round(current_state.development_index, 4),
+                            quarterly_change=(
+                                round(
+                                    current_state.development_index
+                                    - previous_state.development_index,
+                                    4,
+                                )
+                                if previous_state is not None
+                                else None
+                            ),
+                        )
+                    )
+                current_metrics = checkpoint.settlement.national_metrics
+                previous_metrics = (
+                    previous.settlement.national_metrics if previous is not None else None
+                )
+                for metric_id, label in (
+                    ("regional_development_gap", "区域发展差距"),
+                    ("local_fiscal_pressure", "地方财政压力"),
+                ):
+                    current_value = getattr(current_metrics, metric_id)
+                    previous_value = (
+                        getattr(previous_metrics, metric_id)
+                        if previous_metrics is not None
+                        else None
+                    )
+                    national_changes.append(
+                        PresentationMetricChangeV5(
+                            metric_id=metric_id,
+                            label=label,
+                            current_value=round(current_value, 4),
+                            quarterly_change=(
+                                round(current_value - previous_value, 4)
+                                if previous_value is not None
+                                else None
+                            ),
+                        )
+                    )
+        return PresentationSettlementV5(
+            contributed=contributed,
+            contribution=round(contribution, 6) if contributed else 0,
+            result_summary=result_summary,
+            direct_contribution_label=(
+                f"环境机制贡献 +{contribution:.3f}" if contributed else "未进入环境贡献"
+            ),
+            province_changes=province_changes,
+            national_changes=national_changes,
+        )
+
+    @staticmethod
     def _edge_relation(message: InteractionMessage) -> tuple[str, str, str]:
         state = message.transaction_state or TransactionState.PROPOSED
         if (
@@ -451,7 +539,7 @@ class M34PresentationProjection:
         session: InteractionSession,
         messages: list[InteractionMessage],
         node: PresentationTimelineNodeV3,
-    ) -> PresentationSpotlightV4:
+    ) -> PresentationSpotlightV5:
         action_message = messages[0]
         actor = self._subject(action_message.sender_id)
         counterpart_id = action_message.recipient_ids[0]
@@ -500,9 +588,9 @@ class M34PresentationProjection:
             else messages[-1].transaction_state or TransactionState.PROPOSED
         )
         result_summary = (
-            "合法达成的互动将在季末进入确定性环境贡献。"
+            f"本次互动以 {session.settled_contribution:.3f} 的模拟贡献进入季度环境。"
             if contributed
-            else f"当前结果为“{STATE_LABELS[visible_state]}”，尚未产生环境贡献。"
+            else f"当前结果为“{STATE_LABELS[visible_state]}”，未进入环境贡献。"
         )
         observed = (decision.noticed_facts if decision else [])[:6]
         if not observed:
@@ -578,7 +666,7 @@ class M34PresentationProjection:
                 ]
             )
         )
-        return PresentationSpotlightV4(
+        return PresentationSpotlightV5(
             spotlight_id=f"spotlight:{role}:{session.session_id}:{node.node_id}",
             branch_id=role,
             tick=session.tick,
@@ -596,9 +684,12 @@ class M34PresentationProjection:
             reconsideration_conditions=self._condition_labels(decision),
             action=action,
             response=response,
-            settlement=PresentationSettlementV4(
+            settlement=self._settlement_view(
+                branch,
+                node,
+                participant_ids=session.participant_ids,
                 contributed=contributed,
-                contribution=session.settled_contribution if contributed else 0,
+                contribution=session.settled_contribution,
                 result_summary=result_summary,
             ),
             beats=beats,
@@ -614,7 +705,7 @@ class M34PresentationProjection:
         branch: BranchRuntimeStateV9,
         role: str,
         node: PresentationTimelineNodeV3,
-    ) -> list[PresentationGameEdgeV4]:
+    ) -> list[PresentationGameEdgeV5]:
         if node.kind != "event" or not node.source_event_ids or node.tick is None:
             return []
         event_id = node.source_event_ids[0]
@@ -628,7 +719,7 @@ class M34PresentationProjection:
         visible_inboxes.sort(key=lambda item: (item.agent_kind.value, item.agent_id))
         source = self._subject(f"event:{event_id}")
         return [
-            PresentationGameEdgeV4(
+            PresentationGameEdgeV5(
                 edge_id=f"event-edge:{role}:{event_id}:{inbox.agent_id}",
                 branch_id=role,
                 source=source,
@@ -638,9 +729,11 @@ class M34PresentationProjection:
                 line_style="pulse",
                 weight=0.7,
                 summary=f"{source.display_name}进入{self._subject(inbox.agent_id).display_name}的授权上下文。",
+                session_id=f"event:{event_id}:{inbox.agent_id}",
+                reveal_order=index,
                 evidence_refs=[f"event:{event_id}", f"inbox:{inbox.inbox_id}"],
             )
-            for inbox in visible_inboxes[:3]
+            for index, inbox in enumerate(visible_inboxes[:3])
         ]
 
     def _branch_story(
@@ -648,9 +741,13 @@ class M34PresentationProjection:
         branch: BranchRuntimeStateV9,
         role: str,
         node: PresentationTimelineNodeV3,
-    ) -> tuple[list[PresentationGameEdgeV4], list[PresentationSpotlightV4]]:
+    ) -> tuple[
+        list[PresentationGameEdgeV5],
+        list[PresentationSpotlightV5],
+        list[PresentationSpotlightV5],
+    ]:
         if node.tick is None:
-            return [], []
+            return [], [], []
         candidates: list[tuple[InteractionSession, list[InteractionMessage]]] = []
         for session in branch.sessions:
             if session.tick is not node.tick:
@@ -680,123 +777,127 @@ class M34PresentationProjection:
                 item[0].session_id,
             )
         )
-        spotlights = [
+        all_spotlights = [
             self._spotlight(branch, role, session, messages, node)
-            for session, messages in candidates[:3]
+            for session, messages in candidates
         ]
-        edges: list[PresentationGameEdgeV4] = self._event_edges(branch, role, node)
+        spotlights = all_spotlights[:3]
+        edges: list[PresentationGameEdgeV5] = self._event_edges(branch, role, node)
         if node.kind == "event" and not edges:
-            return [], []
+            return [], [], []
         if node.kind == "event" and edges:
-            event_edge = edges[0]
-            event_decision = self._decision_for(
-                branch,
-                subject_id=event_edge.target.subject_id,
-                tick=node.tick,
-                maximum_wave=node.wave,
-                preferred_wave=node.wave,
-            )
-            response_summary = self._decision_summary(event_decision)
-            event_action = PresentationActionV4(
-                kind="event_release",
-                label="事件开始可见",
-                summary=event_edge.summary,
-                state="visible",
-                state_label="已进入授权上下文",
-            )
-            event_response = (
-                PresentationActionV4(
-                    kind="event_response",
-                    label="主体重新评估",
-                    summary=response_summary,
-                    state="reviewed",
-                    state_label="已重新评估",
-                )
-                if event_decision
-                else None
-            )
-            spotlights = [
-                PresentationSpotlightV4(
-                    spotlight_id=f"spotlight:{role}:event:{node.source_event_ids[0]}",
-                    branch_id=role,
+            spotlights = []
+            for event_edge in edges:
+                event_decision = self._decision_for(
+                    branch,
+                    subject_id=event_edge.target.subject_id,
                     tick=node.tick,
-                    wave=node.wave or InteractionWave.WAVE_0,
-                    session_id=f"event:{node.source_event_ids[0]}",
-                    actor=event_edge.source,
-                    counterpart=event_edge.target,
-                    objective="检验冻结情景如何改变主体的授权上下文",
-                    strongest_constraint="事件只通过已冻结机制通道传播，不直接写入结果",
-                    observed_facts=[event_edge.summary],
-                    engagement_label="触发重新评估" if event_decision else "等待主体评估",
-                    decision_summary=response_summary,
-                    alternatives=(event_decision.alternatives if event_decision else [])[:4],
-                    opportunity_costs=(event_decision.opportunity_costs if event_decision else [])[
-                        :4
-                    ],
-                    reconsideration_conditions=self._condition_labels(event_decision),
-                    action=event_action,
-                    response=event_response,
-                    settlement=PresentationSettlementV4(
-                        contributed=False,
-                        contribution=0,
-                        result_summary="事件影响将在本季度结算后进入权威世界状态。",
-                    ),
-                    beats=[
-                        PresentationCausalBeatV4(
-                            beat="focus",
-                            label="关注",
-                            headline=event_edge.source.display_name,
-                            detail="冻结情景到达发布节点。",
-                            status="completed",
-                        ),
-                        PresentationCausalBeatV4(
-                            beat="observe",
-                            label="观察",
-                            headline=f"{event_edge.target.display_name}获得事件上下文",
-                            detail=event_edge.summary,
-                            status="completed",
-                        ),
-                        PresentationCausalBeatV4(
-                            beat="decide",
-                            label="决策",
-                            headline="重新评估" if event_decision else "等待评估",
-                            detail=response_summary,
-                            status="completed" if event_decision else "active",
-                        ),
-                        PresentationCausalBeatV4(
-                            beat="action",
-                            label="行动",
-                            headline="主体行动待冻结",
-                            detail=response_summary,
-                            status="completed" if event_decision else "pending",
-                        ),
-                        PresentationCausalBeatV4(
-                            beat="response",
-                            label="回应",
-                            headline="市场回应待发生",
-                            detail="后续互动只读取授权可见信息。",
-                            status="pending",
-                        ),
-                        PresentationCausalBeatV4(
-                            beat="settle",
-                            label="结算",
-                            headline="季度结算待完成",
-                            detail="环境将在季末统一计算事件贡献。",
-                            status="pending",
-                        ),
-                    ],
-                    fallback=bool(event_decision and event_decision.fallback_used),
-                    evidence_refs=event_edge.evidence_refs,
+                    maximum_wave=node.wave,
+                    preferred_wave=node.wave,
                 )
-            ]
-            return edges, spotlights
-        for session, messages in candidates[:3]:
-            for message in messages:
+                response_summary = self._decision_summary(event_decision)
+                event_action = PresentationActionV4(
+                    kind="event_release",
+                    label="事件开始可见",
+                    summary=event_edge.summary,
+                    state="visible",
+                    state_label="已进入授权上下文",
+                )
+                event_response = (
+                    PresentationActionV4(
+                        kind="event_response",
+                        label="主体重新评估",
+                        summary=response_summary,
+                        state="reviewed",
+                        state_label="已重新评估",
+                    )
+                    if event_decision
+                    else None
+                )
+                spotlights.append(
+                    PresentationSpotlightV5(
+                        spotlight_id=f"spotlight:{role}:{event_edge.session_id}",
+                        branch_id=role,
+                        tick=node.tick,
+                        wave=node.wave or InteractionWave.WAVE_0,
+                        session_id=event_edge.session_id or f"event:{node.source_event_ids[0]}",
+                        actor=event_edge.source,
+                        counterpart=event_edge.target,
+                        objective="检验冻结情景如何改变主体的授权上下文",
+                        strongest_constraint="事件只通过已冻结机制通道传播，不直接写入结果",
+                        observed_facts=[event_edge.summary],
+                        engagement_label="触发重新评估" if event_decision else "等待主体评估",
+                        decision_summary=response_summary,
+                        alternatives=(event_decision.alternatives if event_decision else [])[:4],
+                        opportunity_costs=(
+                            event_decision.opportunity_costs if event_decision else []
+                        )[:4],
+                        reconsideration_conditions=self._condition_labels(event_decision),
+                        action=event_action,
+                        response=event_response,
+                        settlement=PresentationSettlementV5(
+                            contributed=False,
+                            contribution=0,
+                            direct_contribution_label="未进入环境贡献",
+                            result_summary="事件影响将在本季度结算后进入权威世界状态。",
+                        ),
+                        beats=[
+                            PresentationCausalBeatV4(
+                                beat="focus",
+                                label="关注",
+                                headline=event_edge.source.display_name,
+                                detail="冻结情景到达发布节点。",
+                                status="completed",
+                            ),
+                            PresentationCausalBeatV4(
+                                beat="observe",
+                                label="观察",
+                                headline=f"{event_edge.target.display_name}获得事件上下文",
+                                detail=event_edge.summary,
+                                status="completed",
+                            ),
+                            PresentationCausalBeatV4(
+                                beat="decide",
+                                label="决策",
+                                headline="重新评估" if event_decision else "等待评估",
+                                detail=response_summary,
+                                status="completed" if event_decision else "active",
+                            ),
+                            PresentationCausalBeatV4(
+                                beat="action",
+                                label="行动",
+                                headline="主体行动待冻结",
+                                detail=response_summary,
+                                status="completed" if event_decision else "pending",
+                            ),
+                            PresentationCausalBeatV4(
+                                beat="response",
+                                label="回应",
+                                headline="市场回应待发生",
+                                detail="后续互动只读取授权可见信息。",
+                                status="pending",
+                            ),
+                            PresentationCausalBeatV4(
+                                beat="settle",
+                                label="结算",
+                                headline="季度结算待完成",
+                                detail="环境将在季末统一计算事件贡献。",
+                                status="pending",
+                            ),
+                        ],
+                        fallback=bool(event_decision and event_decision.fallback_used),
+                        evidence_refs=event_edge.evidence_refs,
+                    )
+                )
+            all_spotlights = spotlights
+            return edges, spotlights, spotlights
+        for reveal_order, (session, messages) in enumerate(candidates[:3]):
+            for message_order, message in enumerate(messages):
                 if not message.recipient_ids:
                     continue
                 relation, label, line_style = self._edge_relation(message)
                 edges.append(
-                    PresentationGameEdgeV4(
+                    PresentationGameEdgeV5(
                         edge_id=f"edge:{role}:{message.message_id}",
                         branch_id=role,
                         source=self._subject(message.sender_id),
@@ -807,52 +908,90 @@ class M34PresentationProjection:
                         weight=min(1.0, 0.35 + message.resource_amount * 4),
                         summary=message.public_summary,
                         session_id=session.session_id,
+                        reveal_order=reveal_order,
+                        message_order=message_order,
                         evidence_refs=message.evidence_refs,
                     )
                 )
-        return edges, spotlights
+        return edges, spotlights, all_spotlights
 
     @staticmethod
     def _divergences(
-        branches: dict[str, PresentationBranchViewV4],
-    ) -> list[PresentationDivergenceV4]:
+        branch_spotlights: dict[str, list[PresentationSpotlightV5]],
+    ) -> list[PresentationDivergenceV5]:
         control = {
             tuple(sorted((item.actor.subject_ref, item.counterpart.subject_ref))): item
-            for item in branches["control"].spotlights
+            for item in branch_spotlights["control"]
         }
         treatment = {
             tuple(sorted((item.actor.subject_ref, item.counterpart.subject_ref))): item
-            for item in branches["treatment"].spotlights
+            for item in branch_spotlights["treatment"]
         }
-        results: list[PresentationDivergenceV4] = []
-        for participant_key in sorted(set(control) & set(treatment)):
-            left = control[participant_key]
-            right = treatment[participant_key]
-            left_state = left.response.state_label if left.response else left.action.state_label
-            right_state = right.response.state_label if right.response else right.action.state_label
-            if left_state == right_state and left.decision_summary == right.decision_summary:
+        results: list[PresentationDivergenceV5] = []
+        for participant_key in sorted(set(control) | set(treatment)):
+            left = control.get(participant_key)
+            right = treatment.get(participant_key)
+            left_state = (
+                left.response.state_label
+                if left and left.response
+                else left.action.state_label
+                if left
+                else "未发生"
+            )
+            right_state = (
+                right.response.state_label
+                if right and right.response
+                else right.action.state_label
+                if right
+                else "未发生"
+            )
+            left_decision = left.decision_summary if left else "未发生"
+            right_decision = right.decision_summary if right else "未发生"
+            if left is None:
+                divergence_type = "treatment_only"
+                summary = "该互动仅在干预方案中发生。"
+            elif right is None:
+                divergence_type = "control_only"
+                summary = "该互动仅在原始方案中发生。"
+            elif left_state != right_state:
+                divergence_type = "state_changed"
+                summary = f"原始方案为“{left_state}”，干预方案为“{right_state}”。"
+            elif left_decision != right_decision:
+                divergence_type = "decision_changed"
+                summary = "两套方案的交易状态相同，但主体决策发生变化。"
+            else:
                 continue
             results.append(
-                PresentationDivergenceV4(
+                PresentationDivergenceV5(
                     divergence_id=f"divergence:{':'.join(participant_key)}",
-                    participants=[left.actor, left.counterpart],
+                    divergence_type=divergence_type,
+                    participants=[
+                        (left or right).actor,
+                        (left or right).counterpart,
+                    ],
                     control_state_label=left_state,
                     treatment_state_label=right_state,
-                    summary=f"原始方案为“{left_state}”，干预方案为“{right_state}”。",
+                    control_decision_summary=left_decision,
+                    treatment_decision_summary=right_decision,
+                    summary=summary,
                 )
             )
         return results[:12]
 
-    def _frame(self, node: PresentationTimelineNodeV3) -> PresentationFrameV4:
-        branches: dict[str, PresentationBranchViewV4] = {}
+    def _frame(self, node: PresentationTimelineNodeV3) -> PresentationFrameV5:
+        branches: dict[str, PresentationBranchViewV5] = {}
+        branch_spotlights: dict[str, list[PresentationSpotlightV5]] = {}
         checkpoints = {}
         for role in ("control", "treatment"):
             branch = self.world.branches.get(role)
             checkpoint = self._checkpoint_for_node(branch, node) if branch else None
             checkpoints[role] = checkpoint
             province_values = self._province_values(checkpoints, role)
-            edges, spotlights = self._branch_story(branch, role, node) if branch else ([], [])
-            branches[role] = PresentationBranchViewV4(
+            edges, spotlights, all_spotlights = (
+                self._branch_story(branch, role, node) if branch else ([], [], [])
+            )
+            branch_spotlights[role] = all_spotlights
+            branches[role] = PresentationBranchViewV5(
                 branch_id=role,
                 label="原始方案" if role == "control" else "干预方案",
                 tick=checkpoint.tick if checkpoint else None,
@@ -864,7 +1003,7 @@ class M34PresentationProjection:
                 spotlights=spotlights[:3],
                 fallback_count=sum(item.fallback for item in spotlights),
             )
-        divergences = self._divergences(branches)
+        divergences = self._divergences(branch_spotlights)
         summary = {
             "policy": "中央政策解读、实验设计与同源基线已冻结。",
             "event": "外生事件按冻结季度与逻辑 Wave 批次发布。",
@@ -901,4 +1040,4 @@ class M34PresentationProjection:
             "event_plan_ids": node.source_event_ids,
             "evidence_refs": evidence,
         }
-        return PresentationFrameV4(**payload, source_hash=canonical_hash(payload))
+        return PresentationFrameV5(**payload, source_hash=canonical_hash(payload))

@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "typecheck": "tsc -b --pretty false"
+    "typecheck": "tsc -b --pretty false",
+    "test:geometry": "node --experimental-strip-types scripts/test-geometry.mjs"
   },
   "dependencies": {
     "@deck.gl/core": "9.3.10",

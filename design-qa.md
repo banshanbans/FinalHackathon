@@ -1,5 +1,133 @@
 # PolicyScope Design QA
 
+## 13110 M35.8 因果侧视镜头 Design QA
+
+### 比较基线
+
+- Source visual truth：`/Users/carrey/Desktop/决赛/outputs/m35-presentation-design/causal-stage-reference.png`，1672×941 px；该图冻结主舞台结构、信息层级和视觉令牌，侧视镜头是用户批准的增量方向。
+- WebGL implementation：`/Users/carrey/Desktop/决赛/outputs/m35-presentation-design/implementation-side-view-webgl-1920x1080-final.png`，1912×1080 浏览器像素，1920×1080 CSS 视口，1× 密度。
+- SVG compatibility implementation：`/Users/carrey/Desktop/决赛/outputs/m35-presentation-design/implementation-side-view-svg-1920x1080.png`，1912×1080 浏览器像素，同一 Action 状态。
+- Full-view comparison：`/Users/carrey/Desktop/决赛/outputs/m35-presentation-design/side-view-source-vs-implementation-1920.png`；源图归一为 1912×1080 后与 WebGL 实现并排。
+- Focused evidence：中央地图、右上“视角”入口、侧视状态、广东→浙江关系和右侧行动卡在 full-view 中均可读，无需另裁局部图。
+- State：Q1 首次行动，干预方案，六段链“行动”，自动镜头解析为因果侧视；浏览器为 Codex in-app Browser。
+
+### Findings
+
+- P0/P1/P2：无未关闭问题。
+- 可接受差异：侧视为增量叙事镜头，因此地图透视与参考图的俯视地图有意不同；顶栏、因果链、博弈台、时间轴、字体、色彩和内容密度仍沿用参考视觉。
+- P3：深色低饱和底图在投影环境中依赖大屏亮度；当前 47° 俯仰已在保留侧视纵深的同时维持省界与关系线可辨性。
+
+### 五项视觉表面
+
+- Fonts / typography：Inter Variable + Noto Sans SC Variable 未变化；视角菜单使用既有 7–12 px 辅助层级，中文标签没有机器码或英文工程名泄漏。
+- Spacing / layout rhythm：视角入口加入原探索工具坞，不新增常驻面板；1920×1080 与 1280×720 均满足 `scrollWidth <= innerWidth`、`scrollHeight <= innerHeight`，1280 菜单边界为 x=640–884、y=88–345，无画布裁切。
+- Colors / tokens：菜单与状态沿用近黑海军蓝、Evidence teal 和现有玻璃边界；侧视不引入新的业务颜色，不改变提议/反报价/达成/拒绝语义。
+- Image / asset fidelity：没有生成、改写或替换地图资产。WebGL 使用同一冻结 GeoJSON 的真实相机；SVG 使用同一省域路径的兼容透视；南海诸岛附图继续独立显示且不参与互动。
+- Copy / content：入口固定为“自动镜头 / 全国俯视 / 因果侧视”；状态显示当前因果节拍；锁定理由明确说明差值、结算与年度比较使用全国俯视。
+
+### Interaction / reliability
+
+- 自动模式断言：决策=俯视、行动=侧视、回应=侧视、结算=俯视。
+- 手动模式断言：行动帧选择全国俯视后保持俯视；重新选择自动镜头后按节拍恢复。
+- 真值保护断言：差值视图、季度 Settlement Frame 和年度 Comparison Frame 强制返回俯视。
+- WebGL 与 SVG 的 `data-view-mode` 都为 `side`；1920×1080 和 1280×720 无溢出，浏览器 console error/warning 为 0。
+- TypeScript typecheck、31 省几何/视角规则测试与 Vite production build 通过。
+
+### Comparison history
+
+1. Pass 1：WebGL 使用 58° 俯仰且额外降低亮度，北部边界压缩、地图过暗；改为 47°、轻微缩小镜头并移除重复亮度滤镜。
+2. Pass 2：手动侧视停在非行动节拍时状态标签仍显示“行动”；改为读取当前六段链中文标签。
+3. Pass 3：1920 WebGL/SVG 和 1280 SVG 复测，无布局、交互或可访问性 P0/P1/P2。
+
+### Implementation checklist
+
+- [x] 自动/俯视/侧视三态与锁定规则。
+- [x] WebGL 真实俯仰相机和 SVG 兼容透视。
+- [x] 行动/回应自动切换，结算/差值/比较恢复俯视。
+- [x] 1280/1920 画布、控制台、构建与规则测试。
+
+final result: passed
+
+---
+
+## M35.13 中国地图地理锚定南海断续线 Design QA
+
+> QA date: 2026-08-14
+> Scope: `/experiments/:id/present` 中国地图本体、地理锚定南海断续线与左下角固定南海诸岛附图。
+
+### Evidence and normalization
+
+- Source visual truth: `/Users/carrey/Desktop/WechatIMG79.jpg`；只使用其中台湾、海南与向南延伸断续线的版图相对关系，不复制微信界面、配色或文案。
+- Focused comparison: `outputs/m35-presentation-design/m3513-source-vs-map-georeferenced.png`；参考图与实现地图同画布并排检查。
+- National top view: `outputs/m35-presentation-design/m3513-map-georeferenced-before-1920x1080.png`。
+- Panned map: `outputs/m35-presentation-design/m3513-map-georeferenced-pan-1920x1080.png`；中国版图与断续线接受同一次拖动，左下角附图保持画布固定。
+- Zoomed map: `outputs/m35-presentation-design/m3513-map-georeferenced-zoom-1920x1080.png`；断续线与海南、台湾按同一比例缩放，无相对漂移。
+- Side view: `outputs/m35-presentation-design/m3513-map-georeferenced-side-1920x1080.png`；断续线与地图共同接受 pitch/bearing，相对地理关系保持不变。
+- Responsive view: `outputs/m35-presentation-design/m3513-map-georeferenced-1280x720.png`。
+- Browser state: 年度比较、Q4 首次行动、干预方案；Codex in-app Browser，WebGL 正式渲染。
+- Production proof: `policyscope-m35-web:20260814-south-sea-georef6` 健康；公网 JS 与本地生产构建 SHA-256 同为 `abc1668c43426547d352028f616e6c70293436b5a00b25242e5d1fec6678def2`，公网 GeoJSON 返回 HTTP 200。
+
+### Required fidelity surfaces
+
+- Fonts and typography: 本轮不改变工作台 Inter + Noto Sans SC、字号、行高或文案层级；参考图中的省名文字不是本轮可复制 UI 资产。
+- Spacing and layout rhythm: 主地图断续线从台湾、海南下方向南延伸，属于地图地理内容；左下角标准附图仍固定在画布坐标，并与右下角图例分区。
+- Colors and tokens: 保留产品深色地图和青色制图语义；断续线使用高对比青白色而非参考图白底灰线，以保证深色舞台可见性。
+- Image quality and asset fidelity: 断续线不是手绘、CSS 图案或屏幕贴片，而是从冻结自然资源部 GS(2016)1609 标准地图黑色制图路径机械分离为 46 个 GeoJSON 要素；WebGL 与 SVG 兼容图共用同一来源。
+- Copy and content: 没有新增解释性文案；31 省模拟范围和港澳台/南海诸岛版图边界保持原产品口径。
+
+### Comparison history
+
+1. 旧实现把主地图断续线做成独立 CSS 绝对定位层，拖动中国地图时其屏幕坐标不变，导致与海南、台湾的相对位置漂移，记为 P1。
+2. 移除主地图 CSS 覆盖层，将同一官方路径机械转换为地理坐标 GeoJSON，并加入 MapLibre 地图源；SVG 兼容图把同源矢量放入 `fallback-geography` 相机变换组。
+3. 年度结算/比较镜头改为完整全国视角，避免聚焦省份错误裁掉版图南部。拖动、缩放、全国俯视与立体侧视复测均显示版图和断续线共同变换；左下角附图继续固定。P0/P1/P2：无。
+
+### Follow-up polish
+
+- P3：参考图使用白底细灰线，产品为深色演示舞台；当前青白高对比处理是投影可读性适配，不改变官方路径形状。
+
+final result: passed
+
+---
+
+## M35.14 南海断续线线型与位置修正 Design QA
+
+> QA date: 2026-08-14
+> Scope: `/experiments/:id/present` 中国地图本体的南海断续线线型、台湾/海南相对位置、地图相机联动与左下角固定附图。
+
+### Evidence and normalization
+
+- Source visual truth: `/Users/carrey/Desktop/WechatIMG79.jpg`；检查台湾东侧、海南南侧和向南延伸的 U 形版图关系。
+- Regression visual: `/Users/carrey/Desktop/Screenshot 2026-08-14 at 16.57.31.png`；旧实现的粗重 I/锤形填充符号记录为 P1。
+- Focused comparison: `outputs/m35-presentation-design/m3514-source-vs-slender-map.png`。
+- National top view: `outputs/m35-presentation-design/m3514-slender-national-1920x1080.png`。
+- Southeast zoom: `outputs/m35-presentation-design/m3514-slender-southeast-zoom-1920x1080.png`。
+- Panned map: `outputs/m35-presentation-design/m3514-slender-pan-1920x1080.png`；版图与断续线共同移动，左下角附图保持视口固定。
+- Side view: `outputs/m35-presentation-design/m3514-slender-side-clean-1920x1080.png`；12 段边界线与地图共同接受 pitch/bearing，形成完整 U 形关系。
+
+### Required fidelity surfaces
+
+- Line shape: 不再把 46 条官方填充路径直接绘制为粗重符号；按 12 个官方断续符号分组，以协方差主轴机械生成一条细长中心线，MapLibre 使用 `round` cap/join。
+- Position: 展示地理范围校准为经度 `106.0–127.5`、纬度 `6.0–26.0`；东侧从台湾以东向南延伸，底部经过南海深处，西侧回到海南西南方向。
+- Camera behavior: GeoJSON `LineString` 与中国地图共用平移、缩放、俯仰、旋转、分支和 A/B 相机变换；左下角标准附图继续采用画布固定坐标。
+- Asset fidelity: 中心、方向和分组来自冻结 GS(2016)1609 黑色路径；没有增加手绘点、CSS 虚线图案或屏幕固定贴片。
+- Product boundary: 不新增交互、文案或模拟语义，仍不进入 31 省指标、事件、Agent、关系线和比较计算。
+
+### Comparison history
+
+1. 旧实现直接渲染 46 条官方填充路径，单个断续符号由 3–4 个路径组成，组合后在深色地图上表现为粗重 I/锤形，记为 P1。
+2. 改为对 12 个官方符号组机械求取主轴中心线，并把地图图层从 fill + line 改为单一圆头 line；线型恢复为细长断续边界。
+3. 以项目台湾、海南实际几何校准 U 形展示范围；全国俯视、东南放大、拖动和立体侧视并排复测后，P0/P1/P2：无。
+
+### Follow-up polish
+
+- P3：深色舞台继续使用青白色而非参考图灰色，以保证投影距离下可见；不改变符号中心与方向。
+
+final result: passed
+
+final result: passed
+
+---
+
 ## V3.2 / M30 verification status
 
 > Contract: 前置直接 A/B 与上下文驱动的省级 Agent 自主协作
@@ -198,6 +326,58 @@ V2 地图来自自然资源部标准地图 GS(2016)1609，已记录原始校验�
 `V2 final result: passed`
 
 该结论只证明 V2 历史基线，不证明 V2.1 或 V3.0。
+
+---
+
+## 13110 M35.1 Agent 博弈叙事与地图几何 Design QA
+
+### 比较基线
+
+- Source visual truth：`/Users/carrey/Desktop/决赛/outputs/m35-presentation-design/causal-stage-reference.png`，1672×941 px。
+- Runtime implementation：`http://127.0.0.1:4173/experiments/exp_m34_adc34e2efdc8/present?intro=0`。
+- WebGL 证据：`/Users/carrey/Desktop/决赛/outputs/m35-presentation-design/m351-webgl-final-1280x721.png`，1280×720 CSS px，浏览器截图按 1× CSS 像素归一化。
+- SVG 证据：`/Users/carrey/Desktop/决赛/outputs/m35-presentation-design/m351-svg-1920x1081.png`；同一 Action 状态，强制 `mapFallback=1`。
+- Full-view comparison：`/Users/carrey/Desktop/决赛/outputs/m35-presentation-design/m351-source-vs-webgl-final.png`。实现截图等比归一为 1672×941 后与视觉目标并排。
+- Focused comparison：`/Users/carrey/Desktop/决赛/outputs/m35-presentation-design/m351-focused-source-vs-webgl-final.png`，比较主体地图、连接与右侧博弈面板。
+- State：Q1 Wave 0，Action，第 1/3 组省企互动；干预方案。
+
+### Findings
+
+- P0/P1/P2：无未关闭问题。
+- 可接受差异：参考图保留历史品牌位和固定全国镜头；正式实现按已批准契约使用“13110”，并在 Action 中飞向当前省份。两项均为产品契约差异，不是视觉回归。
+- P3：大省聚焦时仍会压缩全国上下文，但当前缩放受 4.6–5.2 限制，车企固定节点与右侧 Spotlight 始终可见；后续可按演示者偏好微调停留时长。
+
+### 五项视觉表面
+
+- Fonts / typography：Inter Variable + Noto Sans SC Variable 与既有因果舞台一致；标题、阶段、正文和 7–9 px 辅助信息层级稳定，四画布无关键文本裁切。
+- Spacing / layout rhythm：顶栏、因果链、地图、右侧博弈台和年度时间轴维持参考比例；1280×721、1920×1081、2560×1440、3840×2160 均满足 `scrollWidth <= innerWidth`、`scrollHeight <= innerHeight`，时间轴未越界。
+- Colors / tokens：继续使用近黑海军蓝、青色主体、琥珀提议、紫色反报价和低透明红色拒绝；互动阶段非相关热力降低，焦点关系成为第一视觉层。
+- Image / asset fidelity：未重写冻结 GeoJSON、源 SVG 或生成脚本；WebGL 与 SVG 复用同一 Mercator 投影、主体 Polygon 和内部代表点。31 个省级锚点均通过点在面内断言，SVG 31 省 + 港澳台 3 个版图上下文完整。
+- Copy / content：DECIDE 展示实际选择、替代项、机会成本与重新考虑条件；SETTLE 明确分开直接贡献和季度共享变化；19 个时间节点字段泄漏扫描未发现 snake_case、Schema、Checkpoint、`null` 或四类机器枚举。
+
+### Interaction / reliability
+
+- 三组关系的可见数按 `0 → 1 → 2 → 3` 递增，焦点按“贵州—长安 → 新疆—奇瑞 → 河北—上汽通用五菱”切换，结束后回到用户原 Spotlight。
+- WebGL 和 SVG 均支持连接按 Session 选择、车企节点选择和普通省份探索；选中轮廓与基础填色使用完全相同的 `d`。
+- Settlement 验证为直接贡献 `+0.035`，Q1 只显示形成值；A/B 差值页显示中文映射且无后端字段泄漏。
+- 默认开场仍存在跳过按钮；`?intro=0` 直接进入配置对话框。开场资源与 `GlobeIntro` 校验和保持实施前值。
+- 最终浏览器控制台错误 0；WebGL 与 SVG 强制回退均可加载。
+
+### Comparison history
+
+1. Pass 1：发现车企端点使用地图外固定经纬度，省份端点来自全部顶点均值；替换为省域主体面内部代表点和视口固定车企轨道。
+2. Pass 2：发现逐条序列的绘制进度绑定 Spotlight 焦点，第一条连接在延迟显示时没有重新绘制；改为绑定可见 Overlay ID 序列，并复测 `0/1/2/3`。
+3. Pass 3：发现普通省份探索高亮可能与当前 Session 不一致、选中填充压过热力；互动时改由当前 Spotlight 省份承载选中语义，并将选中填充降至 0.08。Post-fix 证据为 `m351-source-vs-webgl-final.png`。
+
+### Implementation checklist
+
+- [x] Presentation Frame v5、季度共享变化与四类 A/B 分歧。
+- [x] Mercator SVG、31 省内部锚点、同源选中描边和车企屏幕轨道。
+- [x] 三组互动逐条揭示、镜头飞行、Session/主体拾取与自动播放等待。
+- [x] WebGL、SVG、字段泄漏、四画布和开场保护验证。
+- [x] Presentation typecheck/build、几何测试、仿真/API 专项与 lint。
+
+final result: passed
 
 ---
 
@@ -429,3 +609,39 @@ final result: passed
 - 非阻塞工程提示：Vite 仍报告主包体积建议，不影响本地演示、交互或冻结契约。
 
 final result: passed
+
+---
+
+## Latest QA result — 13110 M35.1
+
+完整证据、比较历史与五项视觉表面见本文件“13110 M35.1 Agent 博弈叙事与地图几何 Design QA”章节。最终复测覆盖 WebGL、SVG、三组逐条关系、四画布、字段泄漏、默认开场、跳过开场和实验深链；P0/P1/P2 均为 0。
+
+final result: passed
+# 13110 M35.9 立体数据侧视 Design QA
+
+> QA date: 2026-08-14
+> Scope: `/experiments/:id/present` 行动/回应阶段的立体数据沙盘。
+
+## Evidence
+
+- Source visual truth: `/Users/carrey/Downloads/IMG_1661.HEIC`，4032×3024；参考其深色斜视数据城市、竖向高差和中心主舞台构图，不复制照片中的第三方界面。
+- WebGL implementation: `outputs/m35-presentation-design/implementation-height-side-view-webgl-final-v2.jpg`。
+- SVG compatibility implementation: `outputs/m35-presentation-design/implementation-height-side-view-national-final.jpg`。
+- Q1 pre-settlement semantic state: `outputs/m35-presentation-design/implementation-height-side-view-final.jpg`。
+- Browser viewport: in-app Browser default 1280×720 CSS px，device scale 1；Q2 首次行动、干预方案、行动 beat。
+
+## Findings and comparison history
+
+1. 第一轮只改变地图 pitch，缺少真实高度编码，属于 P1；已改为 MapLibre `fill-extrusion` 与 SVG 兼容柱体。
+2. Q1 首次行动尚无冻结发展指数，直接显示 31 省柱体会伪造数据，属于 P1；改为仅对当前互动主体显示“当前互动强度（展示权重）”。Q2 起 31 省已有冻结值后，自动切为“新能源汽车发展指数”。
+3. 初始 WebGL 高度过低，视觉仍接近平面，属于 P2；提高高度域并保持统一色阶，最终形成参考图可见的全国高低错落。
+4. Typography、HUD、左右因果链/主体面板、时间轴与原 Presentation 设计系统保持不变；高度层没有引入远程资产、未改变权威地图填色、结算或差值语义。
+5. TypeScript、31 省几何/视角/高度映射测试、生产构建和 `git diff --check` 通过。Vite 仅保留既有大包体积提示。
+
+## Residual P3
+
+- 参考照片的建筑密度来自城市级数据；当前产品只有省级权威指标，因此保持 31 根省域柱体，不用虚构城市楼群追求表面相似。
+
+final result: passed
+
+---

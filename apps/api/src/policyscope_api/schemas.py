@@ -66,3 +66,19 @@ class ApproveEventScenarioRequest(EventScenarioSelection):
 
 class RunBranchRequest(DomainModel):
     until_phase: Phase = Phase.Y2_Q4
+
+
+class PresentationWorldLandmarkResponse(DomainModel):
+    schema_version: Literal["presentation-world-landmark-v1"] = "presentation-world-landmark-v1"
+    landmark_id: str
+    kind: Literal["battery_capability", "industrial_facility"]
+    province_code: str = Field(pattern=r"^\d{2}$")
+    province_name: str
+    node_count: int = Field(ge=1)
+    node_names: list[str]
+    data_quality: Literal["proxy"] = "proxy"
+
+
+class PresentationWorldLandmarksResponse(DomainModel):
+    schema_version: Literal["presentation-world-landmarks-v1"] = "presentation-world-landmarks-v1"
+    items: list[PresentationWorldLandmarkResponse]

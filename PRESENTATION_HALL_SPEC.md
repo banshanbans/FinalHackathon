@@ -16,7 +16,7 @@
 政策输入
   → 中央解读人工确认
   → A/B 实验设计与突发事件设置确认
-  → 代理数据基线确认
+  → 代理数据基线顺序冻结
   → 七轮推演
   → 章节回放
   → 结果对照
@@ -317,7 +317,7 @@ V1 只开放当前 V3.2 已支持的三个冻结边界：
 - `prefers-reduced-motion` 下取消自转与长距离飞行，以不超过 1 秒的中国聚焦和短淡入完成交接。
 - WebGL 初始化失败时立即交接现有全国兼容地图，不能阻塞业务操作。
 - 无实验 ID 的根入口先播放该镜头，不显示前置事件目录。全国版图接管约 2 秒后自动弹出实验配置；第一 Tab 配置东中西中央承担比例，第二 Tab 选择是否注入突发事件。事件默认关闭，关闭时创建纯政策对比，开启时才冻结事件模板、触发点、强度和通知范围。
-- 配置提交后不得在单个前端函数里自动确认所有门禁。根入口必须依次显示并由用户确认中央政策解读、实验类型与唯一主动差异、代理数据基线边界；基线确认后才进入七轮推演。网络丢失响应后重试相同确认必须语义幂等。
+- 根入口只显示“实验配置”和“实验类型与唯一主动差异”两页。配置提交后按顺序确认中央政策解读，设计确认后按顺序冻结代理数据基线并进入推演。网络丢失响应后重试相同确认必须语义幂等。
 
 ## 7. Presentation DTO 冻结草案
 
@@ -438,7 +438,7 @@ GET /api/experiments/{id}/presentation/bootstrap
 - React 19、TypeScript strict、Vite、TanStack Query、XState v5。
 - MapLibre GL JS + deck.gl 作为主引擎；ECharts 保留指标图表。
 - 地图、字体、图标、样式和演示资产本地打包，不依赖 CDN。
-- 冻结 `china-standard-map.svg` 不修改；WebGL 数据必须由其校验过的 31 省几何以及香港、澳门、台湾版图上下文衍生。31 省标记为 `simulation-province`，港澳台标记为 `territory-context`。
+- 冻结 `china-standard-map.svg` 不修改；WebGL 数据必须由其校验过的 31 省几何以及香港、澳门、台湾版图上下文衍生。31 省标记为 `simulation-province`，港澳台标记为 `territory-context`。主地图另外必须直接显示该冻结源中的南海诸岛附图，不手工重绘，不进入 31 省计算或交互。
 - 保留现有 ECharts/SVG 省域地图为 WebGL 故障兼容模式。
 - 前端不计算环境指标、不生成事件系数、不决定协作是否生效。
 
@@ -449,6 +449,7 @@ GET /api/experiments/{id}/presentation/bootstrap
 - 支持全屏、播放、暂停、单步、变速、一键复位和低动效模式。
 - API 断线时保留最后完整冻结帧，并显示重连状态。
 - API 进程重启后必须按实验惰性恢复 World、Replay、Comparison 和 SSE Event 游标，不得因内存索引丢失误走历史产品路径。恢复真相使用同目录原子快照；旧 `state/replay/comparison` 文件只作兼容镜像。
+- 公网 API 使用 Cache-first：命中回放，miss 调用 DeepSeek 并原子回写持久卷；模型或业务校验失败时显式 fallback。密钥不得进入镜像、客户端、缓存或日志。
 - WebGL 初始化失败时切换兼容地图并保留时间轴、面板和业务操作。
 - 离线彩排只能加载经过验证的 Replay/缓存；没有 Luna 输出时必须显示 Fake/Fallback，不得伪装。
 

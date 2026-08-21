@@ -18,11 +18,17 @@ import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
 
+from shapely.geometry import GeometryCollection, MultiPolygon, Polygon, mapping, shape
+from shapely.ops import unary_union
+
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "apps" / "web" / "src" / "assets" / "maps" / "china-analysis-map.svg"
+STANDARD_SOURCE = ROOT / "apps" / "web" / "src" / "assets" / "maps" / "china-standard-map.svg"
 OUTPUT_DIR = ROOT / "apps" / "presentation" / "public" / "assets"
 TARGET = OUTPUT_DIR / "china-presentation-map.geojson"
+CAUSAL_TARGET = OUTPUT_DIR / "china-causal-map.geojson"
 FALLBACK = OUTPUT_DIR / "china-analysis-map.svg"
+STANDARD_MAP_TARGET = OUTPUT_DIR / "china-standard-map.svg"
 SVG_NS = "http://www.w3.org/2000/svg"
 SOURCE_GEOMETRY_HASH = "2f6aea81b85e929df44aa83beb6c4dcf3fe8f14b8274506e62c6b836ac1c97d6"
 TOKEN_RE = re.compile(r"[MLCZ]|[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?")
@@ -257,6 +263,62 @@ def build_collection() -> dict[str, object]:
     }
 
 
+def visible_surface_collection(collection: dict[str, object]) -> dict[str, object]:
+    """Resolve the source SVG painter order into non-overlapping display surfaces."""
+    features = collection["features"]
+    if not isinstance(features, list):
+        raise TypeError("presentation collection features must be a list")
+    covered = GeometryCollection()
+    visible_reversed: list[dict[str, object]] = []
+    for feature in reversed(features):
+        if not isinstance(feature, dict):
+            raise TypeError("presentation feature must be an object")
+        source_geometry = shape(feature["geometry"])
+        visible = source_geometry.difference(covered)
+        polygon_parts = []
+        if isinstance(visible, Polygon):
+            polygon_parts = [visible]
+        elif isinstance(visible, MultiPolygon):
+            polygon_parts = list(visible.geoms)
+        elif isinstance(visible, GeometryCollection):
+            polygon_parts = [part for part in visible.geoms if isinstance(part, Polygon)]
+        if not polygon_parts:
+            code = feature.get("properties", {}).get("province_code", "unknown")
+            raise ValueError(f"visible presentation surface is empty for {code}")
+        visible_geometry = MultiPolygon(polygon_parts)
+        properties = dict(feature["properties"])
+        properties["render_geometry"] = "source-order-visible-surface"
+        visible_reversed.append(
+            {
+                **feature,
+                "properties": properties,
+                "geometry": mapping(visible_geometry),
+            }
+        )
+        covered = unary_union([covered, source_geometry])
+    visible_features = list(reversed(visible_reversed))
+    visible_shapes = [shape(feature["geometry"]) for feature in visible_features]
+    for index, left in enumerate(visible_shapes):
+        for right in visible_shapes[index + 1 :]:
+            if left.intersection(right).area > 1e-12:
+                raise ValueError("causal presentation surfaces must not overlap")
+    result = dict(collection)
+    result["name"] = "policyscope-causal-presentation-map-v1"
+    result["features"] = visible_features
+    metadata = dict(collection["metadata"])
+    metadata.update(
+        {
+            "schema_version": "presentation-causal-map-v1",
+            "geometry_derivation": "source SVG painter-order visible-surface difference",
+            "source_geojson": TARGET.name,
+            "source_geojson_sha256": sha256_bytes(TARGET.read_bytes()),
+            "non_overlapping_render_surfaces": True,
+        }
+    )
+    result["metadata"] = metadata
+    return result
+
+
 def build() -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     collection = build_collection()
@@ -264,12 +326,20 @@ def build() -> None:
         json.dumps(collection, ensure_ascii=False, separators=(",", ":")) + "\n",
         encoding="utf-8",
     )
+    causal_collection = visible_surface_collection(collection)
+    CAUSAL_TARGET.write_text(
+        json.dumps(causal_collection, ensure_ascii=False, separators=(",", ":")) + "\n",
+        encoding="utf-8",
+    )
     shutil.copyfile(SOURCE, FALLBACK)
+    shutil.copyfile(STANDARD_SOURCE, STANDARD_MAP_TARGET)
     print(
         "Presentation map built: "
-        "31 simulation provinces plus 3 territory context regions, "
+        "31 simulation provinces plus Hong Kong, Macao, Taiwan and the official "
+        "South China Sea inset, "
         f"{sha256_bytes(TARGET.read_bytes())}."
     )
+    print(f"Causal presentation map built: {sha256_bytes(CAUSAL_TARGET.read_bytes())}.")
 
 
 if __name__ == "__main__":

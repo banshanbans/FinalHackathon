@@ -6,6 +6,7 @@ from typing import Literal
 
 from pydantic import Field, model_validator
 
+from simulation.domain_constants import MAINLAND_PROVINCE_CODES
 from simulation.models.automaker import (
     AutomakerState,
     FacilityAction,
@@ -239,11 +240,13 @@ class AutomakerQuarterAction(DomainModel):
     @model_validator(mode="after")
     def complete_national_action(self) -> AutomakerQuarterAction:
         codes = [item.province_code for item in self.province_market_actions]
-        if len(codes) != 31 or len(set(codes)) != 31:
-            raise ValueError("automaker quarter action must cover 31 unique provinces")
+        if len(codes) != 31 or set(codes) != set(MAINLAND_PROVINCE_CODES):
+            raise ValueError("automaker quarter action must cover the authorized 31 provinces once")
         facilities = [item.province_code for item in self.facility_actions]
-        if len(facilities) != len(set(facilities)):
-            raise ValueError("facility actions must use unique provinces")
+        if len(facilities) != len(set(facilities)) or not set(facilities) <= set(
+            MAINLAND_PROVINCE_CODES
+        ):
+            raise ValueError("facility actions must use unique authorized mainland provinces")
         return self
 
 
@@ -369,6 +372,30 @@ class InteractionSession(DomainModel):
         if self.state is not TransactionState.SETTLED and self.settled_contribution != 0:
             raise ValueError("only settled sessions contribute to the environment")
         return self
+
+
+class M34OutputConstraints(FrozenDomainModel):
+    schema_version: Literal["m34-output-constraints-v1"] = "m34-output-constraints-v1"
+    required_action: Literal["province_action", "automaker_action", "optional"]
+    authorized_agent_ids: list[str] = Field(min_length=41, max_length=41)
+    authorized_province_codes: list[str] = Field(min_length=31, max_length=31)
+    available_policy_budget: float | None = Field(default=None, ge=0, le=1)
+    remaining_policy_budget: float | None = Field(default=None, ge=0, le=1)
+    national_market_budget: float | None = Field(default=None, gt=0, le=31)
+    remaining_market_budget: float | None = Field(default=None, ge=0, le=31)
+    max_facility_targets: int = Field(default=0, ge=0, le=3)
+    max_interprovincial_proposals: int = Field(default=0, ge=0, le=2)
+    max_province_automaker_packages: int = Field(default=0, ge=0, le=2)
+    max_automaker_private_messages: int = Field(default=0, ge=0, le=5)
+
+
+class M34LiveAuthorizedContext(FrozenDomainModel):
+    schema_version: Literal["m34-live-authorized-context-v3"] = "m34-live-authorized-context-v3"
+    inbox: AuthorizedInbox
+    output_constraints: M34OutputConstraints
+    visible_messages: list[InteractionMessage] = Field(default_factory=list, max_length=500)
+    pending_sessions: list[InteractionSession] = Field(default_factory=list, max_length=80)
+    previous_action: ProvinceQuarterAction | AutomakerQuarterAction | None = None
 
 
 class InteractionMarket(DomainModel):
@@ -726,6 +753,84 @@ class PresentationFrameV4(FrozenDomainModel):
     wave_label: str | None = None
     branches: dict[Literal["control", "treatment"], PresentationBranchViewV4]
     divergences: list[PresentationDivergenceV4] = Field(default_factory=list, max_length=12)
+    shared_scale: PresentationSharedScaleV4
+    event_plan_ids: list[str] = Field(default_factory=list, max_length=3)
+    disclaimer: Literal["模拟季度与互动顺序，不代表现实响应日期"] = (
+        "模拟季度与互动顺序，不代表现实响应日期"
+    )
+    evidence_refs: list[str] = Field(default_factory=list)
+    source_hash: str
+
+
+class PresentationMetricChangeV5(FrozenDomainModel):
+    metric_id: Literal["regional_development_gap", "local_fiscal_pressure"]
+    label: str
+    current_value: float = Field(ge=0, le=100)
+    quarterly_change: float | None = None
+    unit: Literal["模拟指数"] = "模拟指数"
+
+
+class PresentationProvinceChangeV5(FrozenDomainModel):
+    province_code: str = Field(pattern=r"^\d{2}$")
+    province_name: str
+    current_value: float = Field(ge=0, le=100)
+    quarterly_change: float | None = None
+    unit: Literal["模拟指数"] = "模拟指数"
+
+
+class PresentationSettlementV5(PresentationSettlementV4):
+    direct_contribution_label: str
+    province_changes: list[PresentationProvinceChangeV5] = Field(default_factory=list, max_length=2)
+    national_changes: list[PresentationMetricChangeV5] = Field(default_factory=list, max_length=2)
+    attribution_note: str = "季度变化是同期共享环境结果，不归因于单笔互动。"
+
+
+class PresentationSpotlightV5(PresentationSpotlightV4):
+    settlement: PresentationSettlementV5
+
+
+class PresentationGameEdgeV5(PresentationGameEdgeV4):
+    reveal_order: int = Field(default=0, ge=0, le=2)
+    message_order: int = Field(default=0, ge=0, le=19)
+
+
+class PresentationBranchViewV5(FrozenDomainModel):
+    branch_id: Literal["control", "treatment"]
+    label: str
+    tick: MacroTick | None = None
+    national_metrics: NationalMetrics
+    province_values: list[PresentationBranchProvinceValueV4]
+    game_edges: list[PresentationGameEdgeV5] = Field(default_factory=list)
+    spotlights: list[PresentationSpotlightV5] = Field(default_factory=list, max_length=3)
+    fallback_count: int = Field(default=0, ge=0)
+
+
+class PresentationDivergenceV5(FrozenDomainModel):
+    divergence_id: str
+    divergence_type: Literal["control_only", "treatment_only", "state_changed", "decision_changed"]
+    participants: list[PresentationSubjectV4] = Field(min_length=2, max_length=2)
+    control_state_label: str
+    treatment_state_label: str
+    control_decision_summary: str
+    treatment_decision_summary: str
+    summary: str
+
+
+class PresentationFrameV5(FrozenDomainModel):
+    schema_version: Literal["presentation-frame-v5"] = "presentation-frame-v5"
+    frame_id: str
+    experiment_id: str
+    sequence: int = Field(ge=0)
+    kind: Literal["policy", "event", "wave", "settlement", "comparison"]
+    tick: MacroTick | None = None
+    wave: InteractionWave | None = None
+    chapter_label: str
+    question: str
+    title: str
+    summary: str
+    wave_label: str | None = None
+    branches: dict[Literal["control", "treatment"], PresentationBranchViewV5]
+    divergences: list[PresentationDivergenceV5] = Field(default_factory=list, max_length=12)
     shared_scale: PresentationSharedScaleV4
     event_plan_ids: list[str] = Field(default_factory=list, max_length=3)
     disclaimer: Literal["模拟季度与互动顺序，不代表现实响应日期"] = (

@@ -2,7 +2,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, SecretStr
+from pydantic import AliasChoices, Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from simulation.models.common import RunMode
@@ -16,14 +16,21 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # Safe default for local/direct starts. Production must opt in to live mode
-    # explicitly through POLICYSCOPE_RUN_MODE=live.
+    # Safe default for local/direct starts. Production explicitly opts into
+    # cache-first mode and a live miss provider through deployment settings.
     run_mode: RunMode = RunMode.FAKE
+    cache_miss_mode: Literal["fake", "live"] = "fake"
     llm_base_url: str = "https://api.openai.com/v1"
     llm_api_key: SecretStr = SecretStr("")
     central_model: str = Field(default="gpt-5.6-luna", alias="POLICYSCOPE_CENTRAL_MODEL")
     province_model: str = Field(default="gpt-5.6-luna", alias="POLICYSCOPE_PROVINCE_MODEL")
-    automaker_model: str = Field(default="gpt-5.6-luna", alias="POLICYSCOPE_AUTOMAKER_MODEL")
+    automaker_model: str = Field(
+        default="gpt-5.6-luna",
+        validation_alias=AliasChoices(
+            "POLICYSCOPE_AUTOMAKER_MODEL",
+            "POLICYSCOPE_ENTERPRISE_MODEL",
+        ),
+    )
 
     @property
     def enterprise_model(self) -> str:
