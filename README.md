@@ -1,278 +1,214 @@
-# PolicyScope / 13110
+# 13110
 
-> **面向中央政策统筹场景的新能源汽车多智能体政策推演平台**
+**抖音 AI 创变者计划 2026 北京全国总决赛作品**
 
-**31 Province Agents · Automaker Agents · Counterfactual A/B · Checkpoint / Replay / Audit · React + FastAPI**
+> 面向中央政策统筹场景的新能源汽车产业协同多智能体推演平台
 
-PolicyScope 不是用 Agent 去“预测未来”，而是把政策调整放进一个可审计的模拟环境里，观察不同主体会如何响应，并比较两条同源分支之间的机制差异。
+13110 把一项政策调整放入可审计的同源 A/B 模拟环境，让中央、31 个省级 Agent 和 10 家代表性车企模拟 Agent 在约束中动态互动，并把策略、消息、环境结算与年度差异连成可回放的证据链。
 
-当前主问题是：
+`PolicyScope` 仅作为仓库中的代码标识和历史版本名保留；当前对外产品名为 **13110**。
 
-> 当中央调整新能源汽车补贴中不同区域的中央承担比例后，各省如何改变补贴策略，企业如何重新配置资源，最终区域发展差距、财政压力与产业集中度会如何变化？
+## 30 秒看懂产品
 
-结果以**模拟指数和相对变化**呈现，用于方案比较，不代表现实政府或企业未来决定。
+| | 内容 |
+|---|---|
+| 目标用户 | 中央政策统筹、产业政策研究与跨区域协同分析团队 |
+| 核心问题 | 一项政策变量如何经由地方财政、消费需求、企业行动与产业布局层层传导 |
+| 产品输出 | 同一基线下 Control / Treatment 两条路径的主体决策、互动记录、季度结算、年度对比与审计证据 |
+| 使用价值 | 在政策讨论前显式暴露传导假设、主体反应与权衡，支持方案比较，不替代现实预测 |
 
----
+## 实机截图
 
-## 这个项目为什么值得看
+### 季度主体互动
 
-很多 Multi-Agent Demo 的核心仍然是“多个角色轮流聊天”。PolicyScope 尝试进一步解决三个问题：
+![13110 季度主体互动实机截图](./docs/assets/readme/interaction.jpg)
 
-1. **Agent 决策如何进入一个真正会变化的环境；**
-2. **如何保证 A/B 两个世界只改变一个主动变量；**
-3. **如何把每个主体的行为、证据与结果完整记录下来，便于审计和回放。**
+中央政策信号、省域 Agent、车企 Agent、跨主体连线、因果链和季度章节在同一张可回放画布中展示。
 
-因此系统把 LLM Agent 与确定性环境分离：
+### 年度同源 A/B 对比
+
+![13110 年度 A/B 对比实机截图](./docs/assets/readme/annual-comparison.jpg)
+
+年度结果对比的是模拟指标和相对变化，并保留从指标回到季度决策、消息和证据的追溯路径。
+
+## 产品闭环
 
 ```text
-政策输入
+政策参数输入与审批
   ↓
-中央解读 / 实验设计
+中央 Agent 结构化解读 / 实验设计
   ↓
-同一 Checkpoint 派生 A / B
+冻结 Baseline 与不可变 Checkpoint
   ↓
-31 省级 Agent 行动
+派生 Control / Treatment 两条同源分支
   ↓
-车企 Agent 响应
+Q1—Q4 条件激活的省级 / 车企 Agent 互动
   ↓
-省际 / 省企互动
+每季度确定性环境结算 + 不可变 Checkpoint
   ↓
-确定性环境结算
-  ↓
-ΔGap + 财政 + 需求 + 投资集中度
+Q4 年度 Comparison / 中央复盘
   ↓
 Replay / Audit / Evidence
 ```
 
-## 当前规模
+Q1 每个分支激活 31 个省级主体和 10 个车企主体；Q2—Q4 只在收到新授权消息、计划复评到期、事件可见或仍有未决事务时激活。每个季度最多 3 波互动，并有调用、消息和往返次数上限，避免无界对话。
 
-当前 V3.2 运行时包含：
+## 同源 A/B：只改一个主动变量
 
-- **31 个省级 Agent**；
-- **10 家代表性车企模拟 Agent**；
-- 一场完整双分支实验包含 **226 次结构化主体调用**；
-- Agent 上下文接入 **4,527 条事实、711 项特征、282 条关系边**；
-- 支持政策对比、政策压力测试、事件反事实三类实验；
-- 支持 Checkpoint、Replay、Audit、Evidence 和 REST / SSE 运行链路；
-- 地图工作台与全景推演厅可展示全国状态、主体互动和 A/B 差异。
-
-## 核心设计：同源反事实
-
-PolicyScope 的 A/B 不是“重新随机跑两遍”。
-
-两个世界从同一个不可变 Checkpoint 派生，并冻结除目标变量之外的实验条件：
+13110 不是“重新随机跑两遍”。Control 和 Treatment 从同一个不可变 Checkpoint 派生，冻结数据基线、主体画像、环境版本与事件条件，只允许用户审批的政策变量不同。
 
 ```text
-          Same Checkpoint
-          /             \
-         /               \
-   Control World     Treatment World
-   原始政策             调整后的政策
-         \               /
-          \             /
-          Compare Δ
+                  Same Checkpoint
+                  /             \
+                 /               \
+          Control World     Treatment World
+             原始方案            干预方案
+                 \               /
+                  \             /
+                 Compare 相对差异
 ```
 
-这使得最终差异更接近回答：
+当前默认基线参考为西部 / 中部 / 东部 `95% / 90% / 85%`，比赛预热的 Treatment 初始参数为 `96% / 93% / 82%`。三项是独立中央承担比例，不求和；预热参数只为稳定展示路径，不是现实最优比例或政策建议。
 
-> **“如果只有这个政策变量发生变化，会发生什么？”**
+## Agent 与确定性环境的分工
 
-而不是比较两次彼此不可控的 Agent 生成结果。
+| 层 | 负责 | 不负责 |
+|---|---|---|
+| 中央 Agent | 生成结构化政策解读与 Q4 年度复盘 | 不绕过用户审批，不修改权威 WorldState |
+| 省级 Agent | 在财政空间、产业基础、需求和供应链约束下选择地方策略、发起或回应互动 | 不直接生成宏观结果 |
+| 车企 Agent | 分配 31 省销售 / 渠道资源，并提出有上限的建厂、扩产或延迟行动 | 不代表真实企业计划或承诺 |
+| 确定性环境 | 校验行动、去重、结算区域差距、财政压力、需求、资源迁移与产业集中度 | 不把模型文本当作环境事实 |
+| 前端投影 | 只读渲染 World、Action、Interaction、Comparison 和 Evidence | 不从文案或动画反推业务结果 |
 
-## 三级主体
+Agent 输出的 `DecisionTrace v3` 保存结构化行动、理由、备选、机会成本和重新考虑条件，但不保存或展示模型私有思维链。
 
-### 中央 Agent
+## 关键产品取舍
 
-负责将政策输入整理为结构化实验指令和复盘建议，但不能绕过用户审批或直接写入最终指标。
+- **从“多角色聊天”到“可结算行动”：** 自由文本不能直接改变世界，只有通过 Schema、身份、授权、会话状态和资源额度校验的行动才能提交。
+- **从“看最终 KPI”到“看传导过程”：** 季度消息、会话、策略与环境变化全部关联到逻辑时间和证据。
+- **稳定演示不等于伪造实时：** 默认采用 Cache-first；缓存未命中时由 DeepSeek 生成结构化决策，强校验后原子回写，模型或校验耗尽才显式 fallback。
+- **演示可视化与业务事实分离：** 全国地图、主体连线和因果动画只表达已提交事实；切换视角不触发新模型调用。
+- **质量优先于“全部看起来像 AI”：** 指标、差值、资源守恒与评估口径由确定性代码管理。
 
-### 31 个省级 Agent
+## 当前 M34 / M35 能力
 
-每个省份结合自身画像与上下文，在财政空间、产业基础、需求、供应链、人才等约束下配置地方支持策略，并在实验中响应其他省份和企业行为。
+### M34：动态季度互动运行时
 
-主要政策工具包括：
+- `Q1 | Q2 | Q3 | Q4` 逻辑时间与 `wave_0 | wave_1 | wave_2` 因果顺序；
+- 主体按消息、计划到期、事件和未决事务动态激活；
+- 双向发起、报价 / 回应 / 结算会话状态机；
+- 跨帧合并、资源守恒、每季度纯函数结算与 Q4 年度对比；
+- REST / SSE 中携带 `tick`、`wave`、`logical_sequence`、`message_id` 和 `session_id`。
 
-- 消费端补贴；
-- 固定成本支持；
-- 可变成本支持；
-- 省际协同；
-- 面向企业的资源包与响应。
+### M35：全景因果舞台
 
-### 车企 Agent
+- `apps/presentation` 是当前唯一产品界面；`apps/web` 仅作为历史研究工作台保留；
+- 从地球开场、全国主体博弈到季度互动与年度 A/B 结果的单画布路径；
+- 基于冻结标准地图的 31 省计算图层与港澳台、南海诸岛非计算上下文；
+- WebGL 主路径、SVG 兼容渲染、低动效与多分辨率适配；
+- 只读 Presentation Projection 与原始 World / Action / Comparison 哈希稳定性边界。
 
-当前固定使用 10 家代表性新能源汽车企业作为模拟主体。每个 Agent 在全国 31 省之间重新配置销售 / 渠道资源，并可提出有限数量的建厂、扩产或延迟行动。
-
-真实销量、财报、产能和工厂布局仅用于冻结基线；模拟输出不表示企业真实计划或承诺。
-
-## Agent 与环境分工
-
-这是项目最重要的工程边界之一。
-
-**Agent 负责选择策略：**
-
-- 做什么；
-- 为什么做；
-- 为什么不选其他方案；
-- 什么条件变化会改变选择；
-- 当前选择的机会成本。
-
-**确定性环境负责计算结果：**
-
-- 区域差距；
-- 财政压力；
-- 需求变化；
-- 资源迁移；
-- 投资集中度；
-- 产业集聚度。
-
-因此 Agent 不直接“编一个 GDP / 销量 / 财政结果”。
-
-`DecisionTrace v3` 保存结构化决策记录，但不保存模型私有思维链。
-
-## 核心指标
-
-系统当前固定比较六类中央指标：
-
-1. 区域发展差距；
-2. 中央财政负担；
-3. 地方财政压力；
-4. 新能源汽车需求；
-5. 新增投资集中度；
-6. 产业集聚度。
-
-其中核心公平指标：
-
-```text
-ΔGap = Gap_treatment − Gap_control
-```
-
-- `ΔGap < 0`：干预方案下区域差距缩小；
-- `ΔGap > 0`：干预方案下区域差距扩大；
-- `ΔGap ≈ 0`：当前机制和显示精度下影响有限。
-
-## 产品界面
-
-正式产品包含研究工作台和全景推演厅两套表现形态。
-
-研究工作台主要路由：
-
-```text
-/experiments/new
-/experiments/:id/live
-/experiments/:id/provinces/:provinceCode
-/experiments/:id/intervention
-/experiments/:id/compare
-```
-
-Live 以中国地图为主画布，可查看地方支持强度、WTP、产业基础、车企销售投入等图层；Compare 使用同口径 A/B 视图优先展示 `ΔGap` 与政策差异。
-
-全景推演厅进一步强化省—省、省—企之间的行动、响应和资源迁移，用于现场演示复杂 Agent interaction，而不是只展示最终 KPI。
+`apps/roadshow` 是独立的开场叙事层，只包含自有静态素材和可逆滚动动效，不导入模拟运行时状态或 API。
 
 ## 技术架构
 
 ```mermaid
 flowchart LR
-    User[Policy User] --> Web[React Workbench]
-    User --> Present[Presentation Hall]
+    User[政策统筹用户] --> Presentation[13110 Presentation]
+    Presentation --> API[FastAPI REST / SSE]
+    API --> Orchestrator[季度编排器]
+    Orchestrator --> Central[中央 Agent]
+    Orchestrator --> Provinces[31 省级 Agents]
+    Orchestrator --> OEMs[10 车企 Agents]
 
-    Web --> API[FastAPI / REST + SSE]
-    Present --> API
+    Central --> Gate[Schema / 授权 / 资源门禁]
+    Provinces --> Gate
+    OEMs --> Gate
+    Gate --> Env[确定性季度环境]
+    Env --> State[World / Checkpoint / Comparison]
+    State --> Projection[只读 Presentation Projection]
+    Projection --> Presentation
 
-    API --> Orchestrator[Agent Orchestrator]
-    Orchestrator --> Central[Central Agent]
-    Orchestrator --> Provinces[31 Province Agents]
-    Orchestrator --> OEMs[10 Automaker Agents]
-
-    Provinces --> Env[Deterministic Environment]
-    OEMs --> Env
-    Env --> World[World State / Comparison]
-
-    API --> Store[Checkpoint / Cache / Replay]
-    API --> Evidence[Audit / Evidence]
+    Orchestrator <--> Cache[Cache-first / DeepSeek miss / explicit fallback]
+    State --> Audit[Replay / Audit / Evidence]
 ```
 
-## 可审计性
+主要技术栈：Python 3.11+、FastAPI、Pydantic、React、TypeScript、MapLibre / deck.gl、SSE、Pytest、Vitest 与 Playwright。
 
-为了避免“Agent 说了什么就算什么”，系统显式保存：
+## 稳定性与验证证据
 
-- 实验输入与版本；
-- 数据基线与 Evidence；
-- 主体结构化行动；
-- Control / Treatment 分支关系；
-- Checkpoint；
-- DecisionTrace；
-- 环境结算结果；
-- Replay / Audit 信息；
-- Provider / fallback 状态。
+默认预热参数的完整年度路径已做冷缓存与热缓存双重复验：
 
-本地规则 fallback 会明确标记，不会写入或冒充线上模型缓存。
+- 冷跑和热跑均完成 Q1—Q4，每次实测共 **530 次主体调用、0 fallback**；
+- Control 产生 267 条决策、93 条消息、46 个会话；Treatment 产生 263 条决策、104 条消息、52 个会话；98 个会话全部结算；
+- 热跑复验期间缓存文件数保持 `1487 → 1487`，证明默认路径没有隐式增量或未命中；
+- M35 已覆盖 1280、1080p、2K、4K 画布、WebGL / SVG 降级、开场、深链、回放、控制台和字段泄漏扫描。
 
-## 运行模式
+**530 是该默认完整年度路径在动态条件激活后的已验证实测值，不是系统的固定调用预算，也不代表任意参数组合都会产生相同调用量。**
 
-项目支持三种模式：
+仓库门禁覆盖 Python / API / React 单元测试、Ruff 与前端构建、31 省数据与地图校验、Presentation Playwright E2E，以及 roadshow 的 Vitest、Sites Worker 和隔离构建检查。历史证据参见 [验收记录](./docs/validation/) 与 [Design QA](./docs/validation/design-qa.md)。
 
-- `fake`：确定性 Mock Provider，用于本地稳定开发；
-- `cache`：使用完整预生成实验缓存进行稳定回放；
-- `live`：配置 Provider 后执行线上结构化 Agent 调用，失败时显式记录 fallback。
-
-## 本地启动
+## 快速启动
 
 环境要求：Python 3.11+、Node.js 20+。
 
 ```bash
 make setup
+```
+
+分别在两个终端启动 API 和当前 Presentation 产品界面：
+
+```bash
 make dev-api
-make dev-web
+```
+
+```bash
 make dev-presentation
 ```
 
-默认开发地址：
-
 ```text
-Workbench:          http://localhost:5173/experiments/new
-Presentation Hall:  http://localhost:4180
-API:                http://localhost:8000
+Presentation:  http://localhost:4180
+API:           http://localhost:8000
 ```
 
-## 验证与测试
+`make dev-api` 默认使用确定性 `fake` Provider，适合本地开发与回归。Cache-first + live miss 需按 [`.env.example`](./.env.example) 配置服务端环境；密钥不得进入前端或 Git。
 
-当前仓库包含多层验证：
+独立 roadshow 可选本地启动：
 
-- Python / API tests；
-- React component tests；
-- Ruff / formatter / ESLint / TypeScript build；
-- 31 省数据与地图校验；
-- Playwright E2E；
-- SSE reconnect / fallback 测试；
-- 1280、1080p、2K、4K 多画布演示验收；
-- Design QA 与截图矩阵。
+```bash
+cd apps/roadshow
+npm ci
+npm run dev
+```
 
-详细验证证据见 [Design QA](./docs/validation/design-qa.md) 与 [M33 最终验收](./docs/validation/M33_PRESENTATION_FINAL_VALIDATION.md)。
+## 仓库目录
 
-## 文档导航
+```text
+apps/
+  api/             FastAPI、REST / SSE 与运行时投影
+  presentation/    当前 13110 产品界面
+  roadshow/        独立开场叙事与离线启动源码
+  web/             历史研究工作台，非当前产品界面
+simulation/        Agent、编排、互动机制与确定性环境
+data/              冻结数据基线与场景输入
+config/            实验与运行配置
+docs/
+  adr/             架构与产品决策记录
+  specs/           前端与 Presentation 规范
+  validation/      M33 / M35 验收与 Design QA
+  assets/          README 实机图与 M35 正式验收画面
+scripts/           数据校验、缓存、地图与展示构建工具
+deploy/m35/        M35 部署配置
+```
 
-- [V3.2 PRD](./PRD_省域政策多智能体推演平台.md)
-- [开发计划](./DEVELOPMENT_PLAN.md)
-- [前端规范](./docs/specs/STITCH_FRONTEND_SPEC.md)
-- [Presentation Hall Spec](./docs/specs/PRESENTATION_HALL_SPEC.md)
-- [Agent 开发约束](./AGENTS.md)
-- [Design QA](./docs/validation/design-qa.md)
+完整文档索引见 [`docs/README.md`](./docs/README.md)。
 
-## 当前研究边界
+## 研究边界
 
-PolicyScope 是一个**机制推演与方案比较工具**，不是现实预测系统。
+13110 是**机制推演与方案比较工具**，不是现实预测系统或政策自动决策器。
 
-- 不输出未来真实 GDP、就业、投资金额或销量预测；
+- 不输出未来真实 GDP、就业、投资金额、产能或销量预测；
 - 不代表现实政府部门、地方政府或企业的真实行为；
-- 真实数据主要用于冻结基线与上下文；
-- 派生敏感度和部分机制字段会明确标记为 proxy / scenario assumption；
-- Agent 生成与确定性结算保持分离。
-
-## 这个项目主要证明什么
-
-PolicyScope 是我对 **复杂 Multi-Agent 产品工程** 的一次完整探索：
-
-- 如何让几十个 Agent 不只是线性聊天，而是真正进入共享环境；
-- 如何设计 Agent orchestration、结构化输出与主体间互动；
-- 如何用 Checkpoint 和 A/B 分支构造可解释反事实；
-- 如何把真实数据、规则环境、LLM Agent 和前端地图整合成一个完整系统；
-- 如何让一个 Hackathon 原型继续迭代到可测试、可回放、可审计的产品架构。
+- 现实数据主要用于冻结基线和主体上下文，派生敏感度与机制字段按 proxy / scenario assumption 管理；
+- 模拟时间是 Q1—Q4 逻辑时间，不暗示现实主体的响应日期或速度；
+- 产品的价值是帮助研究者比较机制、定位分歧并追溯证据，最终判断仍由人做出。
