@@ -137,7 +137,7 @@ final result: passed
 ## M36 13110 product-reveal pass
 
 - Opening source visual truth: `references/orbital-precision.png`.
-- Terminal composition reference: `../../outputs/m35-presentation-design/qa-interaction-1920x1080.png`.
+- Terminal composition reference: `../../docs/assets/m35/qa-interaction-1920x1080.jpg`.
 - Opening implementation: `qa/implementation-1440x1024-13110-opening.png`.
 - Historical focus implementation: `qa/implementation-1440x1024-13110-lift.png`.
 - Terminal implementation: `qa/implementation-1440x1024-13110-terminal.png`.

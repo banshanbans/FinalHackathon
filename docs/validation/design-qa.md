@@ -4,10 +4,10 @@
 
 ### 比较基线
 
-- Source visual truth：`/Users/carrey/Desktop/决赛/outputs/m35-presentation-design/causal-stage-reference.png`，1672×941 px；该图冻结主舞台结构、信息层级和视觉令牌，侧视镜头是用户批准的增量方向。
-- WebGL implementation：`/Users/carrey/Desktop/决赛/outputs/m35-presentation-design/implementation-side-view-webgl-1920x1080-final.png`，1912×1080 浏览器像素，1920×1080 CSS 视口，1× 密度。
-- SVG compatibility implementation：`/Users/carrey/Desktop/决赛/outputs/m35-presentation-design/implementation-side-view-svg-1920x1080.png`，1912×1080 浏览器像素，同一 Action 状态。
-- Full-view comparison：`/Users/carrey/Desktop/决赛/outputs/m35-presentation-design/side-view-source-vs-implementation-1920.png`；源图归一为 1912×1080 后与 WebGL 实现并排。
+- Source visual truth：`docs/assets/m35/causal-stage-reference.png`，1672×941 px；该图冻结主舞台结构、信息层级和视觉令牌，侧视镜头是用户批准的增量方向。
+- WebGL implementation：`outputs/m35-presentation-design/implementation-side-view-webgl-1920x1080-final.png`，1912×1080 浏览器像素，1920×1080 CSS 视口，1× 密度。
+- SVG compatibility implementation：`outputs/m35-presentation-design/implementation-side-view-svg-1920x1080.png`，1912×1080 浏览器像素，同一 Action 状态。
+- Full-view comparison：`outputs/m35-presentation-design/side-view-source-vs-implementation-1920.png`；源图归一为 1912×1080 后与 WebGL 实现并排。
 - Focused evidence：中央地图、右上“视角”入口、侧视状态、广东→浙江关系和右侧行动卡在 full-view 中均可读，无需另裁局部图。
 - State：Q1 首次行动，干预方案，六段链“行动”，自动镜头解析为因果侧视；浏览器为 Codex in-app Browser。
 
@@ -333,12 +333,12 @@ V2 地图来自自然资源部标准地图 GS(2016)1609，已记录原始校验�
 
 ### 比较基线
 
-- Source visual truth：`/Users/carrey/Desktop/决赛/outputs/m35-presentation-design/causal-stage-reference.png`，1672×941 px。
+- Source visual truth：`docs/assets/m35/causal-stage-reference.png`，1672×941 px。
 - Runtime implementation：`http://127.0.0.1:4173/experiments/exp_m34_adc34e2efdc8/present?intro=0`。
-- WebGL 证据：`/Users/carrey/Desktop/决赛/outputs/m35-presentation-design/m351-webgl-final-1280x721.png`，1280×720 CSS px，浏览器截图按 1× CSS 像素归一化。
-- SVG 证据：`/Users/carrey/Desktop/决赛/outputs/m35-presentation-design/m351-svg-1920x1081.png`；同一 Action 状态，强制 `mapFallback=1`。
-- Full-view comparison：`/Users/carrey/Desktop/决赛/outputs/m35-presentation-design/m351-source-vs-webgl-final.png`。实现截图等比归一为 1672×941 后与视觉目标并排。
-- Focused comparison：`/Users/carrey/Desktop/决赛/outputs/m35-presentation-design/m351-focused-source-vs-webgl-final.png`，比较主体地图、连接与右侧博弈面板。
+- WebGL 证据：`outputs/m35-presentation-design/m351-webgl-final-1280x721.png`，1280×720 CSS px，浏览器截图按 1× CSS 像素归一化。
+- SVG 证据：`outputs/m35-presentation-design/m351-svg-1920x1081.png`；同一 Action 状态，强制 `mapFallback=1`。
+- Full-view comparison：`outputs/m35-presentation-design/m351-source-vs-webgl-final.png`。实现截图等比归一为 1672×941 后与视觉目标并排。
+- Focused comparison：`outputs/m35-presentation-design/m351-focused-source-vs-webgl-final.png`，比较主体地图、连接与右侧博弈面板。
 - State：Q1 Wave 0，Action，第 1/3 组省企互动；干预方案。
 
 ### Findings
@@ -441,14 +441,14 @@ final result: passed
 
 | State / canvas | Evidence |
 |---|---|
-| Selected source visual | `outputs/m35-presentation-design/causal-stage-reference.png` |
-| Same-state implementation | `outputs/m35-presentation-design/implementation-interaction-final-1672x941.png` |
-| Required side-by-side comparison | `outputs/m35-presentation-design/source-vs-implementation-final.png` |
-| 1920×1080 WebGL | `outputs/m35-presentation-design/qa-interaction-1920x1080.png` |
-| 2560×1440 WebGL | `outputs/m35-presentation-design/qa-interaction-2560x1440.png` |
-| 3840×2160 WebGL | `outputs/m35-presentation-design/qa-interaction-3840x2160-full.png` |
-| 1280×720 SVG compatibility renderer | `outputs/m35-presentation-design/qa-fallback-1280x720.png` |
-| Annual A/B result | `outputs/m35-presentation-design/implementation-annual-1440x810.png` |
+| Selected source visual | `docs/assets/m35/causal-stage-reference.png` |
+| Same-state implementation | `docs/assets/readme/interaction.jpg` |
+| Required side-by-side comparison | `docs/assets/m35/source-vs-implementation-final.png` |
+| 1920×1080 WebGL | `docs/assets/m35/qa-interaction-1920x1080.jpg` |
+| 2560×1440 WebGL | `docs/assets/m35/qa-interaction-2560x1440.jpg` |
+| 3840×2160 WebGL | `docs/assets/m35/qa-interaction-3840x2160-full.jpg` |
+| 1280×720 SVG compatibility renderer | `docs/assets/m35/qa-fallback-1280x720.jpg` |
+| Annual A/B result | `docs/assets/readme/annual-comparison.jpg` |
 
 ### Comparison and iteration history
 

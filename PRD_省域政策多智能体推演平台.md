@@ -9,7 +9,7 @@
 
 ## 0. V3.2 活动产品契约
 
-M35 不改变本节的 M34 季度业务真相。用户已明确普通 Web 前端不属于当前产品界面；活动产品界面只以 `apps/presentation` 验收。Presentation 必须通过强类型只读投影把运行时事实转为可读的主体博弈和因果故事，详细决策见 `ADR-370-m35-presentation-causal-stage.md`。
+M35 不改变本节的 M34 季度业务真相。用户已明确普通 Web 前端不属于当前产品界面；活动产品界面只以 `apps/presentation` 验收。Presentation 必须通过强类型只读投影把运行时事实转为可读的主体博弈和因果故事，详细决策见 `docs/adr/ADR-370-m35-presentation-causal-stage.md`。
 
 公网 Presentation 新建实验继续以 `95%/90%/85%` 作为原始方案和 2025 年政策参考基线；干预方案初始预设为已完整预热的 `96%/93%/82%`。该预设只用于降低比赛现场默认路径的模型网络依赖，不代表现实最优比例，也不限制用户修改三档比例。
 
@@ -21,7 +21,7 @@ M34 将活动运行时升级为一年四个宏观季度。基线确认后两个�
   → 年度同源 A/B 与中央复盘
 ```
 
-时间权威是 `Q1|Q2|Q3|Q4` 与 `wave_0|wave_1|wave_2` 的逻辑顺序，不是现实响应日期。活动版本、权限、预算和 API 以 `ADR-360-m34-quarterly-event-driven-interaction.md` 为准。
+时间权威是 `Q1|Q2|Q3|Q4` 与 `wave_0|wave_1|wave_2` 的逻辑顺序，不是现实响应日期。活动版本、权限、预算和 API 以 `docs/adr/ADR-360-m34-quarterly-event-driven-interaction.md` 为准。
 
 V3.2 取消用户主链中的“首年运行 → 年末干预审批 → 次年分支”，改为：
 
@@ -1028,7 +1028,7 @@ GET /api/experiments/{id}/presentation/timeline
 GET /api/experiments/{id}/presentation/frames/{frame_id}
 ```
 
-投影只能引用 World、Action、Strategy Market、Comparison、Replay 和 Evidence 的已提交事实。前端不得从摘要反推权威环境结果。完整契约以 `PRESENTATION_HALL_SPEC.md` 和 `ADR-350-presentation-hall-event-timeline.md` 为准。
+投影只能引用 World、Action、Strategy Market、Comparison、Replay 和 Evidence 的已提交事实。前端不得从摘要反推权威环境结果。完整契约以 `docs/specs/PRESENTATION_HALL_SPEC.md` 和 `docs/adr/ADR-350-presentation-hall-event-timeline.md` 为准。
 
 ### 24.5 冻结结果
 

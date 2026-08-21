@@ -246,16 +246,16 @@ API:                http://localhost:8000
 - 1280、1080p、2K、4K 多画布演示验收；
 - Design QA 与截图矩阵。
 
-详细验证证据见 [Design QA](./design-qa.md) 与 [M33 最终验收](./M33_PRESENTATION_FINAL_VALIDATION.md)。
+详细验证证据见 [Design QA](./docs/validation/design-qa.md) 与 [M33 最终验收](./docs/validation/M33_PRESENTATION_FINAL_VALIDATION.md)。
 
 ## 文档导航
 
 - [V3.2 PRD](./PRD_省域政策多智能体推演平台.md)
 - [开发计划](./DEVELOPMENT_PLAN.md)
-- [前端规范](./STITCH_FRONTEND_SPEC.md)
-- [Presentation Hall Spec](./PRESENTATION_HALL_SPEC.md)
+- [前端规范](./docs/specs/STITCH_FRONTEND_SPEC.md)
+- [Presentation Hall Spec](./docs/specs/PRESENTATION_HALL_SPEC.md)
 - [Agent 开发约束](./AGENTS.md)
-- [Design QA](./design-qa.md)
+- [Design QA](./docs/validation/design-qa.md)
 
 ## 当前研究边界
 

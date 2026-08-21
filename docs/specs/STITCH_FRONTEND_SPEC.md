@@ -751,7 +751,7 @@ simulated_facility_activity
 4. 修复 P0/P1/P2 后重新截图。
 5. 检查真实企业模拟边界、禁止文案和地图来源。
 
-### 18.3 `design-qa.md`
+### 18.3 `docs/validation/design-qa.md`
 
 V3 章节必须记录：
 
@@ -763,7 +763,7 @@ V3 章节必须记录：
 - 可访问性、禁止文案和 Logo 扫描。
 - `V3 final result: passed | failed`。
 
-V3 实现证据不完整时只能标记 `not started`，不得沿用 V2 或 V2.1 结论；当前证据已记录在 `design-qa.md`。
+V3 实现证据不完整时只能标记 `not started`，不得沿用 V2 或 V2.1 结论；当前证据已记录在 `docs/validation/design-qa.md`。
 
 ---
 
@@ -814,7 +814,7 @@ V3 实现证据不完整时只能标记 `not started`，不得沿用 V2 或 V2.1
 - [x] 键盘、焦点、对比度和图表替代通过。
 - [x] 无 CDN、iframe、截图地图和 `href="#"`。
 - [x] 禁止预测、承诺、最优、官方暗示和伪置信度扫描通过。
-- [x] `design-qa.md` 的 V3 最终结果为 `passed`。
+- [x] `docs/validation/design-qa.md` 的 V3 最终结果为 `passed`。
 
 ---
 
@@ -830,7 +830,7 @@ V3 前端只有同时满足以下条件才完成：
 - 所有真实企业行为明确为模拟，不使用未授权 Logo或现实承诺。
 - 完整状态、单位、来源和免责声明符合 PRD。
 - 三种桌面画布、核心 E2E、禁止文案和可访问性检查通过。
-- `design-qa.md` 的 V3 `final result` 为 `passed`。
+- `docs/validation/design-qa.md` 的 V3 `final result` 为 `passed`。
 
 上述条件已由正式 React 运行时、V3 API、两条 Playwright 流程和 1536×1024、1440×900、1280 三画布截图验证。V3.0 前端状态为“已实现，Design QA passed”。
 
@@ -951,7 +951,7 @@ V3.1 前端只有两条模式 E2E 和三画布检查完成后才能标记 Design
 
 ### 28.1 源真相与页面骨架
 
-正式视觉源为 `outputs/m35-presentation-design/causal-stage-reference.png`。页面按 16:9 舞台组织：顶部 HUD 约 7%，左侧因果链约 19%，中央地图约 55%，右侧博弈台约 26%，底部季度轨约 16%。不同分辨率允许等比调整，但不得把左/右核心链折叠成需要主动打开的抽屉。
+正式视觉源为 `docs/assets/m35/causal-stage-reference.png`。页面按 16:9 舞台组织：顶部 HUD 约 7%，左侧因果链约 19%，中央地图约 55%，右侧博弈台约 26%，底部季度轨约 16%。不同分辨率允许等比调整，但不得把左/右核心链折叠成需要主动打开的抽屉。
 
 顶部只显示品牌、当前决策问题、原始方案/干预方案/差值和事实状态。左侧六段链固定为“关注、观察、决策、行动、回应、结算”；右侧固定回答“本季度关键问题、为何行动、提出什么、如何回应、对年度结果的影响”。
 

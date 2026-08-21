@@ -31,7 +31,7 @@
 
 1. V3.2 / M32 产品语义、Schema、审批和唯一主动差异规则。
 2. 本文件的全景推演厅信息架构、事件与时间轴契约。
-3. `STITCH_FRONTEND_SPEC.md` 的数据边界、文案和状态规则。
+3. `docs/specs/STITCH_FRONTEND_SPEC.md` 的数据边界、文案和状态规则。
 4. `stitch_policyscope/policyscope/DESIGN.md` 的品牌令牌。
 5. Earth Map 参考页只提供全屏舞台、浮动控件、镜头和时间轴参考，不覆盖 PolicyScope 业务语义。
 6. 旧 `apps/web` 只用于 API、类型、地图资产和异常处理参考。
@@ -465,7 +465,7 @@ GET /api/experiments/{id}/presentation/bootstrap
 - Story 绑定 `presentation-summary-v1` 五幕；Compare 提供单图 Delta、同步 A/B、Gap/财政/受益承压摘要和三条权威机制链。
 - 遥控键为空格、左右、`Shift+左右`、`Home|R`、`Esc`；运输控件提供四档速度、复位和全屏。
 - WebGL 失效时使用同一冻结 GeoJSON 的本地 SVG 兼容渲染，保留 31 省键盘/点击可达与全部业务控件；港澳台继续显示轮廓与名称，但保持非聚焦、非点击、非计算。
-- 正式验收画布为 1920×1080、2560×1440、3840×2160；具体证据见 `M33_PRESENTATION_FINAL_VALIDATION.md`。
+- 正式验收画布为 1920×1080、2560×1440、3840×2160；具体证据见 `docs/validation/M33_PRESENTATION_FINAL_VALIDATION.md`。
 - [x] 现有五个模板和后续候选类别边界已明确。
 - [x] 三个现有触发点和未来晚期触发门禁已明确。
 - [x] 可拖动时间轴、吸附、动画和真实性边界已冻结。
@@ -474,7 +474,7 @@ GET /api/experiments/{id}/presentation/bootstrap
 - [x] 车企详情反报价响应过滤缺陷修复并回归。
 - [x] 离线标准地图进入 MapLibre/deck.gl 的技术验证完成。
 
-M33.1 已于 2026-08-13 通过，证据见 `M33_MAP_ANIMATION_TECH_VALIDATION.md`；M33.2 只读投影 API 也已通过，证据见 `M33_PRESENTATION_API_VALIDATION.md`。M33.3 开场与运行时壳层、M33.4 事件闭环、M33.5 路演结果和 M33.6 可靠性验收现已全部完成并冻结。
+M33.1 已于 2026-08-13 通过，证据见 `docs/validation/M33_MAP_ANIMATION_TECH_VALIDATION.md`；M33.2 只读投影 API 也已通过，证据见 `docs/validation/M33_PRESENTATION_API_VALIDATION.md`。M33.3 开场与运行时壳层、M33.4 事件闭环、M33.5 路演结果和 M33.6 可靠性验收现已全部完成并冻结。
 
 ## 13. M34 / Presentation V2 breaking upgrade
 
@@ -552,4 +552,4 @@ fallback
 
 ### 15.3 Design QA
 
-源真相为 `outputs/m35-presentation-design/causal-stage-reference.png`。QA 必须比较同一 16:9 视口和同一互动状态，检查字体、布局、色彩、地图层级、主体节点、关系线、六段链、右侧博弈台、季度轨和全部用户文案。没有浏览器截图、主交互验证、console 检查和字段泄漏扫描时，`design-qa.md` 只能标记 `blocked`。
+源真相为 `docs/assets/m35/causal-stage-reference.png`。QA 必须比较同一 16:9 视口和同一互动状态，检查字体、布局、色彩、地图层级、主体节点、关系线、六段链、右侧博弈台、季度轨和全部用户文案。没有浏览器截图、主交互验证、console 检查和字段泄漏扫描时，`docs/validation/design-qa.md` 只能标记 `blocked`。

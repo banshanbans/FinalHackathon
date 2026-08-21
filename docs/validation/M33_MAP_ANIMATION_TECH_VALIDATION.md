@@ -72,6 +72,6 @@ M33.1 的本地校验几何、31 省计算绑定、港澳台版图上下文、De
 - 3840×2160 交接后连续播放实测 60.1 FPS、P95 17.7 ms。
 - 自动交接、跳过、重播和 `prefers-reduced-motion` 不超过 1 秒交接均通过浏览器检查。
 - 控制台错误 0、警告 0；生产构建和高危依赖审计通过。
-- 视觉对照证据：`outputs/m33-globe-intro/source-vs-implementation.png`；完整 Design QA 见 `design-qa.md`。
+- 视觉对照证据：`outputs/m33-globe-intro/source-vs-implementation.png`；完整 Design QA 见 `docs/validation/design-qa.md`。
 
 本节只证明开场镜头子项完成，不改变 M33.2 仍为唯一下一阶段，也不将完整 M33.3 标记为完成。

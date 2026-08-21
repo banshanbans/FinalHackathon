@@ -38,7 +38,7 @@ PolicyScope V3.0 将目标产品迁移为：
 
 涉及前端、地图、可视化、文案或交互时，还必须完整阅读：
 
-5. `STITCH_FRONTEND_SPEC.md`
+5. `docs/specs/STITCH_FRONTEND_SPEC.md`
 6. `stitch_policyscope/policyscope/DESIGN.md`
 7. 与目标页面对应的 Stitch `screen.png`
 
@@ -52,7 +52,7 @@ PolicyScope V3.0 将目标产品迁移为：
 
 1. V3 PRD：产品语义、用户权限、主体、阶段、指标和验收。
 2. 获批后的 V3 Schema/API：运行时数据真相。
-3. `STITCH_FRONTEND_SPEC.md`：正式页面结构、交互、文案和状态。
+3. `docs/specs/STITCH_FRONTEND_SPEC.md`：正式页面结构、交互、文案和状态。
 4. `DESIGN.md` 与 Stitch `screen.png`：视觉令牌和布局参考。
 5. Stitch `code.html`：仅用于测量，不是正式代码。
 6. V2/V2.1 实现：迁移基线，不是 V3 契约来源。
@@ -761,9 +761,9 @@ V3 实现期间按里程碑运行与风险相称的检查；不得用局部通�
 
 ## 20. 当前唯一下一步
 
-用户于 2026-08-14 报告公网默认干预方案存在“命中缓存但全线无互动记录”回归。根因是早期 DeepSeek 输出检验缺少互动一致性、接收方 session 授权和剩余额度约束，旧验证仅统计调用/fallback。旧 831 个缓存及首轮修复的 75 个不完整缓存已可恢复隔离；活动缓存升级为 `m34-luna-cache-envelope-v3`、`m34-live-authorized-context-v3` 和 `m34-decision-quality-v1`。公网默认原始/干预方案仍为 `95/90/85` 与 `96/93/82`；冷跑 `exp_m34_44819eaa0dcd`、热跑 `exp_m34_cb7ae06bfad4` 均完成 Q1–Q4、530 次调用零 fallback，原始/干预分别有 93/104 条消息与 46/52 个已结算会话，缓存文件数第二次保持 1487 不变。完整契约与证据见 `ADR-374-m354-deepseek-cache-quality-gate.md`。
+用户于 2026-08-14 报告公网默认干预方案存在“命中缓存但全线无互动记录”回归。根因是早期 DeepSeek 输出检验缺少互动一致性、接收方 session 授权和剩余额度约束，旧验证仅统计调用/fallback。旧 831 个缓存及首轮修复的 75 个不完整缓存已可恢复隔离；活动缓存升级为 `m34-luna-cache-envelope-v3`、`m34-live-authorized-context-v3` 和 `m34-decision-quality-v1`。公网默认原始/干预方案仍为 `95/90/85` 与 `96/93/82`；冷跑 `exp_m34_44819eaa0dcd`、热跑 `exp_m34_cb7ae06bfad4` 均完成 Q1–Q4、530 次调用零 fallback，原始/干预分别有 93/104 条消息与 46/52 个已结算会话，缓存文件数第二次保持 1487 不变。完整契约与证据见 `docs/adr/ADR-374-m354-deepseek-cache-quality-gate.md`。
 
-用户于 2026-08-13 在 M35 验收后追加的两项正式部署要求已完成公网验收：公网默认 Cache-first，修改东中西比例导致 cache miss 时由 DeepSeek 生成、校验并回写缓存；全国地图除 31 省和港澳台上下文外，显示同一冻结标准地图的南海诸岛附图。验证实验 `exp_m34_64538c5bf0bc` 已完成修改比例后的双分支 Q1 与独立 Checkpoint。南海诸岛不进入 31 省 Agent、指标、色阶、事件、交互或比较。完整契约与证据见 `ADR-372-m352-cache-first-deepseek-and-national-map.md`、`M35_2_CACHE_DEEPSEEK_NATIONAL_MAP_VALIDATION.md`。
+用户于 2026-08-13 在 M35 验收后追加的两项正式部署要求已完成公网验收：公网默认 Cache-first，修改东中西比例导致 cache miss 时由 DeepSeek 生成、校验并回写缓存；全国地图除 31 省和港澳台上下文外，显示同一冻结标准地图的南海诸岛附图。验证实验 `exp_m34_64538c5bf0bc` 已完成修改比例后的双分支 Q1 与独立 Checkpoint。南海诸岛不进入 31 省 Agent、指标、色阶、事件、交互或比较。完整契约与证据见 `docs/adr/ADR-372-m352-cache-first-deepseek-and-national-map.md`、`docs/validation/M35_2_CACHE_DEEPSEEK_NATIONAL_MAP_VALIDATION.md`。
 
 用户于 2026-08-14 最终澄清公网中国地图的南海诸岛必须固定在地图画布左下角，不跟随俯视、侧视、缩放、平移、分支或 A/B 视角移动，也不得被右下角图例覆盖。Presentation 的 WebGL 与 SVG 降级画布继续共用同一个 `SouthChinaSeaInset`：该层是地图内制图内容而不是说明卡，外框为方角虚线，不显示卡片底色、阴影或外置标题牌；内部“南海诸岛”名称、岛礁与断续线只从冻结自然资源部 GS(2016)1609 标准地图裁切，不手工重绘，也不进入 31 省 Agent、指标、事件、关系线或比较。
 
@@ -880,7 +880,7 @@ M29 v2 已将 177 项需求纳入验收；但当前 Fake 省级与车企基线�
 ## 29. M35 Presentation 因果舞台契约
 
 - M35 只修改独立 `apps/presentation` 与其只读投影；普通 Web 前端不进入设计、实现或验收。
-- 用户已选定 `outputs/m35-presentation-design/causal-stage-reference.png` 为正式视觉目标。主舞台固定为顶部决策问题、左侧六段因果链、中央低饱和世界地图、右侧主体博弈台和底部四季度章节轨。
+- 用户已选定 `docs/assets/m35/causal-stage-reference.png` 为正式视觉目标。主舞台固定为顶部决策问题、左侧六段因果链、中央低饱和世界地图、右侧主体博弈台和底部四季度章节轨。
 - 主叙事必须按“关注 → 观察 → 决策 → 行动 → 回应 → 结算”展示结构化事实；不得展示或推断思维链。
 - 主舞台只消费强类型 Presentation View Model；不得直接显示 `sender_id`、`recipient_ids`、`transaction_state`、消息机器码、裸主体 ID、snake_case、Wave 码、Schema、Checkpoint 或哈希。
 - 主体引用统一为 `province:`、`automaker:`、`event:` 与 `environment:` 前缀；后端负责展示名、主体类型、消息、状态、阶段和机制的中文映射。

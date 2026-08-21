@@ -34,4 +34,4 @@ A/B 分歧基于双侧完整 Session 集合的并集，类型为 `control_only`�
 - 31 个省份锚点全部位于有效省域内；Mercator 四边严格映射到 1000×720。
 - WebGL 与 SVG 均支持 1/2/3 组逐条揭示、Session 选择、车企节点选择与省份探索。
 - `make test`、`make test-sim`、`make test-api`、`make lint`、`make validate-data`、Presentation typecheck/build 与几何专项测试通过。
-- Browser 验证四画布、WebGL、SVG、开场、跳过开场、深链、控制台错误和 19 帧字段泄漏；最终结果记录在 `design-qa.md`。
+- Browser 验证四画布、WebGL、SVG、开场、跳过开场、深链、控制台错误和 19 帧字段泄漏；最终结果记录在 `docs/validation/design-qa.md`。

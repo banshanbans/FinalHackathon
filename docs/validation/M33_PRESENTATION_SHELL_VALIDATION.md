@@ -45,7 +45,7 @@ pytest M33 API / contract  9 passed
 - `outputs/m33-globe-intro/m33-shell-event-1280x720-v2.jpg`
 - `outputs/m33-globe-intro/m33-shell-1366x768.jpg`
 - `outputs/m33-globe-intro/m33-shell-reference-comparison-2560x720.jpg`
-- 完整 Design QA 见 `design-qa.md` 的 “M33.3 Full Presentation Shell Design QA”。
+- 完整 Design QA 见 `docs/validation/design-qa.md` 的 “M33.3 Full Presentation Shell Design QA”。
 
 ## 4. 后续边界
 

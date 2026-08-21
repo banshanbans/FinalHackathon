@@ -1,6 +1,7 @@
 .DS_Store
 .obsidian/
 .env
+*.pem
 .venv/
 .pytest_cache/
 .ruff_cache/
@@ -13,6 +14,7 @@ stitch_policyscope/audit/
 __pycache__/
 *.py[cod]
 *.egg-info/
+*.tsbuildinfo
 dist/
 build/
 htmlcov/
@@ -30,4 +32,21 @@ runtime/v32/
 runtime/cache-verification/
 runtime/cache/default/*.json
 !runtime/cache/default/v21_manifest.json
+runtime/cache/v3_2_m30_fallback/
+runtime/cache/v3_2_m34_fake_regression/
+runtime/idempotency/
+runtime/m32/
+runtime/m34/
+
+# Local competition materials, prototypes, captures, and generated evidence.
+outputs/
+prototypes/
+决赛资料/
+
+# Roadshow build products and local design-review inputs.
+apps/roadshow/.offline-build/
+apps/roadshow/.offline-runtime-cache/
+apps/roadshow/offline-dist/
+apps/roadshow/qa/
+apps/roadshow/references/
 *.log

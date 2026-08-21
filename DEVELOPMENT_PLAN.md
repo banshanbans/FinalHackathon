@@ -1,12 +1,12 @@
 # 13110 V3.2 产品旅程与 Fake Agent 重构开发计划
 
 > 对应 PRD：[PRD_省域政策多智能体推演平台.md](./PRD_省域政策多智能体推演平台.md)
-> 前端规范：[STITCH_FRONTEND_SPEC.md](./STITCH_FRONTEND_SPEC.md)
+> 前端规范：[docs/specs/STITCH_FRONTEND_SPEC.md](./docs/specs/STITCH_FRONTEND_SPEC.md)
 > 计划版本：V3.2 M35（Presentation 因果舞台重建）
 > 更新日期：2026-08-14
 > 当前门禁：只以 `apps/presentation` 为产品界面，完成强类型展示投影、因果链、博弈层、分支隔离、字段泄漏扫描、三类 E2E 和四画布 Design QA
 
-2026-08-14 公网维护项：Presentation 原始方案保持 `95%/90%/85%`，新建实验的干预方案预设保持 `96%/93%/82%`。旧缓存因早期互动校验缺口已隔离；`m34-decision-quality-v1` 门禁重建后，公网冷/热两次同语义全年度运行均为 530 次调用零 fallback，消息/会话完整，第二次缓存文件数 `1487→1487`，退出条件已满足。详见 `ADR-374-m354-deepseek-cache-quality-gate.md`。
+2026-08-14 公网维护项：Presentation 原始方案保持 `95%/90%/85%`，新建实验的干预方案预设保持 `96%/93%/82%`。旧缓存因早期互动校验缺口已隔离；`m34-decision-quality-v1` 门禁重建后，公网冷/热两次同语义全年度运行均为 530 次调用零 fallback，消息/会话完整，第二次缓存文件数 `1487→1487`，退出条件已满足。详见 `docs/adr/ADR-374-m354-deepseek-cache-quality-gate.md`。
 
 ---
 
@@ -528,7 +528,7 @@ DOC-300 → ADR-300 → MODEL-300 → DATA/SIM/AI-300
 
 - 全部统一命令通过。
 - 两条 E2E 和连续三次 Cache 通过。
-- `design-qa.md` 的 V3 结果为 `passed`。
+- `docs/validation/design-qa.md` 的 V3 结果为 `passed`。
 - 无现实预测、企业承诺、官方暗示或最优政策结论。
 
 ---
@@ -726,7 +726,7 @@ V3 实现后必须让这些命令覆盖新领域；不得为了通过门禁跳�
 - [x] 默认场景完整离线缓存可用。
 - [x] `make test`、`make lint`、`make validate-data`、`make smoke` 通过。
 - [x] 两条 E2E 和 Cache 连续三次通过。
-- [x] `design-qa.md` 的 V3 `final result` 为 `passed`。
+- [x] `docs/validation/design-qa.md` 的 V3 `final result` 为 `passed`。
 - [x] 无现实预测、企业承诺、未授权 Logo、官方身份暗示或最优政策结论。
 
 ---
@@ -785,10 +785,10 @@ M29 v2 对用户统一显示“可信数据”；直接来源和具备合理置�
 
 | 阶段 | 状态 | 退出证据 |
 |---|---|---|
-| M33.0 契约冻结 | Complete | ADR-350、`PRESENTATION_HALL_SPEC.md`、PRD、计划、AGENTS、前端规范与 DESIGN 已同步；Pydantic/TypeScript 契约、回归与文档检查通过 |
-| M33.1 地图与动画技术验证 | Complete | 本地校验几何、31 省绑定、Delta、弧线、镜头、1080p/4K 60 FPS、低动效和 SVG 降级通过；证据见 `M33_MAP_ANIMATION_TECH_VALIDATION.md` |
-| M33.2 演示投影 API | Complete | 两个只读接口、10 个合法冻结帧、事件节点、六类覆盖层、Replay 映射、旧帧哈希稳定性和只读边界通过 Schema/API/Replay 测试；证据见 `M33_PRESENTATION_API_VALIDATION.md` |
-| M33.3 独立大屏壳层 | Complete | 地球开场、全屏 HUD、GovSim Glass UI Kit、十入口功能坞、浮层/Side Sheet、三模式、真实 Timeline/Frame、事件节点、可拖动时间轴和省域联动通过；证据见 `M33_PRESENTATION_SHELL_VALIDATION.md` |
+| M33.0 契约冻结 | Complete | ADR-350、`docs/specs/PRESENTATION_HALL_SPEC.md`、PRD、计划、AGENTS、前端规范与 DESIGN 已同步；Pydantic/TypeScript 契约、回归与文档检查通过 |
+| M33.1 地图与动画技术验证 | Complete | 本地校验几何、31 省绑定、Delta、弧线、镜头、1080p/4K 60 FPS、低动效和 SVG 降级通过；证据见 `docs/validation/M33_MAP_ANIMATION_TECH_VALIDATION.md` |
+| M33.2 演示投影 API | Complete | 两个只读接口、10 个合法冻结帧、事件节点、六类覆盖层、Replay 映射、旧帧哈希稳定性和只读边界通过 Schema/API/Replay 测试；证据见 `docs/validation/M33_PRESENTATION_API_VALIDATION.md` |
+| M33.3 独立大屏壳层 | Complete | 地球开场、全屏 HUD、GovSim Glass UI Kit、十入口功能坞、浮层/Side Sheet、三模式、真实 Timeline/Frame、事件节点、可拖动时间轴和省域联动通过；证据见 `docs/validation/M33_PRESENTATION_SHELL_VALIDATION.md` |
 | M33.4 事件与七轮闭环 | Complete | 五项版本化事件目录、三触发边界、七轮单屏推进、SSE 恢复和资源守恒矩阵通过契约/API/E2E |
 | M33.5 路演与结果 | Complete | 五幕摘要、单图 Delta、同步 A/B、三机制链、键盘遥控、全屏、四档变速与复位通过正式 E2E |
 | M33.6 可靠性与冻结 | Complete | 1080p/2K/4K、连续播放、断网保帧、WebGL→SVG 降级、禁止文案、Fake/Fallback 标签、全量测试与 Design QA 通过 |
@@ -817,14 +817,14 @@ M29 v2 对用户统一显示“可信数据”；直接来源和具备合理置�
 - 冻结标准地图已确定性生成只读 WebGL 展示 GeoJSON：31 个省域进入推演，香港、澳门、台湾作为非交互版图上下文；逐区域源路径哈希、根级几何哈希和声明 bbox 校验通过。
 - MapLibre/deck.gl 本地渲染完成 Delta 填色、选择、事件点、弧线和镜头验证；无远程底图或运行时 CDN。
 - 1920×1080 与 3840×2160 连续播放均实测 60 FPS、P95 17.6 ms；SVG 容错和低动效路径通过。
-- 详细证据见 `M33_MAP_ANIMATION_TECH_VALIDATION.md`。该退出记录形成时，M33.2 是下一阶段；当前 M33.2–M33.6 均已完成。
+- 详细证据见 `docs/validation/M33_MAP_ANIMATION_TECH_VALIDATION.md`。该退出记录形成时，M33.2 是下一阶段；当前 M33.2–M33.6 均已完成。
 
 ### M33.2 退出结果
 
 - `GET /presentation/timeline` 与 `GET /presentation/frames/{frame_id}` 已接入 M32 Orchestrator，且调用前后 WorldState 完全一致。
 - 完整无事件实验投影政策输入、方案冻结、七轮和结果复盘共 10 帧；事件实验在合法触发边界增加 Marker 与 Event Frame。
 - 省域值、竞争/协同/谈判/Top-K/车企/事件覆盖层、六项指标和 A/B Delta 均由已提交 DTO 投影，每帧保留 Replay 事件、Evidence 和稳定哈希。
-- Simulation 48/48、API 7/7、M33.2 聚焦 10/10、前端类型与生产构建通过；详细证据见 `M33_PRESENTATION_API_VALIDATION.md`。
+- Simulation 48/48、API 7/7、M33.2 聚焦 10/10、前端类型与生产构建通过；详细证据见 `docs/validation/M33_PRESENTATION_API_VALIDATION.md`。
 - 该退出记录形成时，M33.3 正式壳层是下一阶段；当前已完成并冻结。
 
 ### M33.3 开场镜头先行子项
@@ -850,7 +850,7 @@ M29 v2 对用户统一显示“可信数据”；直接来源和具备合理置�
 - GovSim Glass UI Kit、三模式、十入口工具坞、单主面板、Context Popover、Side Sheet 和地图主内容比例落地，未重建 SaaS 卡片网格。
 - 时间轴的拖动吸附、播放/暂停、前后帧、节点跳转、变速和复位通过；突发事件帧和省域点击与当前帧联动。
 - `npm run typecheck`、`npm run build`、1280×720/1366×768 浏览器交互、无溢出和 console 零错误/警告通过；视觉对照没有未闭环 P0/P1/P2。
-- 详细证据见 `M33_PRESENTATION_SHELL_VALIDATION.md`；该退出记录形成时，M33.4 是下一阶段，当前 M33.4–M33.6 均已完成。
+- 详细证据见 `docs/validation/M33_PRESENTATION_SHELL_VALIDATION.md`；该退出记录形成时，M33.4 是下一阶段，当前 M33.4–M33.6 均已完成。
 - 2026-08-13 用户复核后追加地图校准：开场光点改为北京真实经纬度；展示投影按冻结 SVG 宽高比锁定 Web Mercator，经度跨度不再造成横向拉伸，贝塞尔采样从 8 提升至 24，并加入几何回归门禁。
 
 ### M33.4–M33.6 最终退出结果
@@ -860,7 +860,7 @@ M29 v2 对用户统一显示“可信数据”；直接来源和具备合理置�
 - Story 绑定后端五幕摘要；Compare 默认权威 Delta，可切换镜头、选择和值同步的 A/B 双世界，并展示 Gap、财政代价、受益/承压省份和三条机制链。
 - WebGL 初始化或上下文失效时切换本地 SVG 兼容地图，31 省点击、时间轴和业务操作保留。
 - 2026-08-13 追加全国版图完整性验收：WebGL、SVG 降级和旧工作台均从冻结标准地图带入香港、澳门、台湾；三者为非计算 `territory-context`，不改变 31 省 Agent、业务帧、指标或调用预算。
-- 1920×1080、2560×1440、3840×2160 完整画布通过；详细命令与证据见 `M33_PRESENTATION_FINAL_VALIDATION.md` 和 `design-qa.md`。
+- 1920×1080、2560×1440、3840×2160 完整画布通过；详细命令与证据见 `docs/validation/M33_PRESENTATION_FINAL_VALIDATION.md` 和 `docs/validation/design-qa.md`。
 
 ### M33 用户复审回归封口
 
