@@ -1,0 +1,49 @@
+name: Bug 报告
+description: 报告可复现的产品、接口或构建问题
+title: "[Bug] "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: 请勿在公开 Issue 中提交密钥、真实用户数据或尚未修复的安全漏洞。安全问题请使用 Security 页面的私密报告入口。
+  - type: dropdown
+    id: area
+    attributes:
+      label: 影响范围
+      options:
+        - Presentation
+        - API
+        - Simulation
+        - Roadshow
+        - 数据或地图
+        - 构建与部署
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: 问题描述
+      description: 说明实际行为和预期行为。
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: 最小复现步骤
+      placeholder: |
+        1. 使用提交或版本…
+        2. 执行…
+        3. 观察到…
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: 环境
+      description: 操作系统、Python / Node 版本、浏览器和运行模式；请删除敏感值。
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 日志或截图
+      description: 仅提供脱敏后的最小必要证据。

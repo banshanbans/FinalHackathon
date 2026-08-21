@@ -1,12 +1,13 @@
-PYTHON := /opt/homebrew/bin/python3.12
+PYTHON ?= python3.12
 VENV := .venv
 PY := $(VENV)/bin/python
 PIP := $(VENV)/bin/pip
 NPM_CACHE := $(CURDIR)/.cache/npm
+COMPOSE_ENV ?= $(CURDIR)/.env.example
 
-.PHONY: setup setup-backend setup-web setup-presentation dev dev-api start-api dev-web dev-presentation test test-sim test-api test-e2e test-e2e-presentation capture-v3 lint validate-data precompute precompute-v32 precompute-v32-luna precompute-m34 precompute-m34-luna showcase-m35 verify-cache verify-cache-v32 verify-cache-v32-luna verify-cache-m34 verify-cache-m34-luna demo smoke spike-agentsociety clean
+.PHONY: setup setup-backend setup-web setup-presentation setup-roadshow dev dev-api start-api dev-web dev-presentation test test-sim test-api test-e2e test-e2e-presentation capture-v3 capture-readme lint validate-data build repository-check check docker-config docker-build precompute precompute-v32 precompute-v32-luna precompute-m34 precompute-m34-luna showcase-m35 verify-cache verify-cache-v32 verify-cache-v32-luna verify-cache-m34 verify-cache-m34-luna demo smoke spike-agentsociety clean
 
-setup: setup-backend setup-web setup-presentation
+setup: setup-backend setup-web setup-presentation setup-roadshow
 
 setup-backend:
 	$(PYTHON) -m venv $(VENV)
@@ -15,13 +16,16 @@ setup-backend:
 	-chflags nohidden $(VENV)/lib/python*/site-packages/*.pth
 
 setup-web:
-	npm --prefix apps/web install --cache $(NPM_CACHE)
+	npm --prefix apps/web ci --cache $(NPM_CACHE)
 
 setup-presentation:
-	npm --prefix apps/presentation install --cache $(NPM_CACHE)
+	npm --prefix apps/presentation ci --cache $(NPM_CACHE)
+
+setup-roadshow:
+	npm --prefix apps/roadshow ci --cache $(NPM_CACHE)
 
 dev:
-	@echo "Run 'make dev-api' with 'make dev-web' or 'make dev-presentation' in separate terminals."
+	@echo "Run 'make dev-api' with 'make dev-presentation' in separate terminals."
 
 dev-api:
 	PYTHONPATH="$(CURDIR):$(CURDIR)/apps/api/src" POLICYSCOPE_RUN_MODE=fake $(PY) -m uvicorn policyscope_api.main:app --app-dir apps/api/src --reload --port 8000
@@ -38,6 +42,9 @@ dev-presentation:
 test:
 	$(PY) -m pytest
 	npm --prefix apps/web run test
+	npm --prefix apps/presentation run test:geometry
+	npm --prefix apps/roadshow run test
+	npm --prefix apps/roadshow run test:sites
 
 test-sim:
 	$(PY) -m pytest simulation/tests
@@ -54,17 +61,38 @@ test-e2e-presentation:
 capture-v3:
 	npm --prefix apps/web run test:e2e:capture
 
+capture-readme:
+	npm --prefix apps/web run test:e2e:capture-readme
+
 lint:
 	$(VENV)/bin/ruff check simulation apps/api scripts
 	$(VENV)/bin/ruff format --check simulation apps/api scripts
 	npm --prefix apps/web run lint
-	npm --prefix apps/web run build
-	npm --prefix apps/presentation run build
+	npm --prefix apps/presentation run typecheck
+	npm --prefix apps/roadshow run typecheck
+	npm --prefix apps/roadshow run check:boundaries
 
 validate-data:
 	PYTHONPATH="$(CURDIR):$(CURDIR)/apps/api/src" $(PY) scripts/validate_data.py
 	PYTHONPATH="$(CURDIR):$(CURDIR)/apps/api/src" $(PY) scripts/validate_standard_map.py
 	PYTHONPATH="$(CURDIR):$(CURDIR)/apps/api/src" $(PY) scripts/validate_presentation_map.py
+
+build:
+	npm --prefix apps/web run build
+	npm --prefix apps/presentation run build
+	npm --prefix apps/roadshow run build
+
+repository-check:
+	$(PY) scripts/check_repository.py
+
+check: repository-check lint validate-data test build
+
+docker-config:
+	POLICYSCOPE_ENV_FILE="$(COMPOSE_ENV)" docker compose -f deploy/m35/compose.production.yml config --quiet
+
+docker-build: docker-config
+	docker build -f deploy/m35/Dockerfile.api -t 13110-api:local .
+	docker build -f deploy/m35/Dockerfile.web -t 13110-presentation:local .
 
 precompute:
 	PYTHONPATH="$(CURDIR):$(CURDIR)/apps/api/src" $(PY) scripts/precompute_demo.py

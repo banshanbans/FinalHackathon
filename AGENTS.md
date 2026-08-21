@@ -698,7 +698,7 @@ payload
 
 - 保留 `.obsidian`、Stitch 原始文件、用户文档和 V2.1 代码。
 - 不提交 `.env`、API Key、令牌或敏感材料。
-- Runtime experiment、Replay 和大缓存默认忽略；默认演示缓存单独白名单。
+- Runtime experiment、Replay 和全部决策缓存默认忽略；仓库只保留缓存生成与验证说明。
 - 不用破坏性 Git 命令覆盖用户修改。
 - 未获批准前不升级依赖。
 
@@ -725,11 +725,15 @@ make setup
 make dev
 make dev-api
 make dev-web
+make dev-presentation
 make test
 make test-sim
 make test-api
 make lint
 make validate-data
+make build
+make check
+make docker-build
 make demo
 make smoke
 ```

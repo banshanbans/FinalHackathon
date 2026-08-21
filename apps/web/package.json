@@ -11,6 +11,7 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:presentation": "playwright test --config playwright.presentation.config.ts",
+    "test:e2e:capture-readme": "playwright test --config playwright.readme.config.ts",
     "test:e2e:capture": "POLICYSCOPE_CAPTURE=1 playwright test e2e/policyscope-v3.spec.ts --grep \"complete A/B flow|non-monotonic|reconnecting\""
   },
   "dependencies": {

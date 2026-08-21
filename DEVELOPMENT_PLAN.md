@@ -656,11 +656,15 @@ make setup
 make dev
 make dev-api
 make dev-web
+make dev-presentation
 make test
 make test-sim
 make test-api
 make lint
 make validate-data
+make build
+make check
+make docker-build
 make demo
 make smoke
 ```

@@ -7,7 +7,7 @@ services:
       context: ../..
       dockerfile: deploy/m35/Dockerfile.api.incremental
     env_file:
-      - /opt/13110/shared/.env.deepseek
+      - ${POLICYSCOPE_ENV_FILE:-/opt/13110/shared/.env.deepseek}
     environment:
       POLICYSCOPE_RUN_MODE: cache
       POLICYSCOPE_CACHE_MISS_MODE: live
