@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 私密安全报告
+    url: https://github.com/banshanbans/13110/security/advisories/new
+    about: 请在此报告漏洞、密钥泄漏或其他不应公开的问题。

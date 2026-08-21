@@ -3,22 +3,28 @@ FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    PYTHONPATH=/app:/app/apps/api/src
+    PYTHONPATH=/app:/app/apps/api/src \
+    POLICYSCOPE_RUN_MODE=fake \
+    POLICYSCOPE_CACHE_MISS_MODE=fake \
+    POLICYSCOPE_RUNTIME_DIR=/app/runtime
+
+RUN groupadd --system appuser \
+    && useradd --system --gid appuser --create-home appuser
 
 WORKDIR /app
 
 COPY pyproject.toml README.md ./
 COPY simulation ./simulation
 COPY apps/api ./apps/api
+COPY config ./config
 COPY data ./data
-COPY runtime/m34/exp_m34_35ca2026081a ./runtime/m34/exp_m34_35ca2026081a
 
-RUN pip install --no-cache-dir .
-
-RUN useradd --create-home --uid 10001 appuser \
+RUN python -m pip install --no-cache-dir . \
+    && mkdir -p /app/runtime/cache /app/runtime/experiments /app/runtime/idempotency \
     && chown -R appuser:appuser /app/runtime
+
 USER appuser
 
 EXPOSE 8000
 
-CMD ["uvicorn", "policyscope_api.main:app", "--app-dir", "apps/api/src", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "*"]
+CMD ["python", "-m", "uvicorn", "policyscope_api.main:app", "--app-dir", "apps/api/src", "--host", "0.0.0.0", "--port", "8000", "--workers", "1", "--proxy-headers", "--forwarded-allow-ips", "*"]

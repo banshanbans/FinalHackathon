@@ -1,13 +1,14 @@
 # 13110 文档导航
 
-本目录集中管理 13110 的产品决策、前端与演示规范、验收记录和对外展示资产。根目录只保留产品与开发的核心入口。
+本目录集中管理产品说明、架构决策、验证证据、部署运维、数据来源与展示资产。根目录只保留 README、开发入口和权利说明。
 
-## 核心入口
+## 产品说明
 
 - [产品需求文档](../PRD_%E7%9C%81%E5%9F%9F%E6%94%BF%E7%AD%96%E5%A4%9A%E6%99%BA%E8%83%BD%E4%BD%93%E6%8E%A8%E6%BC%94%E5%B9%B3%E5%8F%B0.md)
 - [开发计划](../DEVELOPMENT_PLAN.md)
 - [Agent 与开发约束](../AGENTS.md)
-- [项目 README](../README.md)
+- [Presentation Hall 规范](./specs/PRESENTATION_HALL_SPEC.md)
+- [前端产品规范](./specs/STITCH_FRONTEND_SPEC.md)
 
 ## 架构决策
 
@@ -24,12 +25,7 @@
 - [ADR-373：默认预热缓存参数](./adr/ADR-373-m353-default-warm-cache-preset.md)
 - [ADR-374：DeepSeek 质量门禁](./adr/ADR-374-m354-deepseek-cache-quality-gate.md)
 
-## 产品与演示规范
-
-- [Presentation Hall 规范](./specs/PRESENTATION_HALL_SPEC.md)
-- [前端产品规范](./specs/STITCH_FRONTEND_SPEC.md)
-
-## 验收记录
+## 验证证据
 
 - [M33 地图与动画技术验证](./validation/M33_MAP_ANIMATION_TECH_VALIDATION.md)
 - [M33 Presentation API 验证](./validation/M33_PRESENTATION_API_VALIDATION.md)
@@ -39,9 +35,25 @@
 - [Presentation Design QA](./validation/design-qa.md)
 - [Roadshow Design QA](./validation/roadshow-design-qa.md)
 
+## 部署与运维
+
+- [`deploy/m35/`](../deploy/m35/)：M35 API、Presentation、Compose 与反向代理配置。
+- [开发计划中的部署与回滚约束](../DEVELOPMENT_PLAN.md)
+- [运行时缓存说明](../runtime/cache/README.md)
+
+生产部署依赖服务器侧密钥和运行时数据；仓库中的示例环境仅用于本地开发与 CI 配置校验。
+
+## 数据来源
+
+- [`docs/data/`](./data/)：来源说明、字段口径和数据处理记录。
+- [`data/`](../data/)：冻结基线、场景输入和证据引用。
+- [第三方材料与许可说明](../THIRD_PARTY_NOTICES.md)
+
+现实事实、代理变量、场景假设和模拟派生指标必须保持显式区分。
+
 ## 图像资产
 
-- `assets/readme/`：README 使用的两张实机截图。
+- `assets/readme/`：README 使用的两张 1600×900 实机截图。
 - `assets/m35/`：M35 正式视觉基准与验收画面。
 
 其他本地批量 QA 截图、原型、运行结果和比赛资料不进入 Git，但保留在开发者本机。

@@ -1,0 +1,27 @@
+name: 文档问题
+description: 报告 README、开发说明、数据来源或验证记录问题
+title: "[Docs] "
+labels:
+  - documentation
+body:
+  - type: input
+    id: location
+    attributes:
+      label: 文档位置
+      description: 文件路径、章节或链接。
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: 问题与建议
+      description: 说明内容为何不准确、过期、缺失或难以理解。
+    validations:
+      required: true
+  - type: checkboxes
+    id: boundary
+    attributes:
+      label: 内容边界
+      options:
+        - label: 建议不会把模拟结果表述为现实预测、真实主体行为或自动政策建议
+          required: true

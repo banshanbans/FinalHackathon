@@ -5,8 +5,10 @@
 **/node_modules
 **/dist
 **/__pycache__
+output
 outputs
 prototypes
+决赛资料
 runtime/*
 !runtime/m34/
 runtime/m34/*
@@ -17,3 +19,6 @@ Hackathon.pem
 *.crt
 .env
 .env.*
+**/.playwright-cli
+**/*.tsbuildinfo
+**/* 2.*
